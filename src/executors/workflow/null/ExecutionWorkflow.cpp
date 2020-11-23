@@ -18,7 +18,6 @@
 #include <DataAccessRegistration.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadManagement.hpp>
 
 
 namespace ExecutionWorkflow {
@@ -26,6 +25,7 @@ namespace ExecutionWorkflow {
 	void executeTask(Task *task, ComputePlace *targetComputePlace, MemoryPlace *targetMemoryPlace)
 	{
 		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+
 		CPU *cpu = (CPU *) targetComputePlace;
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
@@ -34,15 +34,13 @@ namespace ExecutionWorkflow {
 		task->setThread(currentThread);
 		task->setMemoryPlace(targetMemoryPlace);
 
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(
-			taskId,
+			task->getInstrumentationTaskId(),
 			cpu->getInstrumentationId(),
 			currentThread->getInstrumentationId()
 		);
 
-		bool taskHasCode = task->hasCode();
-		if (taskHasCode) {
+		if (task->hasCode()) {
 			size_t tableSize = 0;
 			nanos6_address_translation_entry_t *translationTable =
 				SymbolTranslation::generateTranslationTable(
@@ -57,17 +55,21 @@ namespace ExecutionWorkflow {
 			task->body(translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
 
-			// Free up all symbol translation
-			if (tableSize > 0)
-				MemoryAllocator::free(translationTable, tableSize);
-
 			// Update the CPU since the thread may have migrated
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
-		}
 
-		// Runtime Tracking Point - A task has completed its execution (user code)
-		TrackingPoints::taskCompletedUserCode(task);
+			// Runtime Tracking Point - A task has completed its execution (user code)
+			TrackingPoints::taskCompletedUserCode(task);
+
+			// Free up all symbol translation
+			if (tableSize > 0) {
+				MemoryAllocator::free(translationTable, tableSize);
+			}
+		} else {
+			// Runtime Tracking Point - A task has completed its execution (user code)
+			TrackingPoints::taskCompletedUserCode(task);
+		}
 
 		DataAccessRegistration::combineTaskReductions(task, cpu);
 
@@ -75,9 +77,6 @@ namespace ExecutionWorkflow {
 			DataAccessRegistration::unregisterTaskDataAccesses(
 				task, cpu, cpu->getDependencyData()
 			);
-
-			// Runtime Tracking Point - A task has completely finished its execution
-			TrackingPoints::taskFinished(task);
 
 			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {

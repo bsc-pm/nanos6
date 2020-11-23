@@ -240,11 +240,7 @@ namespace ExecutionWorkflow {
 						targetMemoryPlace
 					);
 
-					// Runtime Tracking Point - A task has completely finished its execution
-					TrackingPoints::taskFinished(task);
-
 					TaskFinalization::taskFinished(task, cpu);
-
 					if (task->markAsReleased()) {
 						TaskFinalization::disposeTask(task);
 					}

@@ -32,14 +32,16 @@ void TrackingPoints::taskReinitialized(Task *task)
 
 void TrackingPoints::taskIsPending(Task *task)
 {
-	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
+	assert(task != nullptr);
 
 	// No need to stop hardware counters, as the task just got created
-	Instrument::taskIsPending(taskId);
+	Instrument::taskIsPending(task->getInstrumentationTaskId());
 }
 
 void TrackingPoints::taskIsExecuting(Task *task)
 {
+	assert(task != nullptr);
+
 	HardwareCounters::updateRuntimeCounters();
 
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
@@ -89,6 +91,8 @@ void TrackingPoints::taskCompletedUserCode(Task *task)
 
 void TrackingPoints::taskFinished(Task *task)
 {
+	assert(task != nullptr);
+
 	// If this is a taskfor collaborator, we must accumulate its counters into the taskfor source
 	if (task->isTaskforCollaborator()) {
 		Taskfor *source = (Taskfor *) task->getParent();
@@ -112,7 +116,6 @@ void TrackingPoints::threadInitialized(const WorkerThread *thread, const CPU *cp
 	Instrument::thread_id_t threadId = thread->getInstrumentationId();
 	Instrument::compute_place_id_t cpuId = cpu->getInstrumentationId();
 	Instrument::createdThread(threadId, cpuId);
-	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpuId, threadId);
 	Instrument::threadHasResumed(threadId, cpuId, false);
 
 	HardwareCounters::threadInitialized();
@@ -123,10 +126,8 @@ void TrackingPoints::threadWillSuspend(const WorkerThread *thread, const CPU *cp
 	assert(cpu != nullptr);
 	assert(thread != nullptr);
 
-	Instrument::thread_id_t threadId = thread->getInstrumentationId();
-	Instrument::compute_place_id_t cpuId = cpu->getInstrumentationId();
 	HardwareCounters::updateRuntimeCounters();
-	Instrument::threadWillSuspend(threadId, cpuId);
+	Instrument::threadWillSuspend(thread->getInstrumentationId(), cpu->getInstrumentationId());
 }
 
 void TrackingPoints::threadWillShutdown()
@@ -149,11 +150,10 @@ void TrackingPoints::cpuBecomesIdle(const CPU *cpu, const WorkerThread *thread)
 	assert(cpu != nullptr);
 	assert(thread != nullptr);
 
-	size_t id = cpu->getIndex();
 	Instrument::compute_place_id_t instrumId = cpu->getInstrumentationId();
 
 	HardwareCounters::updateRuntimeCounters();
-	Monitoring::cpuBecomesIdle(id);
+	Monitoring::cpuBecomesIdle(cpu->getIndex());
 	Instrument::threadWillSuspend(thread->getInstrumentationId(), instrumId);
 	Instrument::suspendingComputePlace(instrumId);
 }
@@ -192,17 +192,21 @@ void TrackingPoints::enterWaitForIf0Task(Task *task, const Task *if0Task, const 
 {
 	assert(task != nullptr);
 	assert(if0Task != nullptr);
+	assert(thread != nullptr);
+	assert(cpu != nullptr);
 
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 	const nanos6_task_invocation_info_t *if0TaskInvocation = if0Task->getTaskInvokationInfo();
 	assert(if0TaskInvocation != nullptr);
 
+	Instrument::enterTaskWait(taskId, if0TaskInvocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
+	Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
+
 	// Common function actions for when the thread suspends
 	TrackingPoints::threadWillSuspend(thread, cpu);
 
-	Instrument::enterTaskWait(taskId, if0TaskInvocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
-	Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
-	Monitoring::taskChangedStatus(task, paused_status);
+	HardwareCounters::updateRuntimeCounters();
+	Instrument::threadWillSuspend(thread->getInstrumentationId(), cpu->getInstrumentationId());
 }
 
 void TrackingPoints::exitWaitForIf0Task(Task *task)
@@ -224,18 +228,18 @@ void TrackingPoints::enterExecuteInline(Task *task, const Task *if0Task)
 	assert(task != nullptr);
 	assert(if0Task != nullptr);
 
+	const nanos6_task_invocation_info_t *if0Invocation = if0Task->getTaskInvokationInfo();
+	assert(if0Invocation != nullptr);
+
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
+	Instrument::enterTaskWait(taskId, if0Invocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
+
 	if (if0Task->hasCode()) {
 		// Since hardware counters for the creator task (task) are updated
 		// when creating the if0Task, we need not update them here
 		Monitoring::taskChangedStatus(task, paused_status);
 		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
 	}
-
-	const nanos6_task_invocation_info_t *if0Invocation = if0Task->getTaskInvokationInfo();
-	assert(if0Invocation != nullptr);
-
-	Instrument::enterTaskWait(taskId, if0Invocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
 }
 
 void TrackingPoints::exitExecuteInline(Task *task, const Task *if0Task)
@@ -398,6 +402,7 @@ void TrackingPoints::exitWaitFor(Task *task)
 void TrackingPoints::enterAddReadyTasks(Task *tasks[], const size_t numTasks)
 {
 	Instrument::enterAddReadyTask();
+
 	for (size_t i = 0; i < numTasks; ++i) {
 		Task *task = tasks[i];
 		assert(task != nullptr);
@@ -442,12 +447,11 @@ void TrackingPoints::enterSubmitTask(Task *creator, Task *task, bool fromUserCod
 
 	// NOTE: See the note in "enterSpawnFunction" for more details
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 	Instrument::enterSubmitTask(taskRuntimeTransition);
 
 	HardwareCounters::taskCreated(task);
 	Monitoring::taskCreated(task);
-	Instrument::createdTask(task, taskId);
+	Instrument::createdTask(task, task->getInstrumentationTaskId());
 }
 
 void TrackingPoints::exitSubmitTask(Task *creator, const Task *task, bool fromUserCode)

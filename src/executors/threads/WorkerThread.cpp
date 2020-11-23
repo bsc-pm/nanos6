@@ -32,7 +32,6 @@
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadManagement.hpp>
 #include <InstrumentWorkerThread.hpp>
 
 void WorkerThread::initialize()
@@ -41,6 +40,12 @@ void WorkerThread::initialize()
 
 	CPU *cpu = getComputePlace();
 	assert(cpu != nullptr);
+
+	Instrument::ThreadInstrumentationContext instrumentationContext(
+		Instrument::task_id_t(),
+		cpu->getInstrumentationId,
+		getInstrumentationId()
+	);
 
 	// Runtime Tracking Point - A thread is initializing
 	TrackingPoints::threadInitialized(this, cpu);
@@ -75,8 +80,9 @@ void WorkerThread::body()
 
 		_task = Scheduler::getReadyTask(cpu);
 		if (_task != nullptr) {
-			// A task already assigned to another thread
 			WorkerThread *assignedThread = _task->getThread();
+
+			// A task already assigned to another thread
 			if (assignedThread != nullptr) {
 				_task = nullptr;
 

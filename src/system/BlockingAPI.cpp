@@ -24,6 +24,7 @@ void BlockingAPI::blockCurrentTask(bool fromUserCode)
 	assert(currentThread != nullptr);
 
 	Task *currentTask = currentThread->getTask();
+	assert(currentTask != nullptr);
 
 	// Runtime Tracking Point - The current task is gonna be blocked
 	TrackingPoints::enterBlockCurrentTask(currentTask, fromUserCode);

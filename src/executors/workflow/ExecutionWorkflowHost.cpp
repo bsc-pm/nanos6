@@ -10,15 +10,14 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
-#include "system/TrackingPoints.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadManagement.hpp>
 
 
 namespace ExecutionWorkflow {
@@ -50,15 +49,13 @@ namespace ExecutionWorkflow {
 
 		_task->setThread(currentThread);
 
-		Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(
-			taskId,
+			_task->getInstrumentationTaskId(),
 			cpu->getInstrumentationId(),
 			currentThread->getInstrumentationId()
 		);
 
-		bool taskHasCode = _task->hasCode();
-		if (taskHasCode) {
+		if (_task->hasCode()) {
 			size_t tableSize = 0;
 			nanos6_address_translation_entry_t *translationTable =
 				SymbolTranslation::generateTranslationTable(
@@ -72,17 +69,21 @@ namespace ExecutionWorkflow {
 			_task->body(translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
 
-			// Free up all symbol translation
-			if (tableSize > 0)
-				MemoryAllocator::free(translationTable, tableSize);
-
 			// Update the CPU since the thread may have migrated
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
-		}
 
-		// Runtime Tracking Point - A task completes its execution (user code)
-		TrackingPoints::taskCompletedUserCode(_task);
+			// Runtime Tracking Point - A task completes its execution (user code)
+			TrackingPoints::taskCompletedUserCode(_task);
+
+			// Free up all symbol translation
+			if (tableSize > 0) {
+				MemoryAllocator::free(translationTable, tableSize);
+			}
+		} else {
+			// Runtime Tracking Point - A task completes its execution (user code)
+			TrackingPoints::taskCompletedUserCode(_task);
+		}
 
 		DataAccessRegistration::combineTaskReductions(_task, cpu);
 

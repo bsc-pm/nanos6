@@ -184,7 +184,7 @@ public:
 					break;
 				case CPU::disabled_status:
 					// The CPU is disabled, the thread should be idle. No need for TrackingPoints, this
-					// this is a corner case that should barely happen and the thread becomes idle again
+					// is a corner case that should barely happen and the thread becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
 					break;
