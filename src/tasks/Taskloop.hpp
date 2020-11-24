@@ -146,6 +146,14 @@ public:
 	{
 		return (x+(y-1))/y;
 	}
+
+	static inline size_t computeNumTasks(size_t iterations, size_t grainsize)
+	{
+		if (grainsize == 0) {
+			grainsize = std::max(iterations/CPUManager::getTotalCPUs(), (size_t) 1);
+		}
+		return ceil(iterations, grainsize);
+	}
 };
 
 #endif // TASKLOOP_HPP
