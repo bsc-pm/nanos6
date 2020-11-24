@@ -42,7 +42,7 @@ private:
 	bool _owned;
 
 	//! Random generator. Currently used in TaskDataAccesses::computeNUMAAffinity
-	std::default_random_engine _randomEngine;
+	std::minstd_rand0 _randomEngine;
 
 protected:
 	//! The index of the compute place
@@ -138,7 +138,7 @@ public:
 		return _instrumentationData;
 	}
 
-	inline std::default_random_engine &getRandomEngine()
+	inline std::minstd_rand0 &getRandomEngine()
 	{
 		return _randomEngine;
 	}

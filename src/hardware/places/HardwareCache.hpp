@@ -11,68 +11,77 @@
 #include <cassert>
 #include <vector>
 
-#include "dependencies/DataTrackingSupport.hpp"
-
 class CPU;
-class L3Cache;
 
 class HardwareCache {
+public:
+	enum HardwareCacheLevel {
+		L2_LEVEL = 2,
+		L3_LEVEL
+	};
+
 protected:
-	unsigned _id;
+	int _id;
 	size_t _cacheSize;
 	size_t _cacheLineSize;
-	size_t _cacheLevel;
+	HardwareCacheLevel _cacheLevel;
 	//! CPUs that access this cache.
 	std::vector<CPU *> _cpus;
 
 public:
-	HardwareCache (unsigned id, size_t cacheSize, size_t cacheLineSize, DataTrackingSupport::HardwareCacheLevel cacheLevel)
-		: _id(id), _cacheSize(cacheSize), _cacheLineSize(cacheLineSize), _cacheLevel(cacheLevel)
-	{}
+	HardwareCache (int id, size_t cacheSize, size_t cacheLineSize, HardwareCacheLevel cacheLevel) :
+		_id(id),
+		_cacheSize(cacheSize),
+		_cacheLineSize(cacheLineSize),
+		_cacheLevel(cacheLevel)
+	{
+	}
 
-	virtual ~HardwareCache() {}
+	virtual ~HardwareCache()
+	{
+	}
 
-	virtual inline void setId(unsigned id)
+	inline void setId(int id)
 	{
 		_id = id;
 	}
 
-	virtual inline unsigned getId() const
+	inline int getId() const
 	{
 		return _id;
 	}
 
-	virtual inline size_t getCacheSize() const
+	inline size_t getCacheSize() const
 	{
 		return _cacheSize;
 	}
 
-	virtual inline size_t getCacheLineSize() const
+	inline size_t getCacheLineSize() const
 	{
 		return _cacheLineSize;
 	}
 
-	virtual inline size_t getCacheLevel() const
+	inline HardwareCacheLevel getCacheLevel() const
 	{
 		return _cacheLevel;
 	}
 
-	virtual inline size_t getCPUNumber()
+	inline size_t getNumCPUs() const
 	{
 		return _cpus.size();
 	}
 
-	virtual inline void addCPU(CPU * cpu)
+	inline void addCPU(CPU * cpu)
 	{
 		_cpus.push_back(cpu);
 	}
 
-	virtual inline void clearCPUs()
+	inline void clearCPUs()
 	{
 		_cpus.clear();
 	}
 
-	virtual inline std::vector<CPU *> const &getCPUs()
+	inline std::vector<CPU *> const &getCPUs()
 	{
 		return _cpus;
 	}

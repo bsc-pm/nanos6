@@ -129,11 +129,11 @@ public:
 			assert(tasks[t] != nullptr);
 			// Set temporary info that is used when processing ready tasks
 			tasks[t]->setComputePlace(computePlace);
-			if (tasks[t]->getDataAccesses().getTotalDataSize() > DataTrackingSupport::IS_THRESHOLD) {
+			if (hint == SIBLING_TASK_HINT && !DataTrackingSupport::shouldEnableIS(tasks[t])) {
 				hint = NO_HINT;
 			}
 			tasks[t]->setSchedulingHint(hint);
-			tasks[t]->computeNUMAAffinity(computePlace->getRandomEngine());
+			tasks[t]->computeNUMAAffinity(computePlace);
 		}
 
 		size_t count = 0;

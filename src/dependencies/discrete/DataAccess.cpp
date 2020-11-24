@@ -493,10 +493,6 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 	if (type == READ_ACCESS_TYPE) {
 		DataAccessMessage toChild = inAutomata(message.flagsForNext, oldFlags, false, weak);
 		DataAccessMessage toNext = inAutomata(message.flagsForNext, oldFlags, true, weak);
-		if (matchAll(message.flagsForNext, ACCESS_UNREGISTERED)) {
-			toChild.location = true;
-			toNext.location = true;
-		}
 
 		if (toChild.to != nullptr && toChild.flagsForNext) {
 			// Only one message can contain a dispose and schedule
@@ -510,10 +506,6 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 	} else if (type == CONCURRENT_ACCESS_TYPE) {
 		DataAccessMessage toChild = concurrentAutomata(message.flagsForNext, oldFlags, false, weak);
 		DataAccessMessage toNext = concurrentAutomata(message.flagsForNext, oldFlags, true, weak);
-		if (matchAll(message.flagsForNext, ACCESS_UNREGISTERED)) {
-			toChild.location = true;
-			toNext.location = true;
-		}
 
 		if (toChild.to != nullptr && toChild.flagsForNext) {
 			// Only one message can contain a dispose and schedule
@@ -527,10 +519,6 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 	} else if (type == COMMUTATIVE_ACCESS_TYPE) {
 		DataAccessMessage toChild = commutativeAutomata(message.flagsForNext, oldFlags, false, weak);
 		DataAccessMessage toNext = commutativeAutomata(message.flagsForNext, oldFlags, true, weak);
-		if (matchAll(message.flagsForNext, ACCESS_UNREGISTERED)) {
-			toChild.location = true;
-			toNext.location = true;
-		}
 
 		if (toChild.to != nullptr && toChild.flagsForNext) {
 			// Only one message can contain a dispose and schedule
@@ -543,27 +531,18 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 		}
 	} else if (type == WRITE_ACCESS_TYPE) {
 		DataAccessMessage next;
-		if (matchAll(message.flagsForNext, ACCESS_UNREGISTERED)) {
-			next.location = true;
-		}
 		outAutomata(message.flagsForNext, oldFlags, next, weak);
 		if (next.to != nullptr || next.schedule) {
 			mailBox.push(next);
 		}
 	} else if (type == REDUCTION_ACCESS_TYPE) {
 		DataAccessMessage next;
-		if (matchAll(message.flagsForNext, ACCESS_UNREGISTERED)) {
-			next.location = true;
-		}
 		reductionAutomata(message.flagsForNext, oldFlags, next);
 		if (next.to != nullptr || next.combine) {
 			mailBox.push(next);
 		}
 	} else {
 		DataAccessMessage next;
-		if (matchAll(message.flagsForNext, ACCESS_UNREGISTERED)) {
-			next.location = true;
-		}
 		inoutAutomata(message.flagsForNext, oldFlags, next, weak);
 		if (next.to != nullptr || next.schedule) {
 			mailBox.push(next);

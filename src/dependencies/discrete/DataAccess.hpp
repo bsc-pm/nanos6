@@ -250,12 +250,12 @@ public:
 		return _symbols;
 	}
 
-	uint8_t getHomeNode() const
+	inline uint8_t getHomeNode() const
 	{
 		return _homeNode;
 	}
 
-	void setHomeNode(uint8_t id)
+	inline void setHomeNode(uint8_t id)
 	{
 		_homeNode = id;
 	}

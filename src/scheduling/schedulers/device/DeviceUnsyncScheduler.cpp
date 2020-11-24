@@ -22,7 +22,7 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	}
 
 	// 2. Check if there is work remaining in the ready queue.
-	task = _readyTasks->getReadyTask(computePlace);
+	task = regularGetReadyTask(computePlace);
 
 	// 3. Try to get work from other immediateSuccessorTasks.
 	if (task == nullptr && _enableImmediateSuccessor) {

@@ -122,6 +122,9 @@ long nanos6_cpus_get_numa(void *cpuIterator);
 //! \brief Check whether DLB is enabled
 int nanos6_is_dlb_enabled(void);
 
+//! \brief Check whether NUMA support is enabled
+int nanos6_is_numa_tracking_enabled(void);
+
 #ifdef __cplusplus
 }
 #endif

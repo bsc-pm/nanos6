@@ -8,7 +8,6 @@
 #define HOST_INFO_HPP
 
 #include "DeviceInfo.hpp"
-#include "dependencies/DataTrackingSupport.hpp"
 
 class L2Cache;
 class L3Cache;
@@ -23,10 +22,10 @@ private:
 	std::vector<MemoryPlace *> _memoryPlaces;
 
 	//!< List of L2 caches on the system
-	std::vector<L2Cache*> _L2Caches;
+	std::vector<L2Cache *> _l2Caches;
 
 	//!< List of L3 caches on the system
-	std::vector<L3Cache*> _L3Caches;
+	std::vector<L3Cache *> _l3Caches;
 
 	//! L1 Cache line size
 	size_t _cacheLineSize;
@@ -106,24 +105,27 @@ public:
 	{
 		return _numPhysicalPackages;
 	}
-	inline size_t getNumL2Cache() const
+
+	inline size_t getNumL2Caches() const
 	{
-		return _L2Caches.size();
+		return _l2Caches.size();
 	}
 
-	inline size_t getNumL3Cache() const
+	inline size_t getNumL3Caches() const
 	{
-		return _L3Caches.size();
+		return _l3Caches.size();
 	}
 
-	inline L2Cache *getL2Cache(DataTrackingSupport::location_t id) const
+	inline L2Cache *getL2Cache(int id) const
 	{
-		return _L2Caches[id];
+		assert(id < (int) _l2Caches.size());
+		return _l2Caches[id];
 	}
 
-	inline L3Cache *getL3Cache(DataTrackingSupport::location_t id) const
+	inline L3Cache *getL3Cache(int id) const
 	{
-		return _L3Caches[id];
+		assert(id < (int) _l3Caches.size());
+		return _l3Caches[id];
 	}
 
 	inline const std::vector<uint64_t> &getNUMADistances() const

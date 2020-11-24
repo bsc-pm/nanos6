@@ -5,15 +5,15 @@
 */
 
 #include "DataTrackingSupport.hpp"
-#include "hardware/HardwareInfo.hpp"
+#include "tasks/Task.hpp"
 
-uint64_t DataTrackingSupport::IS_THRESHOLD;
+ConfigVariable<bool> DataTrackingSupport::_NUMASchedulingEnabled("numa.scheduling", true);
+const double DataTrackingSupport::_rwBonusFactor = 2.0;
+const uint64_t DataTrackingSupport::_distanceThreshold = 15;
+const uint64_t DataTrackingSupport::_loadThreshold = 20;
+uint64_t DataTrackingSupport::_shouldEnableIS;
 
-size_t DataTrackingSupport::getNUMATrackingNodes()
+bool DataTrackingSupport::shouldEnableIS(Task *task)
 {
-    if (_NUMATrackingEnabled) {
-        return HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
-    } else {
-        return 1;
-    }
+	return (task->getDataAccesses().getTotalDataSize() <= _shouldEnableIS);
 }

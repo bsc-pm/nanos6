@@ -164,5 +164,17 @@ int nanos6_is_dlb_enabled(void)
 	return (*symbol)();
 }
 
+int nanos6_is_numa_tracking_enabled(void)
+{
+	typedef int nanos6_is_numa_tracking_enabled_t(void);
+
+	static nanos6_is_numa_tracking_enabled_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_is_numa_tracking_enabled_t *) _nanos6_resolve_symbol("nanos6_is_numa_tracking_enabled", "debugging", NULL);
+	}
+
+	return (*symbol)();
+}
+
 
 #pragma GCC visibility pop

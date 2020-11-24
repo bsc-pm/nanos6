@@ -45,7 +45,6 @@ struct TaskDataAccesses {
 	std::atomic<int> _deletableCount;
 	access_map_t *_accessMap;
 	size_t _totalDataSize;
-	std::uniform_int_distribution<uint8_t> _unif;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
@@ -91,8 +90,6 @@ struct TaskDataAccesses {
 
 			_accessMap->reserve((_maxDeps != (size_t) -1) ? _maxDeps : ACCESS_LINEAR_CUTOFF);
 		}
-
-		_unif = std::uniform_int_distribution<uint8_t>(0,1);
 	}
 
 	~TaskDataAccesses()
@@ -154,11 +151,6 @@ struct TaskDataAccesses {
 	inline size_t getRealAccessNumber() const
 	{
 		return _currentIndex;
-	}
-
-	inline size_t getMaxDeps() const
-	{
-		return _maxDeps;
 	}
 
 	inline bool hasDataAccesses() const
@@ -228,7 +220,7 @@ struct TaskDataAccesses {
 		return true;
 	}
 
-	void computeNUMAAffinity(uint8_t &chosenNUMAid, std::default_random_engine &randomEngine, Task *task);
+	uint64_t computeNUMAAffinity(ComputePlace *computePlace);
 };
 
 #endif // TASK_DATA_ACCESSES_HPP

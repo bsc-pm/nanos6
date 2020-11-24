@@ -14,13 +14,17 @@ private:
 	bool _inclusive;
 
 public:
-	L3Cache (unsigned id, size_t cacheSize, size_t cacheLineSize, bool inclusive)
-		: HardwareCache(id, cacheSize, cacheLineSize, DataTrackingSupport::L3_LEVEL), _inclusive(inclusive)
-	{}
+	L3Cache (int id, size_t cacheSize, size_t cacheLineSize, bool inclusive) :
+		HardwareCache(id, cacheSize, cacheLineSize, HardwareCache::L3_LEVEL),
+		_inclusive(inclusive)
+	{
+	}
 
-	virtual ~L3Cache() {}
+	~L3Cache()
+	{
+	}
 
-	virtual inline bool isInclusive()
+	inline bool isInclusive() const
 	{
 		return _inclusive;
 	}

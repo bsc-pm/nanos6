@@ -40,17 +40,17 @@ public:
 
 	typedef enum {
 		uninitialized_status=0,
-		enabled_status,           // The CPU is enabled
-		enabling_status,          // The CPU is being enabled
-		disabled_status,          // The CPU is disabled
-		disabling_status,         // The CPU is being disabled
-		lent_status,              // The CPU is lent to another runtime
-		lending_status,           // The CPU is about to be lent to another runtime
-		acquired_status,          // The (external) CPU is acquired but not enabled yet
+		enabled_status,		   // The CPU is enabled
+		enabling_status,		  // The CPU is being enabled
+		disabled_status,		  // The CPU is disabled
+		disabling_status,		 // The CPU is being disabled
+		lent_status,			  // The CPU is lent to another runtime
+		lending_status,		   // The CPU is about to be lent to another runtime
+		acquired_status,		  // The (external) CPU is acquired but not enabled yet
 		acquired_enabled_status,  // The (external) CPU is acquired and enabled
-		returned_status,          // The (external) CPU is returned to its original owner
-		shutting_down_status,     // The CPU is being shutdown
-		shutdown_status           // The CPU is shutdown and shouldn't be used
+		returned_status,		  // The (external) CPU is returned to its original owner
+		shutting_down_status,	 // The CPU is being shutdown
+		shutdown_status		   // The CPU is shutdown and shouldn't be used
 	} activation_status_t;
 
 #ifdef __KNC__
@@ -87,7 +87,7 @@ public:
 	//! \param[in] systemCPUId The system id of the CPU
 	//! \param[in] virtualCPUId The virtual id or index of the CPU
 	//! \param[in] NUMANodeId The NUMA node id of the CPU
-	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId, L2Cache *l2cache, L3Cache *l3cache);
+	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId, L2Cache *l2Cache, L3Cache *l3Cache);
 
 	//! \brief Constructor for virtual CPUs
 	//!

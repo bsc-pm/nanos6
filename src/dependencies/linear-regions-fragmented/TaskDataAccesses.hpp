@@ -99,6 +99,16 @@ struct TaskDataAccesses {
 	{
 		return 0;
 	}
+
+	inline size_t getTotalDataSize() const
+	{
+		return 0;
+	}
+
+	uint64_t computeNUMAAffinity(ComputePlace *)
+	{
+		return 0;
+	}
 };
 
 

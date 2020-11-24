@@ -11,7 +11,7 @@ shift
 export NANOS6_CONFIG="${DIR}/scripts/nanos6.toml"
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
-if [[ "${*}" == *"discrete"* ]]; then
+if [[ "${*}" == *"discrete"* ]] || [[ "${*}" == *"numa"* ]]; then
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.dependencies=discrete"
 else
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.dependencies=regions"
@@ -31,6 +31,15 @@ if [[ "${*}" == *"dlb-"* ]]; then
 	fi
 else
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=false"
+fi
+
+# Setup NUMA config for numa-specific tests
+if [[ "${*}" == *"numa-on"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},numa.tracking=on"
+elif [[ "${*}" == *"numa-off"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},numa.tracking=off"
+else
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},numa.tracking=auto"
 fi
 
 if test "${*}" = "${*/.debug/}" ; then

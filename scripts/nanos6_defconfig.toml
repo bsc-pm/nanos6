@@ -279,3 +279,13 @@ __!require_CLUSTER
 	# library_path = "path/to/nanos6/lib"
 	# Prefix for the report printing all the runtime variables. Default is none
 	# report_prefix = "#"
+
+[numa]
+	# Enable NUMA tracking of data. Default is "auto"
+	# NUMA tracking consists of annotating the NUMA location of data
+	# to be later scheduled based on this information
+	# With "auto", this feature is enabled in the first allocation done using the nanos6 NUMA API
+	# Possible values: "auto", "on", "off"
+	tracking = "auto"
+	# Indicate whether we should print the number of NUMA nodes of each of the NUMA wildcards
+	report = false

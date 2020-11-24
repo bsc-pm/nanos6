@@ -161,6 +161,10 @@ struct CPUDependencyData {
 			&& _acquiredCommutativeScoreboardEntries.empty()
 			&& _completedTaskwaits.empty();
 	}
+
+	inline void initBytesInNUMA(int)
+	{
+	}
 };
 
 

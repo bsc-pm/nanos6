@@ -5,52 +5,59 @@
 */
 
 #include "TaskDataAccesses.hpp"
+#include "memory/numa/NUMAManager.hpp"
 #include "scheduling/SchedulerInterface.hpp"
 
-void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, std::default_random_engine &randomEngine, Task *)
+uint64_t TaskDataAccesses::computeNUMAAffinity(ComputePlace *computePlace)
 {
-	if (_totalDataSize == 0 || !DataTrackingSupport::isNUMATrackingEnabled() || !DataTrackingSupport::isNUMASchedulingEnabled())
-		return;
+	if (_totalDataSize == 0 ||
+			!NUMAManager::isTrackingEnabled() ||
+			!DataTrackingSupport::isNUMASchedulingEnabled())
+	{
+		return (uint64_t) -1;
+	}
 
-	int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
-	size_t *bytesInNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
+	size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
+	size_t *bytesInNUMA = computePlace->getDependencyData()._bytesInNUMA;
+	assert(bytesInNUMA != nullptr);
+
+	// Init bytesInNUMA to 0.
 	std::memset(bytesInNUMA, 0, numNUMANodes * sizeof(size_t));
 
-	forAll([&](void *, DataAccess *dataAccess) -> bool {
+	std::minstd_rand0 &randomEngine = computePlace->getRandomEngine();
+	size_t max = 0;
+	uint64_t chosen = (uint64_t) -1;
+
+	forAll([&](void *, const DataAccess *dataAccess) -> bool {
 		//! If the dataAccess is weak it is not really read/written, so no action required.
 		if (!dataAccess->isWeak()) {
-			uint8_t NUMAid = dataAccess->getHomeNode();
-			if (NUMAid != (uint8_t) -1) {
-				assert(NUMAid < numNUMANodes);
+			uint8_t numaId = dataAccess->getHomeNode();
+			if (numaId != (uint8_t) -1) {
+				assert(numaId < numNUMANodes);
 				// Apply a bonus factor to RW accesses
 				DataAccessType type = dataAccess->getType();
 				bool rwAccess = (type != READ_ACCESS_TYPE) && (type != WRITE_ACCESS_TYPE);
 				if (rwAccess) {
-					bytesInNUMA[NUMAid] += dataAccess->getAccessRegion().getSize() * DataTrackingSupport::RW_BONUS_FACTOR;
+					bytesInNUMA[numaId] += dataAccess->getLength() * DataTrackingSupport::getRWBonusFactor();
 				} else {
-					bytesInNUMA[NUMAid] += dataAccess->getAccessRegion().getSize();
+					bytesInNUMA[numaId] += dataAccess->getLength();
+				}
+
+				if (bytesInNUMA[numaId] > max) {
+					max = bytesInNUMA[numaId];
+					chosen = numaId;
+				} else if (bytesInNUMA[numaId] == max && chosen != numaId) {
+					// Random returns either 0 or 1. If 0, we keep the old max, if 1, we update it.
+					std::uniform_int_distribution<unsigned int> unif(0, 1);
+					unsigned int update = unif(randomEngine);
+					if (update) {
+						chosen = numaId;
+					}
 				}
 			}
-			return true;
 		}
 		return true;
 	});
 
-	size_t max = 0;
-	size_t sanityCheck = 0;
-	uint8_t chosen = (uint8_t) -1;
-	for (int i = 0; i < numNUMANodes; i++) {
-		sanityCheck += bytesInNUMA[i];
-		if (bytesInNUMA[i] > max) {
-			max = bytesInNUMA[i];
-			chosen = i;
-		} else if (bytesInNUMA[i] == max && chosen != (uint8_t) i) {
-			// Random returns either 0 or 1. If 0, we keep the old max, if 1, we update it.
-			uint8_t update = _unif(randomEngine);
-			if (update) {
-				chosen = i;
-			}
-		}
-	}
-	chosenNUMAid = chosen;
+	return chosen;
 }

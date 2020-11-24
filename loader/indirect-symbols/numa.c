@@ -9,18 +9,18 @@
 
 #pragma GCC visibility push(default)
 
-void *nanos6_numa_alloc_interleaved_subset(
+void *nanos6_numa_alloc_block_interleave(
 	uint64_t size,
-	nanos6_bitmask_t *bitmask,
+	const nanos6_bitmask_t *bitmask,
 	uint64_t block_size
 ) {
-	typedef void *nanos6_numa_alloc_interleaved_subset(
-			uint64_t size, nanos6_bitmask_t *bitmask, uint64_t block_size
+	typedef void *nanos6_numa_alloc_block_interleave_t(
+		uint64_t size, const nanos6_bitmask_t *bitmask, uint64_t block_size
 	);
 
-	static nanos6_numa_alloc_interleaved_subset *symbol = NULL;
+	static nanos6_numa_alloc_block_interleave_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_numa_alloc_interleaved_subset *) _nanos6_resolve_symbol("nanos6_numa_alloc_interleaved_subset", "numa", NULL);
+		symbol = (nanos6_numa_alloc_block_interleave_t *) _nanos6_resolve_symbol("nanos6_numa_alloc_block_interleave", "numa", NULL);
 	}
 
 	return (*symbol)(size, bitmask, block_size);
@@ -28,49 +28,31 @@ void *nanos6_numa_alloc_interleaved_subset(
 
 void *nanos6_numa_alloc_sentinels(
 	uint64_t size,
-	nanos6_bitmask_t *bitmask,
+	const nanos6_bitmask_t *bitmask,
 	uint64_t block_size
 ) {
-	typedef void *nanos6_numa_alloc_sentinels(
-			uint64_t size, nanos6_bitmask_t *bitmask, uint64_t block_size
+	typedef void *nanos6_numa_alloc_sentinels_t(
+		uint64_t size, const nanos6_bitmask_t *bitmask, uint64_t block_size
 	);
 
-	static nanos6_numa_alloc_sentinels *symbol = NULL;
+	static nanos6_numa_alloc_sentinels_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_numa_alloc_sentinels *) _nanos6_resolve_symbol("nanos6_numa_alloc_sentinels", "numa", NULL);
+		symbol = (nanos6_numa_alloc_sentinels_t *) _nanos6_resolve_symbol("nanos6_numa_alloc_sentinels", "numa", NULL);
 	}
 
 	return (*symbol)(size, bitmask, block_size);
 }
 
-void nanos6_numa_free_debug(
-	void *ptr,
-	uint64_t size,
-	nanos6_bitmask_t *bitmask,
-	uint64_t block_size
-) {
-	typedef void nanos6_numa_free_debug(
-			void *ptr, uint64_t size, nanos6_bitmask_t *bitmask, uint64_t block_size
-	);
-
-	static nanos6_numa_free_debug *symbol = NULL;
-	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_numa_free_debug *) _nanos6_resolve_symbol("nanos6_numa_free_debug", "numa", NULL);
-	}
-
-	(*symbol)(ptr, size, bitmask, block_size);
-}
-
 void nanos6_numa_free(
 	void *ptr
 ) {
-	typedef void nanos6_numa_free(
-			void *ptr
+	typedef void nanos6_numa_free_t(
+		void *ptr
 	);
 
-	static nanos6_numa_free *symbol = NULL;
+	static nanos6_numa_free_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_numa_free *) _nanos6_resolve_symbol("nanos6_numa_free", "numa", NULL);
+		symbol = (nanos6_numa_free_t *) _nanos6_resolve_symbol("nanos6_numa_free", "numa", NULL);
 	}
 
 	(*symbol)(ptr);
@@ -79,11 +61,11 @@ void nanos6_numa_free(
 void nanos6_bitmask_clearall(
 	 nanos6_bitmask_t *bitmask
 ) {
-	typedef void nanos6_bitmask_clearall(
-			nanos6_bitmask_t *bitmask
+	typedef void nanos6_bitmask_clearall_t(
+		nanos6_bitmask_t *bitmask
 	);
 
-	static nanos6_bitmask_clearall *symbol = NULL;
+	static nanos6_bitmask_clearall_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
 		symbol = (nanos6_bitmask_clearall *) _nanos6_resolve_symbol("nanos6_bitmask_clearall", "numa", NULL);
 	}
@@ -95,13 +77,13 @@ void nanos6_bitmask_clearbit(
 	 nanos6_bitmask_t *bitmask,
 	 uint64_t n
 ) {
-	typedef void nanos6_bitmask_clearbit(
-			nanos6_bitmask_t *bitmask, uint64_t n
+	typedef void nanos6_bitmask_clearbit_t(
+		nanos6_bitmask_t *bitmask, uint64_t n
 	);
 
-	static nanos6_bitmask_clearbit *symbol = NULL;
+	static nanos6_bitmask_clearbit_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_bitmask_clearbit *) _nanos6_resolve_symbol("nanos6_bitmask_clearbit", "numa", NULL);
+		symbol = (nanos6_bitmask_clearbit_t *) _nanos6_resolve_symbol("nanos6_bitmask_clearbit", "numa", NULL);
 	}
 
 	(*symbol)(bitmask, n);
@@ -110,13 +92,13 @@ void nanos6_bitmask_clearbit(
 void nanos6_bitmask_setall(
 	 nanos6_bitmask_t *bitmask
 ) {
-	typedef void nanos6_bitmask_setall(
-			nanos6_bitmask_t *bitmask
+	typedef void nanos6_bitmask_setall_t(
+		nanos6_bitmask_t *bitmask
 	);
 
-	static nanos6_bitmask_setall *symbol = NULL;
+	static nanos6_bitmask_setall_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_bitmask_setall *) _nanos6_resolve_symbol("nanos6_bitmask_setall", "numa", NULL);
+		symbol = (nanos6_bitmask_setall_t *) _nanos6_resolve_symbol("nanos6_bitmask_setall", "numa", NULL);
 	}
 
 	(*symbol)(bitmask);
@@ -126,13 +108,13 @@ void nanos6_bitmask_setbit(
 	 nanos6_bitmask_t *bitmask,
 	 uint64_t n
 ) {
-	typedef void nanos6_bitmask_setbit(
-			nanos6_bitmask_t *bitmask, uint64_t n
+	typedef void nanos6_bitmask_setbit_t(
+		nanos6_bitmask_t *bitmask, uint64_t n
 	);
 
-	static nanos6_bitmask_setbit *symbol = NULL;
+	static nanos6_bitmask_setbit_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_bitmask_setbit *) _nanos6_resolve_symbol("nanos6_bitmask_setbit", "numa", NULL);
+		symbol = (nanos6_bitmask_setbit_t *) _nanos6_resolve_symbol("nanos6_bitmask_setbit", "numa", NULL);
 	}
 
 	(*symbol)(bitmask, n);
@@ -140,46 +122,46 @@ void nanos6_bitmask_setbit(
 
 void nanos6_bitmask_set_wildcard(
 	 nanos6_bitmask_t *bitmask,
-	 nanos6_bitmask_t wildcard
+	 nanos6_bitmask_wildcard_t wildcard
 ) {
-	typedef void nanos6_bitmask_set_wildcard(
-			nanos6_bitmask_t *bitmask, nanos6_bitmask_t wildcard
+	typedef void nanos6_bitmask_set_wildcard_t(
+		nanos6_bitmask_t *bitmask, nanos6_bitmask_wildcard_t wildcard
 	);
 
-	static nanos6_bitmask_set_wildcard *symbol = NULL;
+	static nanos6_bitmask_set_wildcard_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_bitmask_set_wildcard *) _nanos6_resolve_symbol("nanos6_bitmask_set_wildcard", "numa", NULL);
+		symbol = (nanos6_bitmask_set_wildcard_t *) _nanos6_resolve_symbol("nanos6_bitmask_set_wildcard", "numa", NULL);
 	}
 
 	(*symbol)(bitmask, wildcard);
 }
 
-uint8_t nanos6_bitmask_isbitset(
-	 nanos6_bitmask_t *bitmask,
+uint64_t nanos6_bitmask_isbitset(
+	 const nanos6_bitmask_t *bitmask,
 	 uint64_t n
 ) {
-	typedef void nanos6_bitmask_isbitset(
-			nanos6_bitmask_t *bitmask, uint64_t n
+	typedef void nanos6_bitmask_isbitset_t(
+		const nanos6_bitmask_t *bitmask, uint64_t n
 	);
 
-	static nanos6_bitmask_isbitset *symbol = NULL;
+	static nanos6_bitmask_isbitset_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_bitmask_isbitset *) _nanos6_resolve_symbol("nanos6_bitmask_isbitset", "numa", NULL);
+		symbol = (nanos6_bitmask_isbitset_t *) _nanos6_resolve_symbol("nanos6_bitmask_isbitset", "numa", NULL);
 	}
 
 	return (*symbol)(bitmask, n);
 }
 
-uint8_t nanos6_count_enabled_bits(
-	 nanos6_bitmask_t *bitmask
+uint64_t nanos6_count_setbits(
+	 const nanos6_bitmask_t *bitmask
 ) {
-	typedef void nanos6_count_enabled_bits(
-			nanos6_bitmask_t *bitmask
+	typedef void nanos6_count_setbits_t(
+		const nanos6_bitmask_t *bitmask
 	);
 
-	static nanos6_count_enabled_bits *symbol = NULL;
+	static nanos6_count_setbits_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_count_enabled_bits *) _nanos6_resolve_symbol("nanos6_count_enabled_bits", "numa", NULL);
+		symbol = (nanos6_count_setbits_t *) _nanos6_resolve_symbol("nanos6_count_setbits", "numa", NULL);
 	}
 
 	return (*symbol)(bitmask);

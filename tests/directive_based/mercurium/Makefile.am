@@ -32,6 +32,7 @@ reductions_tests =
 runtime_handled_reductions_tests =
 discrete_tests =
 dlb_tests =
+numa_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
@@ -121,6 +122,15 @@ discrete_tests += \
 	discrete-taskloop-for-nonpod.mercurium.test \
 	discrete-taskloop-for-nqueens.mercurium.test \
 	discrete-taskloop-for-reduction.mercurium.test
+
+numa_tests += \
+	numa-allocations.mercurium.test \
+	numa-auto.mercurium.test \
+	numa-bitmask-manip.mercurium.test \
+	numa-irregular-allocations.mercurium.test \
+	numa-off.mercurium.test \
+	numa-on.mercurium.test \
+	numa-wildcards.mercurium.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -217,6 +227,15 @@ discrete_tests += \
 	discrete-taskloop-for-nqueens.mercurium.debug.test \
 	discrete-taskloop-for-reduction.mercurium.debug.test
 
+numa_tests += \
+	numa-allocations.mercurium.debug.test \
+	numa-auto.mercurium.debug.test \
+	numa-bitmask-manip.mercurium.debug.test \
+	numa-irregular-allocations.mercurium.debug.test \
+	numa-off.mercurium.debug.test \
+	numa-on.mercurium.debug.test \
+	numa-wildcards.mercurium.debug.test
+
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
 # moment, as the current implementation is based on task privatization and the
@@ -256,6 +275,8 @@ endif
 if DISCRETE_DEPENDENCIES
 check_PROGRAMS += $(discrete_tests)
 TESTS += $(discrete_tests)
+check_PROGRAMS += $(numa_tests)
+TESTS += $(numa_tests)
 endif
 
 if HAVE_DLB
@@ -923,6 +944,69 @@ dlb_cpu_sharing_passive_process_mercurium_test_LDFLAGS = $(test_common_ldflags)
 dlb_cpu_sharing_passive_process_mercurium_debug_test_SOURCES = ../dlb/dlb-cpu-sharing-passive-process.cpp
 dlb_cpu_sharing_passive_process_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_sharing_passive_process_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_allocations_mercurium_test_SOURCES = ../numa/numa-allocations.cpp
+numa_allocations_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_allocations_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_allocations_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_allocations_mercurium_debug_test_SOURCES = ../numa/numa-allocations.cpp
+numa_allocations_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_allocations_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_auto_mercurium_test_SOURCES = ../numa/numa-auto.cpp
+numa_auto_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_auto_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_auto_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_auto_mercurium_debug_test_SOURCES = ../numa/numa-auto.cpp
+numa_auto_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_auto_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_bitmask_manip_mercurium_test_SOURCES = ../numa/numa-bitmask-manip.cpp
+numa_bitmask_manip_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_bitmask_manip_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_bitmask_manip_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_bitmask_manip_mercurium_debug_test_SOURCES = ../numa/numa-bitmask-manip.cpp
+numa_bitmask_manip_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_bitmask_manip_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_irregular_allocations_mercurium_test_SOURCES = ../numa/numa-irregular-allocations.cpp
+numa_irregular_allocations_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_irregular_allocations_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_irregular_allocations_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_irregular_allocations_mercurium_debug_test_SOURCES = ../numa/numa-irregular-allocations.cpp
+numa_irregular_allocations_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_irregular_allocations_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_off_mercurium_test_SOURCES = ../numa/numa-off.cpp
+numa_off_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_off_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_off_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_off_mercurium_debug_test_SOURCES = ../numa/numa-off.cpp
+numa_off_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_off_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_on_mercurium_test_SOURCES = ../numa/numa-on.cpp
+numa_on_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_on_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_on_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_on_mercurium_debug_test_SOURCES = ../numa/numa-on.cpp
+numa_on_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_on_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_wildcards_mercurium_test_SOURCES = ../numa/numa-wildcards.cpp
+numa_wildcards_mercurium_test_CPPFLAGS = -DNDEBUG
+numa_wildcards_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+numa_wildcards_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+numa_wildcards_mercurium_debug_test_SOURCES = ../numa/numa-wildcards.cpp
+numa_wildcards_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_wildcards_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(top_builddir) $(SHELL) $(top_srcdir)/tests/tap-driver.sh

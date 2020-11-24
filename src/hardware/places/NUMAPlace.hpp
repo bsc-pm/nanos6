@@ -11,17 +11,21 @@
 
 class NUMAPlace: public MemoryPlace {
 	typedef std::map<int, ComputePlace *> compute_places_t;
-	compute_places_t _computePlaces; //ComputePlaces able to interact with this MemoryPlace
-	size_t _localCores; // cores that belong to this NUMA node
+	//! ComputePlaces able to interact with this MemoryPlace
+	compute_places_t _computePlaces;
+	//! Cores that belong to this NUMA node
+	size_t _numLocalCores;
 
 public:
-	NUMAPlace(int index, AddressSpace *addressSpace = nullptr)
-		: MemoryPlace(index, nanos6_device_t::nanos6_host_device, addressSpace),
-		  _localCores(0)
-	{}
+	NUMAPlace(int index, AddressSpace *addressSpace = nullptr) :
+		MemoryPlace(index, nanos6_device_t::nanos6_host_device, addressSpace),
+		_numLocalCores(0)
+	{
+	}
 
-	virtual ~NUMAPlace()
-	{}
+	~NUMAPlace()
+	{
+	}
 
 	inline size_t getComputePlaceCount() const
 	{
@@ -33,14 +37,14 @@ public:
 		return _computePlaces[index];
 	}
 
-	inline size_t getLocalCoreCount()
+	inline size_t getNumLocalCores() const
 	{
-		return _localCores;
+		return _numLocalCores;
 	}
 
-	inline void incrementLocalCoreCount()
+	inline void increaseNumLocalCores()
 	{
-		_localCores++;
+		_numLocalCores++;
 	}
 
 	void addComputePlace(ComputePlace *computePlace);

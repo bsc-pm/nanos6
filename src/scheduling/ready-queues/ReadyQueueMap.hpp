@@ -7,7 +7,7 @@
 #ifndef READY_QUEUE_MAP_HPP
 #define READY_QUEUE_MAP_HPP
 
-#include "dependencies/DataTrackingSupport.hpp"
+#include "memory/numa/NUMAManager.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
@@ -17,58 +17,32 @@ class ReadyQueueMap : public ReadyQueue {
 	typedef Container::deque<Task *> ready_queue_t;
 	typedef Container::map<Task::priority_t, ready_queue_t, std::greater<Task::priority_t>> ready_map_t;
 
-	ready_map_t *_readyMaps;
-	size_t *_numCurrentReadyTasksPerNUMANode;
+	ready_map_t _readyMap;
+
 	size_t _numReadyTasks;
-	uint8_t _numMaps;
-	// When tasks does not have a NUMA hint, we assign it in a round robin basis.
-	uint8_t _roundRobinQueues;
 
 public:
 	ReadyQueueMap(SchedulingPolicy policy)
 		: ReadyQueue(policy),
-		_numReadyTasks(0),
-		_roundRobinQueues(0)
+		_numReadyTasks(0)
 	{
-		_numMaps = DataTrackingSupport::getNUMATrackingNodes();
-		_readyMaps = (ready_map_t *) MemoryAllocator::alloc(_numMaps * sizeof(ready_map_t));
-		_numCurrentReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numMaps * sizeof(size_t));
-
-		for (uint8_t i = 0; i < _numMaps; i++) {
-			new (&_readyMaps[i]) ready_map_t();
-			_numCurrentReadyTasksPerNUMANode[i] = 0;
-		}
 	}
 
 	~ReadyQueueMap()
 	{
-		for (uint8_t i = 0; i < _numMaps; i++) {
-			for (ready_map_t::iterator it = _readyMaps[i].begin(); it != _readyMaps[i].end(); it++) {
-				assert(it->second.empty());
-			}
-			_readyMaps[i].clear();
-			_readyMaps[i].~ready_map_t();
+		for (ready_map_t::iterator it = _readyMap.begin(); it != _readyMap.end(); it++) {
+			assert(it->second.empty());
 		}
-		MemoryAllocator::free(_readyMaps, _numMaps * sizeof(ready_map_t));
-		MemoryAllocator::free(_numCurrentReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
+		_readyMap.clear();
 	}
 
 	void addReadyTask(Task *task, bool unblocked)
 	{
 		Task::priority_t priority = task->getPriority();
 
-		uint8_t NUMAid = task->getNUMAhint();
-		// In case there is no hint, use round robin to balance the load
-		if (NUMAid == (uint8_t) -1) {
-			NUMAid = _roundRobinQueues;
-			_roundRobinQueues = (_roundRobinQueues + 1) % _numMaps;
-		}
-
-		assert(NUMAid < _numMaps);
-
 		// Get ready queue for the given priority, if exists. If not, create it, and return it.
-		ready_map_t::iterator it = (_readyMaps[NUMAid].emplace(priority, ready_queue_t())).first;
-		assert(it != _readyMaps[NUMAid].end());
+		ready_map_t::iterator it = (_readyMap.emplace(priority, ready_queue_t())).first;
+		assert(it != _readyMap.end());
 
 		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
 			it->second.push_front(task);
@@ -77,83 +51,27 @@ public:
 		}
 
 		++_numReadyTasks;
-		++_numCurrentReadyTasksPerNUMANode[NUMAid];
 	}
 
-	Task *getReadyTask(ComputePlace *computePlace)
+	Task *getReadyTask(ComputePlace *)
 	{
 		if (_numReadyTasks == 0) {
 			return nullptr;
 		}
 
-		uint8_t NUMAid = 0;
-		if (_numMaps > 1) {
-			NUMAid =  ((CPU *)computePlace)->getNumaNodeId();
-		}
+		ready_map_t::iterator it = _readyMap.begin();
+		while (it != _readyMap.end()) {
+			if (it->second.empty()) {
+				it++;
+			} else {
+				Task *result = it->second.front();
+				assert(result != nullptr);
 
-		// 1. Try to get from my NUMA queue.
-		if (!_readyMaps[NUMAid].empty()) {
-			ready_map_t::iterator it = _readyMaps[NUMAid].begin();
-			while (it != _readyMaps[NUMAid].end()) {
-				if (it->second.empty()) {
-					it++;
-				} else {
-					Task *result = it->second.front();
-					assert(result != nullptr);
+				it->second.pop_front();
 
-					it->second.pop_front();
+				--_numReadyTasks;
 
-					--_numReadyTasks;
-					--_numCurrentReadyTasksPerNUMANode[NUMAid];
-
-					return result;
-				}
-			}
-		}
-
-		// 2. Try to steal from other NUMA queues.
-		if (_numMaps > 1) {
-			// Stealing must consider distance and load balance
-			const std::vector<uint64_t> &distances = HardwareInfo::getNUMADistances();
-			// Ideally, we want to steal from closer sockets with many tasks
-			// We will use this score function: score = 100/distance + ready_tasks/5
-			// The highest score, the better
-			uint64_t score = 0;
-			int16_t chosen = -1;
-			for (uint8_t i = 0; i < _numMaps; i++) {
-				if (i != NUMAid) {
-					if (_numCurrentReadyTasksPerNUMANode[i] > 0) {
-						uint64_t distance = distances[i*_numMaps+NUMAid];
-						uint64_t loadFactor = _numCurrentReadyTasksPerNUMANode[i];
-						if (distance < 15 && loadFactor > 20) {
-							chosen = i;
-							break;
-						}
-						uint64_t tmpscore = 100/distance + loadFactor/5;
-						if (tmpscore >= score) {
-							score = tmpscore;
-							chosen = i;
-						}
-					}
-				}
-			}
-
-			assert(chosen != -1 && _numCurrentReadyTasksPerNUMANode[chosen] > 0);
-			ready_map_t::iterator it = _readyMaps[chosen].begin();
-			while (it != _readyMaps[chosen].end()) {
-				if (it->second.empty()) {
-					it++;
-				} else {
-					Task *result = it->second.front();
-					assert(result != nullptr);
-
-					it->second.pop_front();
-
-					--_numReadyTasks;
-					--_numCurrentReadyTasksPerNUMANode[chosen];
-
-					return result;
-				}
+				return result;
 			}
 		}
 

@@ -61,8 +61,8 @@ nanos6include_HEADERS = \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
 	api/nanos6/monitoring.h \
-	api/nanos6/openacc_device.h \
 	api/nanos6/numa.h \
+	api/nanos6/openacc_device.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \
@@ -395,7 +395,7 @@ common_sources = \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/HomeNodeMap.cpp \
-	src/memory/manager-numa/ManagerNUMA.cpp \
+	src/memory/numa/NUMAManager.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
 	src/monitoring/TasktypeStatistics.cpp \
@@ -421,6 +421,7 @@ common_sources = \
 	src/system/LeaderThread.cpp \
 	src/system/LintAPI.cpp \
 	src/system/MonitoringAPI.cpp \
+	src/system/NumaAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/TaskInfoAPI.cpp \
@@ -429,7 +430,6 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Loop.cpp \
-	src/system/ompss/Numa.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskWait.cpp \
@@ -1258,7 +1258,7 @@ noinst_HEADERS = \
 	src/memory/directory/HomeMapEntry.hpp \
 	src/memory/directory/HomeNodeMap.hpp \
 	src/memory/directory/cluster/DistributionPolicy.hpp \
-	src/memory/manager-numa/ManagerNUMA.hpp \
+	src/memory/numa/NUMAManager.hpp \
 	src/memory/vmm/VirtualMemoryAllocation.hpp \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
@@ -1288,6 +1288,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
+	src/support/BitManipulation.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/Containers.hpp \
 	src/support/GenericFactory.hpp \

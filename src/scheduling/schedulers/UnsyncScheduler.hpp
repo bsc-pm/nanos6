@@ -15,6 +15,9 @@
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
 
+class ReadyQueueDeque;
+class ReadyQueueMap;
+
 class UnsyncScheduler {
 protected:
 	typedef Container::vector<Task *> immediate_successor_tasks_t;
@@ -22,8 +25,11 @@ protected:
 	immediate_successor_tasks_t _immediateSuccessorTasks;
 	immediate_successor_tasks_t _immediateSuccessorTaskfors;
 
-	ReadyQueue *_readyTasks;
+	ReadyQueue **_queues;
+	size_t _numQueues;
 	DeadlineQueue *_deadlineTasks;
+	// When tasks does not have a NUMA hint, we assign it in a round robin basis.
+	uint64_t _roundRobinQueues;
 
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
@@ -57,7 +63,7 @@ public:
 					Task *currentIS = _immediateSuccessorTasks[immediateSuccessorId];
 					if (currentIS != nullptr) {
 						assert(!currentIS->isTaskfor());
-						_readyTasks->addReadyTask(currentIS, false);
+						regularAddReadyTask(currentIS, hint);
 					}
 					_immediateSuccessorTasks[immediateSuccessorId] = task;
 				} else {
@@ -70,7 +76,7 @@ public:
 					} else if (currentIS2 == nullptr) {
 						_immediateSuccessorTaskfors[immediateSuccessorId+1] = task;
 					} else {
-						_readyTasks->addReadyTask(currentIS1, false);
+						regularAddReadyTask(currentIS1, hint);
 						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
 					}
 				}
@@ -78,7 +84,7 @@ public:
 			}
 		}
 
-		_readyTasks->addReadyTask(task, hint == UNBLOCKED_TASK_HINT);
+		regularAddReadyTask(task, hint);
 	}
 
 	//! \brief Get a ready task for execution
@@ -87,6 +93,10 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+protected:
+	void regularAddReadyTask(Task *task, ReadyTaskHint hint);
+
+	Task *regularGetReadyTask(ComputePlace *computePlace);
 };
 
 

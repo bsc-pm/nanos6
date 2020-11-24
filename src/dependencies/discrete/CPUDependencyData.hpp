@@ -77,6 +77,8 @@ struct CPUDependencyData {
 	commutative_satisfied_list_t _satisfiedCommutativeOriginators;
 	mailbox_t _mailBox;
 
+	size_t *_bytesInNUMA;
+
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;
 #endif
@@ -86,7 +88,8 @@ struct CPUDependencyData {
 		_satisfiedOriginatorCount(0),
 		_deletableOriginators(),
 		_satisfiedCommutativeOriginators(),
-		_mailBox()
+		_mailBox(),
+		_bytesInNUMA(nullptr)
 #ifndef NDEBUG
 		, _inUse()
 #endif
@@ -96,6 +99,9 @@ struct CPUDependencyData {
 	~CPUDependencyData()
 	{
 		assert(empty());
+		if (_bytesInNUMA != nullptr) {
+			std::free(_bytesInNUMA);
+		}
 	}
 
 	inline bool empty() const
@@ -132,6 +138,14 @@ struct CPUDependencyData {
 			list.clear();
 
 		_satisfiedOriginatorCount = 0;
+	}
+
+	inline void initBytesInNUMA(int numNUMANodes)
+	{
+		if (_bytesInNUMA == nullptr) {
+			_bytesInNUMA = (size_t *) std::malloc(sizeof(size_t) * numNUMANodes);
+		}
+		assert(_bytesInNUMA != nullptr);
 	}
 };
 

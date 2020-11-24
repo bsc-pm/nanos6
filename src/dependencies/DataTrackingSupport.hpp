@@ -7,46 +7,47 @@
 #ifndef DATA_TRACKING_SUPPORT_HPP
 #define DATA_TRACKING_SUPPORT_HPP
 
-#include "lowlevel/EnvironmentVariable.hpp"
-#include "lowlevel/SpinLock.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 class Task;
 
-namespace DataTrackingSupport {
-	static EnvironmentVariable<bool> _NUMATrackingEnabled("NANOS6_NUMA_TRACKING", 1);
-	static EnvironmentVariable<bool> _NUMASchedulingEnabled("NANOS6_NUMA_SCHEDULING", 1);
-	static EnvironmentVariable<bool> _NUMAStealingEnabled("NANOS6_NUMA_STEALING", 1);
+class DataTrackingSupport {
+	//! This is a developer option. Thus, it is not in the config file.
+	//! This may be used for debugging purposes or performance evaluation.
+	static ConfigVariable<bool> _NUMASchedulingEnabled;
 
-	static const double RW_BONUS_FACTOR = 2.0;
-	static const uint64_t DISTANCE_THRESHOLD = 15;
-	static const uint64_t LOAD_THRESHOLD = 20;
-	extern uint64_t IS_THRESHOLD;
+	static const double _rwBonusFactor;
+	static const uint64_t _distanceThreshold;
+	static const uint64_t _loadThreshold;
+	static uint64_t _shouldEnableIS;
 
-	typedef int16_t location_t;
-
-	enum HardwareCacheLevel {
-		L2_LEVEL = 2,
-		L3_LEVEL
-	};
-
-	static inline bool isNUMATrackingEnabled()
-	{
-		return _NUMATrackingEnabled;
-	}
-
+public:
 	static inline bool isNUMASchedulingEnabled()
 	{
 		return _NUMASchedulingEnabled;
 	}
 
-	static inline bool isNUMAStealingEnabled()
+	static inline double getRWBonusFactor()
 	{
-		return _NUMAStealingEnabled;
+		return _rwBonusFactor;
 	}
 
-	extern size_t getNUMATrackingNodes();
+	static inline double getDistanceThreshold()
+	{
+		return _distanceThreshold;
+	}
 
-	extern void setISThreshold(uint64_t threshold);
-}
+	static inline double getLoadThreshold()
+	{
+		return _loadThreshold;
+	}
+
+	static bool shouldEnableIS(Task *task);
+
+	static inline void setShouldEnableIS(bool value)
+	{
+		_shouldEnableIS = value;
+	}
+};
 
 #endif // DATA_TRACKING_SUPPORT_HPP

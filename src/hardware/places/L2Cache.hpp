@@ -8,28 +8,32 @@
 #define L2_CACHE_HPP
 
 #include "HardwareCache.hpp"
-#include "L3Cache.hpp"
+
+class L3Cache;
 
 class L2Cache : public HardwareCache {
 private:
-	unsigned _associatedL3Id;
+	L3Cache *_associatedL3Cache;
 
 public:
-	L2Cache (unsigned id, unsigned L3Id, size_t cacheSize, size_t cacheLineSize)
-		: HardwareCache(id, cacheSize, cacheLineSize, DataTrackingSupport::L2_LEVEL),
-		_associatedL3Id(L3Id)
-	{}
-
-	virtual ~L2Cache() {}
-
-	inline void setAssociatedL3Id(unsigned id)
+	L2Cache (int id, L3Cache *l3Cache, size_t cacheSize, size_t cacheLineSize) :
+		HardwareCache(id, cacheSize, cacheLineSize, HardwareCache::L2_LEVEL),
+		_associatedL3Cache(l3Cache)
 	{
-		_associatedL3Id = id;
 	}
 
-	inline unsigned getAssociatedL3Id() const
+	~L2Cache()
 	{
-		return _associatedL3Id;
+	}
+
+	inline void setAssociatedL3Cache(L3Cache *l3Cache)
+	{
+		_associatedL3Cache = l3Cache;
+	}
+
+	inline L3Cache *getAssociatedL3Cache() const
+	{
+		return _associatedL3Cache;
 	}
 };
 
