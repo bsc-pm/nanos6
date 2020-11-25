@@ -9,10 +9,10 @@
 #include "CPUDependencyData.hpp"
 #include "DataAccessRegistration.hpp"
 #include "LeaderThread.hpp"
+#include "TrackingPoints.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 

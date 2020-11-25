@@ -54,8 +54,8 @@ namespace Instrument {
 
 	//! \brief Indicates that the task is currently being executed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	//! \param[in] wasBlocked whether the task is running for the first time
-	//! (true) or it is being resumed after being blocked/paused (false)
+	//! \param[in] wasBlocked whether the task is being resumed after being blocked (true)
+	//! or it is being resumed after running for the first time (false)
 	void taskIsExecuting(task_id_t taskId, bool wasBlocked = false, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 
 	//! \brief Indicates that the task is currently blocked

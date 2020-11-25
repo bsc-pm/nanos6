@@ -9,16 +9,13 @@
 
 #include <cassert>
 
+#include "TrackingPoints.hpp"
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
-#include <InstrumentTaskStatus.hpp>
-#include <InstrumentTaskWait.hpp>
 #include <InstrumentThreadManagement.hpp>
 
 
@@ -26,6 +23,7 @@ class ComputePlace;
 
 
 namespace If0Task {
+
 	//! \brief Waits for the child if(0) task to finish.
 	//!
 	//! This function will lock the task by replacing it in the current thread, but as Task::markAsBlocked is
@@ -39,25 +37,22 @@ namespace If0Task {
 		assert(computePlace != nullptr);
 
 		CPU *cpu = static_cast<CPU *>(computePlace);
+		assert(cpu != nullptr);
 
-		Instrument::task_id_t currentTaskId = currentTask->getInstrumentationTaskId();
-		Instrument::enterTaskWait(currentTaskId, if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId(), false);
-		Instrument::taskIsBlocked(currentTaskId, Instrument::in_taskwait_blocking_reason);
+		// Runtime Tracking Point - Entering a taskwait through If0, the task will be blocked
+		TrackingPoints::enterWaitForIf0Task(currentTask, if0Task, currentThread, cpu);
 
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
-		HardwareCounters::updateRuntimeCounters();
-		Monitoring::taskChangedStatus(currentTask, paused_status);
-		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 		currentThread->switchTo(replacementThread);
 
-		//Update the CPU since the thread may have migrated
+		// Update the CPU since the thread may have migrated
 		cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
+
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
-		Instrument::taskIsExecuting(currentTaskId, true);
-		Instrument::exitTaskWait(currentTaskId, false);
-		Monitoring::taskChangedStatus(currentTask, executing_status);
+		// Runtime Tracking Point - Exiting a taskwait through If0, the task will resume
+		TrackingPoints::exitWaitForIf0Task(currentTask);
 	}
 
 
@@ -71,28 +66,13 @@ namespace If0Task {
 		assert(if0Task->getParent() == currentTask);
 		assert(computePlace != nullptr);
 
-		bool hasCode = if0Task->hasCode();
-
-		Instrument::task_id_t currentTaskId = currentTask->getInstrumentationTaskId();
-		Instrument::enterTaskWait(currentTaskId, if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId(), false);
-
-		if (hasCode) {
-			// Since hardware counters for the creator task (currentTask) are
-			// updated when creating the if0Task, we need not update them here
-			Monitoring::taskChangedStatus(currentTask, paused_status);
-			Instrument::taskIsBlocked(currentTaskId, Instrument::in_taskwait_blocking_reason);
-		}
+		// Runtime Tracking Point - Entering a taskwait through If0, the task will be blocked
+		TrackingPoints::enterExecuteInline(currentTask, if0Task);
 
 		currentThread->handleTask((CPU *) computePlace, if0Task);
 
-		if (hasCode) {
-			// Since hardware counters for the creator task (currentTask) are
-			// updated when creating the if0Task, we need not update them here
-			Instrument::taskIsExecuting(currentTaskId, true);
-			Monitoring::taskChangedStatus(currentTask, executing_status);
-		}
-
-		Instrument::exitTaskWait(currentTaskId, false);
+		// Runtime Tracking Point - Exiting a taskwait (from If0), the task will be resumed
+		TrackingPoints::exitExecuteInline(currentTask, if0Task);
 	}
 
 
@@ -101,9 +81,8 @@ namespace If0Task {
 		ComputePlace *computePlace
 	) {
 		assert(currentThread != nullptr);
-		assert(if0Task != nullptr);
 		assert(computePlace != nullptr);
-
+		assert(if0Task != nullptr);
 		assert(if0Task->isIf0());
 
 		Task *parent = if0Task->getParent();

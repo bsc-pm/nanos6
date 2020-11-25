@@ -11,19 +11,17 @@
 #define _GNU_SOURCE
 #endif
 
-#include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h>
+#include <unistd.h>
 
+#include <InstrumentThreadManagement.hpp>
 
 #include "executors/threads/CPU.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/threads/KernelLevelThread.hpp"
 #include "support/InstrumentedThread.hpp"
-
-#include <InstrumentThreadManagement.hpp>
-
 
 class WorkerThreadBase : protected KernelLevelThread, public InstrumentedThread {
 protected:
@@ -76,12 +74,10 @@ public:
 	//! \brief migrate the currently running thread to a given CPU
 	inline void migrate(CPU *cpu);
 
-
 	//! \brief suspend the currently running thread and replace it by another (if given)
 	//!
 	//! \param[in] replacement a thread that is currently suspended and that must take the place of the current thread or nullptr
 	inline void switchTo(WorkerThreadBase *replacement);
-
 
 	inline int getCpuId()
 	{

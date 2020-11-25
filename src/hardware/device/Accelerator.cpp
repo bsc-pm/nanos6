@@ -5,12 +5,11 @@
 */
 
 #include "Accelerator.hpp"
-
 #include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>

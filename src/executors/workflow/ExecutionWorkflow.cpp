@@ -11,7 +11,7 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/directory/Directory.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <ClusterManager.hpp>
@@ -241,7 +241,6 @@ namespace ExecutionWorkflow {
 					);
 
 					TaskFinalization::taskFinished(task, cpu);
-
 					if (task->markAsReleased()) {
 						TaskFinalization::disposeTask(task);
 					}

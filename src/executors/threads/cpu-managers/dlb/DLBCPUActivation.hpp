@@ -16,12 +16,8 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
-
-#include <InstrumentComputePlaceManagement.hpp>
-
+#include "system/TrackingPoints.hpp"
 
 class DLBCPUActivation {
 
@@ -265,14 +261,12 @@ public:
 						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 						assert(currentThread != nullptr);
 
+						// Runtime Tracking Point - A cpu becomes idle
 						// The status change is only notified once we know that the CPU
 						// has been lent sucessfully. Additionally, the instrumentation
 						// must be called prior the status change to prevent overlapping
 						// instrumentation calls with threads resuming on the lending CPU
-						HardwareCounters::updateRuntimeCounters();
-						Monitoring::cpuBecomesIdle(cpu->getIndex());
-						Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+						TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 						// Change the status since the lending was successful
 						expectedStatus = CPU::lending_status;
@@ -370,10 +364,8 @@ public:
 		CPU::activation_status_t expectedStatus = CPU::acquired_enabled_status;
 		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::returned_status);
 		if (successful) {
-			HardwareCounters::updateRuntimeCounters();
-			Monitoring::cpuBecomesIdle(cpu->getIndex());
-			Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+			// Runtime Tracking Point - A cpu becomes idle
+			TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 			// Since we do not want to keep the CPU, we use lend instead of return
 			__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
@@ -455,8 +447,9 @@ public:
 					// reenable the CPU without changing the status
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
-						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+						// Runtime Tracking Point - A cpu becomes active
+						TrackingPoints::cpuBecomesActive(cpu);
+
 						ThreadManager::resumeIdle(cpu, true, true);
 					}
 					break;
@@ -500,22 +493,20 @@ public:
 					// CPU is checking if it should be returned, thus we can
 					// assure no task is being executed and we can return it
 
-					// We always check at each iteration of threads (see WorkerThread.cpp) if the
-					// CPU they are running on must be returned. If they are to be returned, this
-					// callback is called, and before changing the status of the CPU we call
-					// Instrumentation and others to avoid race conditions
+					// We always check at each iteration of threads (see WorkerThread.cpp) if the CPU
+					// they are running on must be returned. If they are to be returned, this callback
+					// is called, and before changing the status of the CPU we call TrackingPoints to
+					// avoid race conditions
 					currentThread = WorkerThread::getCurrentWorkerThread();
 					assert(currentThread != nullptr);
-					HardwareCounters::updateRuntimeCounters();
-					Monitoring::cpuBecomesIdle(cpu->getIndex());
-					Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+					// Runtime Tracking Point - A cpu becomes idle
+					TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::returned_status);
 					assert(successful);
-
-					assert(currentThread->getComputePlace() == cpu);
 					assert(currentThread->getTask() == nullptr);
+					assert(currentThread->getComputePlace() == cpu);
 
 					// The thread becomes idle
 					ThreadManager::addIdler(currentThread);
@@ -568,11 +559,9 @@ public:
 				case CPU::lent_status:
 				case CPU::returned_status:
 				case CPU::shutting_down_status:
-					// If a thread is woken up in this CPU but it is not
-					// supposed to be running, re-add the thread as idle.
-					// It is not needed to call Instrument/Monitoring here,
-					// since this is an extreme case that should barely
-					// happen and the thread directly becomes idle again
+					// If a thread is woken up in this CPU but it is not supposed to be running, re-add
+					// the thread as idle. We don't call TrackingPoints here since this is an extreme
+					// case that should barely happen and the thread directly becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
 					break;
@@ -590,10 +579,10 @@ public:
 						if (successful) {
 							// This owned CPU becomes active now
 							++_numActiveOwnedCPUs;
-
 							currentStatus = CPU::enabled_status;
-							Instrument::resumedComputePlace(cpu->getInstrumentationId());
-							Monitoring::cpuBecomesActive(cpu->getIndex());
+
+							// Runtime Tracking Point - A cpu becomes active
+							TrackingPoints::cpuBecomesActive(cpu);
 						}
 					}
 					break;
@@ -601,8 +590,9 @@ public:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::acquired_enabled_status);
 					if (successful) {
 						currentStatus = CPU::acquired_enabled_status;
-						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+
+						// Runtime Tracking Point - A cpu becomes active
+						TrackingPoints::cpuBecomesActive(cpu);
 					}
 					break;
 			}

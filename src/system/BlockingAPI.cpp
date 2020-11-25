@@ -10,15 +10,12 @@
 #include <nanos6/blocking.h>
 
 #include "DataAccessRegistration.hpp"
+#include "TrackingPoints.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "support/chronometers/std/Chrono.hpp"
-
-#include <InstrumentBlockingAPI.hpp>
 
 
 void BlockingAPI::blockCurrentTask(bool fromUserCode)
@@ -29,61 +26,40 @@ void BlockingAPI::blockCurrentTask(bool fromUserCode)
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	if (fromUserCode) {
-		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, paused_status);
-	}
-	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
-	Instrument::enterBlockCurrentTask(taskId, fromUserCode);
-	Instrument::taskIsBlocked(taskId, Instrument::user_requested_blocking_reason);
+	// Runtime Tracking Point - The current task is gonna be blocked
+	TrackingPoints::enterBlockCurrentTask(currentTask, fromUserCode);
 
 	TaskBlocking::taskBlocks(currentThread, currentTask);
 
 	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);
+
+	// Update the CPU as this thread may have migrated
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 
-	Instrument::taskIsExecuting(taskId, true);
-	if (fromUserCode) {
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitBlockCurrentTask(taskId, fromUserCode);
-		Monitoring::taskChangedStatus(currentTask, executing_status);
-	} else {
-		Instrument::exitBlockCurrentTask(taskId, fromUserCode);
-	}
+	// Runtime Tracking Point - The current task resumes its execution
+	TrackingPoints::exitBlockCurrentTask(currentTask, fromUserCode);
 }
 
 void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
 {
 	assert(task != nullptr);
 
-	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	Task *currentTask = nullptr;
-
 	ComputePlace *computePlace = nullptr;
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	if (currentThread != nullptr) {
 		currentTask = currentThread->getTask();
 		computePlace = currentThread->getComputePlace();
 	}
 
-	// See taskRuntimeTransition variable note in spawnFunction() for more details
-	bool taskRuntimeTransition = fromUserCode && (currentTask != nullptr);
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, paused_status);
-	}
-	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-	Instrument::enterUnblockTask(taskId, taskRuntimeTransition);
+	// Runtime Tracking Point - The current task is gonna execute runtime code
+	TrackingPoints::enterUnblockTask(task, currentTask, fromUserCode);
 
 	Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
 
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitUnblockTask(taskId, taskRuntimeTransition);
-		Monitoring::taskChangedStatus(currentTask, executing_status);
-	} else {
-		Instrument::exitUnblockTask(taskId, taskRuntimeTransition);
-	}
+	// Runtime Tracking Point - The current task is resuming execution
+	TrackingPoints::exitUnblockTask(task, currentTask, fromUserCode);
 }
 
 extern "C" void *nanos6_get_current_blocking_context(void)
@@ -117,16 +93,12 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	assert(currentThread != nullptr);
 
 	CPU *cpu = currentThread->getComputePlace();
-	assert(cpu != nullptr);
-
 	Task *currentTask = currentThread->getTask();
+	assert(cpu != nullptr);
 	assert(currentTask != nullptr);
 
-	HardwareCounters::updateTaskCounters(currentTask);
-	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
-	// We do not notify Monitoring yet, as this will be done in the
-	// Scheduler (addReadyTask) call down below
-	Instrument::enterWaitFor(taskId);
+	// Runtime Tracking Point - The current task is gonna be readded to the scheduler
+	TrackingPoints::enterWaitFor(currentTask);
 
 	Task::deadline_t timeout = (Task::deadline_t) time_us;
 
@@ -152,9 +124,8 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	assert(cpu != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::exitWaitFor(taskId);
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+	// Runtime Tracking Point - The current task is resuming execution
+	TrackingPoints::exitWaitFor(currentTask);
 
 	return (uint64_t) (Chrono::now<Task::deadline_t>() - start);
 }

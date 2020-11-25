@@ -9,12 +9,8 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
-
-#include <InstrumentComputePlaceManagement.hpp>
-
+#include "system/TrackingPoints.hpp"
 
 boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
 SpinLock DefaultCPUManager::_idleCPUsLock;
@@ -174,9 +170,6 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 		assert(_numIdleCPUs > 0);
 
 		--_numIdleCPUs;
-
-		// Since monitoring works with system ids, translate the ID
-		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getIndex());
 		resumed = true;
 	}
 
@@ -184,6 +177,10 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 
 	if (resumed) {
 		assert(_cpus[_firstCPUId] != nullptr);
+
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(_cpus[_firstCPUId]);
+
 		ThreadManager::resumeIdle(_cpus[_firstCPUId]);
 	}
 }
@@ -231,13 +228,9 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 		return false;
 	}
 
+	// Runtime Tracking Point - A cpu becomes idle
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentThread != nullptr);
-
-	HardwareCounters::updateRuntimeCounters();
-	Monitoring::cpuBecomesIdle(index);
-	Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-	Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+	TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 	// Mark the CPU as idle
 	_idleCPUs[index] = true;
@@ -249,22 +242,28 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 
 CPU *DefaultCPUManager::getIdleCPU()
 {
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUsLock.lock();
 
 	boost::dynamic_bitset<>::size_type id = _idleCPUs.find_first();
 	if (id != boost::dynamic_bitset<>::npos) {
 		CPU *cpu = _cpus[id];
 		assert(cpu != nullptr);
 
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(id);
+		// Mark the CPU as active
 		_idleCPUs[id] = false;
 		assert(_numIdleCPUs > 0);
 
 		--_numIdleCPUs;
 
+		_idleCPUsLock.unlock();
+
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(cpu);
+
 		return cpu;
 	} else {
+		_idleCPUsLock.unlock();
+
 		return nullptr;
 	}
 }
@@ -275,16 +274,14 @@ size_t DefaultCPUManager::getIdleCPUs(
 ) {
 	size_t numObtainedCPUs = 0;
 
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUsLock.lock();
 
 	boost::dynamic_bitset<>::size_type id = _idleCPUs.find_first();
 	while (numObtainedCPUs < numCPUs && id != boost::dynamic_bitset<>::npos) {
 		CPU *cpu = _cpus[id];
 		assert(cpu != nullptr);
 
-		// Signal that the CPU becomes active
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(id);
+		// Mark the CPU as active
 		_idleCPUs[id] = false;
 
 		// Place the CPU in the vector
@@ -299,6 +296,13 @@ size_t DefaultCPUManager::getIdleCPUs(
 	assert(_numIdleCPUs >= numObtainedCPUs);
 	_numIdleCPUs -= numObtainedCPUs;
 
+	_idleCPUsLock.unlock();
+
+	for (size_t i = 0; i < numObtainedCPUs; ++i) {
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(idleCPUs[i]);
+	}
+
 	return numObtainedCPUs;
 }
 
@@ -311,16 +315,15 @@ void DefaultCPUManager::getIdleCollaborators(
 	size_t numObtainedCollaborators = 0;
 	size_t groupId = ((CPU *) cpu)->getGroupId();
 
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUsLock.lock();
+
 	boost::dynamic_bitset<>::size_type id = _idleCPUs.find_first();
 	while (id != boost::dynamic_bitset<>::npos) {
 		CPU *collaborator = _cpus[id];
 		assert(collaborator != nullptr);
 
 		if (groupId == collaborator->getGroupId()) {
-			// Signal that the CPU becomes active
-			Instrument::resumedComputePlace(collaborator->getInstrumentationId());
-			Monitoring::cpuBecomesActive(id);
+			// Mark the CPU as active
 			_idleCPUs[id] = false;
 
 			// Place the CPU in the vector
@@ -335,6 +338,13 @@ void DefaultCPUManager::getIdleCollaborators(
 	// Decrease the counter of idle CPUs by the obtained amount
 	assert(_numIdleCPUs >= numObtainedCollaborators);
 	_numIdleCPUs -= numObtainedCollaborators;
+
+	_idleCPUsLock.unlock();
+
+	for (size_t i = 0; i < numObtainedCollaborators; ++i) {
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(idleCPUs[i]);
+	}
 }
 
 

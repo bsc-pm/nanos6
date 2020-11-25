@@ -100,7 +100,7 @@ public:
 	inline CPU(size_t virtualCPUId) :
 		CPUPlace(virtualCPUId, false),
 		_activationStatus(uninitialized_status),
-		_systemCPUId(-1),
+		_systemCPUId((size_t) -1),
 		_NUMANodeId(0),
 		_hardwareCounters()
 	{

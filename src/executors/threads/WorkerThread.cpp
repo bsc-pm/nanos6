@@ -20,36 +20,35 @@
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/LoopGenerator.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
-#include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentTaskExecution.hpp>
-#include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadManagement.hpp>
 #include <InstrumentWorkerThread.hpp>
 
 void WorkerThread::initialize()
 {
-	Instrument::createdThread(_instrumentationId, getComputePlace()->getInstrumentationId());
-
-	assert(getComputePlace() != nullptr);
-
-	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId);
-	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId(), false);
-
 	markAsCurrentWorkerThread();
 
-	HardwareCounters::threadInitialized();
+	CPU *cpu = getComputePlace();
+	assert(cpu != nullptr);
+
+	Instrument::ThreadInstrumentationContext instrumentationContext(
+		Instrument::task_id_t(),
+		cpu->getInstrumentationId(),
+		getInstrumentationId()
+	);
+
+	// Runtime Tracking Point - A thread is initializing
+	TrackingPoints::threadInitialized(this, cpu);
 
 	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
@@ -61,18 +60,19 @@ void WorkerThread::body()
 	initialize();
 
 	CPU *cpu = getComputePlace();
+	assert(cpu != nullptr);
 
 	Instrument::ThreadInstrumentationContext instrumentationContext(
-		Instrument::task_id_t(),
-		cpu->getInstrumentationId(),
-		_instrumentationId);
+		Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId
+	);
 
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
 	while (CPUManager::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
-		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
 		assert(cpu != nullptr);
+
+		// Update the CPU since the thread may have migrated
 		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
 		// There should not be any pre-assigned task
@@ -87,8 +87,10 @@ void WorkerThread::body()
 				_task = nullptr;
 
 				ThreadManager::addIdler(this);
-				HardwareCounters::updateRuntimeCounters();
-				Instrument::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
+
+				// Runtime Tracking Point - The current thread will suspend
+				TrackingPoints::threadWillSuspend(this, cpu);
+
 				switchTo(assignedThread);
 			} else {
 				Instrument::workerThreadObtainedTask();
@@ -126,9 +128,8 @@ void WorkerThread::body()
 	// The thread should not have any task assigned at this point
 	assert(_task == nullptr);
 
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::threadWillShutdown();
-	HardwareCounters::threadShutdown();
+	// Runtime Tracking Point - The current thread is gonna shutdown
+	TrackingPoints::threadWillShutdown();
 
 	ThreadManager::addShutdownThread(this);
 }

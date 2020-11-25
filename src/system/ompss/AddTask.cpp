@@ -25,10 +25,11 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/Throttle.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/Taskfor.hpp"
 #include "tasks/TaskImplementation.hpp"
+#include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -53,20 +54,17 @@ Task *AddTask::createTask(
 ) {
 	Task *task = nullptr;
 	Task *creator = nullptr;
-
 	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
 	if (workerThread != nullptr) {
 		creator = workerThread->getTask();
 	}
-	// See taskRuntimeTransition variable note in spawnFunction() for more details
-	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, paused_status);
-	}
-	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 
-	//! Throttle. If active, act as a taskwait
+	// Runtime Tracking Point - Enter the creation of a task
+	Instrument::task_id_t taskId = TrackingPoints::enterCreateTask(
+		creator, taskInfo, taskInvocationInfo, flags, fromUserCode
+	);
+
+	// Throttle. If active, act as a taskwait
 	if (Throttle::isActive() && creator != nullptr) {
 		assert(workerThread != nullptr);
 		// We will try to execute something else instead of creating more memory pressure
@@ -150,7 +148,7 @@ Task *AddTask::createTask(
 			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	}
 
-	Instrument::exitCreateTask(taskRuntimeTransition);
+	TrackingPoints::exitCreateTask(creator, fromUserCode);
 
 	return task;
 }
@@ -159,25 +157,17 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 {
 	assert(task != nullptr);
 
-	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
-
+	// Retrieve the current thread, compute place, and the creator if it exists
 	Task *creator = nullptr;
-	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
 	ComputePlace *computePlace = nullptr;
-
-	// Retrieve the current compute place
+	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
 	if (workerThread != nullptr) {
+		creator = workerThread->getTask();
 		computePlace = workerThread->getComputePlace();
 		assert(computePlace != nullptr);
-
-		// There could be no creator
-		creator = workerThread->getTask();
 	}
 
-	// See taskRuntimeTransition variable note in spawnFunction() for more details
-	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-	Instrument::enterSubmitTask(taskRuntimeTransition);
-
+	// Set the parent and check if it is a stream executor
 	if (parent != nullptr) {
 		task->setParent(parent);
 
@@ -186,7 +176,6 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 			// trigger of a callback (spawned stream functions)
 			StreamExecutor *executor = (StreamExecutor *) parent;
 			StreamFunctionCallback *callback = executor->getCurrentFunctionCallback();
-
 			if (callback != nullptr) {
 				task->setParentSpawnCallback(callback);
 				executor->increaseCallbackParticipants(callback);
@@ -194,9 +183,8 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		}
 	}
 
-	HardwareCounters::taskCreated(task);
-	Instrument::createdTask(task, taskInstrumentationId);
-	Monitoring::taskCreated(task);
+	// Runtime Tracking Point - Enter the submission of a task to the scheduler
+	TrackingPoints::enterSubmitTask(creator, task, fromUserCode);
 
 	// Compute the task priority only when the scheduler is
 	// considering the task priorities
@@ -214,9 +202,11 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 	if (taskInfo->register_depinfo != 0) {
 		assert(computePlace != nullptr);
 
-		// Begin as pending status, become ready later, through the scheduler
+		Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
-		Instrument::taskIsPending(taskInstrumentationId);
+
+		// Runtime Tracking Point - The created task has unresolved dependencies and is pending
+		TrackingPoints::taskIsPending(task);
 
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
@@ -246,13 +236,8 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		}
 	}
 
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitSubmitTask(taskInstrumentationId, taskRuntimeTransition);
-		Monitoring::taskChangedStatus(creator, executing_status);
-	} else {
-		Instrument::exitSubmitTask(taskInstrumentationId, taskRuntimeTransition);
-	}
+	// Runtime Tracking Point - Exit the submission of a task (and thus, the creation)
+	TrackingPoints::exitSubmitTask(creator, task, fromUserCode);
 }
 
 

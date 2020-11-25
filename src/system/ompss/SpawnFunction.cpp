@@ -4,7 +4,6 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-
 #include <cassert>
 #include <map>
 #include <mutex>
@@ -16,9 +15,8 @@
 
 #include "AddTask.hpp"
 #include "SpawnFunction.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
@@ -58,36 +56,14 @@ void SpawnFunction::spawnFunction(
 	char const *label,
 	bool fromUserCode
 ) {
-	// Instrumentation is interested in the transitions between Runtime and
-	// Tasks. However, this function might be called from within runtime
-	// context (not task context) with fromUserCode set to true (e.g.
-	// polling services are considered user code even if the code itself is
-	// into Nanos6). To detect a runtime-task transisiton, we check whether
-	// we are outside a task context by ensuring that the current worker
-	// does not have a task assigned (creator != nullptr). In summary:
-	//
-	// This function might be called from:
-	// 1) fromUserCode == true && currentTask != nullptr: From user code,
-	//    within task context (a task calls this function). This is a
-	//    transition between runtime and task context.
-	// 2) fromUserCode == true && currentTask == nullptr: From user code,
-	//    outside task context (polling service or external thread). This is not
-	//    a transition between runtime and task context.
-	// 3) fromUserCode == false: From runtime code (the runtime calls this
-	//    function). This is not a transition between runtime and task context.
-
 	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
 	Task *creator = nullptr;
 	if (workerThread != nullptr) {
 		creator = workerThread->getTask();
 	}
 
-	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, paused_status);
-	}
-	Instrument::enterSpawnFunction(taskRuntimeTransition);
+	// Runtime Tracking Point - Entering the creation of a task
+	TrackingPoints::enterSpawnFunction(creator, fromUserCode);
 
 	// Increase the number of spawned functions
 	_pendingSpawnedFunctions++;
@@ -156,13 +132,8 @@ void SpawnFunction::spawnFunction(
 	// Submit the task without parent
 	AddTask::submitTask(task, nullptr);
 
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitSpawnFunction(taskRuntimeTransition);
-		Monitoring::taskChangedStatus(creator, executing_status);
-	} else {
-		Instrument::exitSpawnFunction(taskRuntimeTransition);
-	}
+	// Runtime Tracking Point - Exiting the creation of a task
+	TrackingPoints::exitSpawnFunction(creator, fromUserCode);
 }
 
 void SpawnFunction::spawnedFunctionWrapper(void *args, void *, nanos6_address_translation_entry_t *)

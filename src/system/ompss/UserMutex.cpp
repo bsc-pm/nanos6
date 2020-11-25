@@ -8,6 +8,9 @@
 
 #include <nanos6.h>
 
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentUserMutex.hpp>
+
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
@@ -15,16 +18,11 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-
-#include <InstrumentThreadManagement.hpp>
-#include <InstrumentUserMutex.hpp>
-
 
 typedef std::atomic<UserMutex *> mutex_t;
 
@@ -42,9 +40,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	HardwareCounters::updateTaskCounters(currentTask);
-	Monitoring::taskChangedStatus(currentTask, paused_status);
-	Instrument::enterUserMutexLock();
+	// Runtime Tracking Point - Entering a user lock
+	TrackingPoints::enterUserLock(currentTask);
 
 	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);
@@ -107,9 +104,9 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 
 end:
 	Instrument::acquiredUserMutex(userMutex);
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::exitUserMutexLock();
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+
+	// Runtime Tracking Point - Exiting a user lock
+	TrackingPoints::exitUserLock(currentTask);
 }
 
 
@@ -127,12 +124,8 @@ void nanos6_user_unlock(void **handlerPointer)
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	HardwareCounters::updateTaskCounters(currentTask);
-	Monitoring::taskChangedStatus(currentTask, paused_status);
-	Instrument::enterUserMutexUnlock();
-
-	CPU *cpu = currentThread->getComputePlace();
-	assert(cpu != nullptr);
+	// Runtime Tracking Point - Entering user unlock
+	TrackingPoints::enterUserUnlock(currentTask);
 
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	UserMutex &userMutex = *(userMutexReference.load());
@@ -140,6 +133,8 @@ void nanos6_user_unlock(void **handlerPointer)
 
 	Task *releasedTask = userMutex.dequeueOrUnlock();
 	if (releasedTask != nullptr) {
+		CPU *cpu = currentThread->getComputePlace();
+		assert(cpu != nullptr);
 
 		if (!currentTask->isTaskfor() && ThreadManagerPolicy::checkIfUnblockedMustPreemptUnblocker(currentTask, releasedTask, cpu)) {
 			WorkerThread *releasedThread = releasedTask->getThread();
@@ -153,9 +148,10 @@ void nanos6_user_unlock(void **handlerPointer)
 				// No idle CPUs available, first re-add the current task to the scheduler
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
+				// Runtime Tracking Point - A thread is about to be suspended
+				TrackingPoints::threadWillSuspend(currentThread, cpu);
+
 				// Now switch to the released thread
-				HardwareCounters::updateRuntimeCounters();
-				Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 				currentThread->switchTo(releasedThread);
 
 				// Update the CPU since the thread may have migrated
@@ -168,8 +164,7 @@ void nanos6_user_unlock(void **handlerPointer)
 		}
 	}
 
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::exitUserMutexUnlock();
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+	// Runtime Tracking Point - Exiting user unlock
+	TrackingPoints::exitUserUnlock(currentTask);
 }
 
