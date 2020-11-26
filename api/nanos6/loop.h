@@ -16,7 +16,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_loop_api
-enum nanos6_loop_api_t { nanos6_loop_api = 2 };
+enum nanos6_loop_api_t { nanos6_loop_api = 3 };
 
 
 #ifdef __cplusplus
