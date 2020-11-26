@@ -372,6 +372,14 @@ namespace Instrument {
 		};
 		typedef std::map<task_id_t, dependency_edge_t> output_edges_t;
 
+		enum state_t
+		{
+			INITIAL = 0,
+			STARTED,
+			FINISHED
+		};
+
+
 		struct task_info_t {
 			nanos6_task_info_t *_nanos6_task_info;
 			nanos6_task_invocation_info_t *_nanos6_task_invocation_info;
@@ -399,6 +407,8 @@ namespace Instrument {
 			taskwait_id_t _precedingTaskwait;
 			taskwait_id_t _succedingTaskwait;
 
+			state_t _state;
+
 			task_info_t()
 				: _nanos6_task_info(nullptr), _nanos6_task_invocation_info(nullptr),
 				_parent(-1), _taskGroupPhaseIndex(0),
@@ -409,7 +419,8 @@ namespace Instrument {
 				_hasChildren(false),
 				_hasPredecessorsInSameLevel(false), _hasSuccessorsInSameLevel(false),
 				_isIf0(false),
-				_precedingTaskwait(), _succedingTaskwait()
+				_precedingTaskwait(), _succedingTaskwait(),
+				_state(INITIAL)
 			{
 			}
 		};

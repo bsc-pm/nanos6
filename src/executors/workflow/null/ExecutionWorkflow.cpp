@@ -34,8 +34,15 @@ namespace ExecutionWorkflow {
 		task->setThread(currentThread);
 		task->setMemoryPlace(targetMemoryPlace);
 
+		bool isTaskforCollaborator = task->isTaskforCollaborator();
+		Instrument::task_id_t taskId;
+		if (isTaskforCollaborator) {
+			taskId = task->getParent()->getInstrumentationTaskId();
+		} else {
+			taskId = task->getInstrumentationTaskId();
+		}
 		Instrument::ThreadInstrumentationContext instrumentationContext(
-			task->getInstrumentationTaskId(),
+			taskId,
 			cpu->getInstrumentationId(),
 			currentThread->getInstrumentationId()
 		);

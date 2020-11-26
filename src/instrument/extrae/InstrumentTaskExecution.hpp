@@ -234,21 +234,6 @@ namespace Instrument {
 			if (_detailLevel >= 1) {
 				ce.nEvents += 1;
 			}
-			
-			// Generate graph information
-			if (_detailLevel >= 1) {
-				taskforId._taskInfo->_lock.lock();
-				ce.nCommunications += taskforId._taskInfo->_predecessors.size();
-				taskforId._taskInfo->_lock.unlock();
-			}
-			
-			if (ce.nCommunications > 0) {
-				if (ce.nCommunications < 100) {
-					ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
-				} else {
-					ce.Communications = (extrae_user_communication_t *) malloc(sizeof(extrae_user_communication_t) * ce.nCommunications);
-				}
-			}
 		}
 		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
@@ -281,8 +266,18 @@ namespace Instrument {
 		if (first) {
 			// Generate graph information
 			if (_detailLevel >= 1) {
-				int index = 0;
 				taskforId._taskInfo->_lock.lock();
+				ce.nCommunications += taskforId._taskInfo->_predecessors.size();
+
+				if (ce.nCommunications > 0) {
+					if (ce.nCommunications < 100) {
+						ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+					} else {
+						ce.Communications = (extrae_user_communication_t *) malloc(sizeof(extrae_user_communication_t) * ce.nCommunications);
+					}
+				}
+
+				int index = 0;
 				for (auto const &taskAndTag : taskforId._taskInfo->_predecessors) {
 					ce.Communications[index].type = EXTRAE_USER_RECV;
 					ce.Communications[index].tag = (extrae_comm_tag_t) taskAndTag.second;
