@@ -290,7 +290,7 @@ static void _nanos6_loader_check_envars(void)
 				if (last == NULL) {
 					fprintf(stderr, "%s  ", environ[var]);
 				} else {
-					fprintf(stderr, "%.*s  ", last - environ[var], environ[var]);
+					fprintf(stderr, "%.*s  ", (int) (last - environ[var]), environ[var]);
 				}
 			}
 		}
