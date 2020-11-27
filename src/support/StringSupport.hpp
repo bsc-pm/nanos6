@@ -13,35 +13,6 @@
 #include <sstream>
 
 
-class StringifiedBool {
-private:
-	bool _value;
-
-public:
-	StringifiedBool() :
-		_value(false)
-	{
-	}
-
-	StringifiedBool(bool value) :
-		_value(value)
-	{
-	}
-
-	StringifiedBool(StringifiedBool const &other) :
-		_value(other._value)
-	{
-	}
-
-	StringifiedBool& operator=(const StringifiedBool& other) = default;
-
-	operator bool() const
-	{
-		return _value;
-	}
-};
-
-
 class StringifiedMemorySize {
 private:
 	size_t _value;
