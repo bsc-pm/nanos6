@@ -178,8 +178,8 @@ symbol_resolution += \
 	loader/symbol-resolver/api-check.c \
 	loader/symbol-resolver/blocking.c \
 	loader/symbol-resolver/bootstrap.c \
-	loader/symbol-resolver/config.c \
 	loader/symbol-resolver/cluster.c \
+	loader/symbol-resolver/config.c \
 	loader/symbol-resolver/cpu-control.c \
 	loader/symbol-resolver/debugging.c \
 	loader/symbol-resolver/dependencies.c \
@@ -213,8 +213,8 @@ symbol_resolution += \
 	loader/indirect-symbols/api-check.c \
 	loader/indirect-symbols/blocking.c \
 	loader/indirect-symbols/bootstrap.c \
-	loader/indirect-symbols/config.c \
 	loader/indirect-symbols/cluster.c \
+	loader/indirect-symbols/config.c \
 	loader/indirect-symbols/cpu-control.c \
 	loader/indirect-symbols/debugging.c \
 	loader/indirect-symbols/dependencies.c \
@@ -404,6 +404,7 @@ common_sources = \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.cpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.cpp \
 	src/support/GlobalLock.cpp \
+	src/support/config/ConfigCentral.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
@@ -1288,7 +1289,9 @@ noinst_HEADERS = \
 	src/support/StringLiteral.hpp \
 	src/support/StringSupport.hpp \
 	src/support/bitset/AtomicBitset.hpp \
+	src/support/config/ConfigCentral.hpp \
 	src/support/config/ConfigParser.hpp \
+	src/support/config/ConfigSupport.hpp \
 	src/support/config/ConfigVariable.hpp \
 	src/support/config/toml.hpp \
 	src/support/config/toml/color.hpp \

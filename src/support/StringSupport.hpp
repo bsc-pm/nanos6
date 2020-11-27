@@ -57,12 +57,16 @@ public:
 	{
 	}
 
-	StringifiedMemorySize(StringifiedMemorySize const &other) :
+	StringifiedMemorySize(const StringifiedMemorySize &other) :
 		_value(other._value)
 	{
 	}
 
+	StringifiedMemorySize(const std::string &value);
+
 	StringifiedMemorySize& operator=(const StringifiedMemorySize& other) = default;
+
+	void operator=(const std::string &value);
 
 	operator size_t() const
 	{
@@ -102,6 +106,39 @@ public:
 		return stream.str();
 	}
 
+	//! \brief Find an assignment or compare operator
+	//!
+	//! \param str The string where to search
+	//! \param isCondition Whether should search a compare operator
+	//! \param op The found operator
+	//!
+	//! \returns The index of the operator in the string or
+	//! std::string::npos if not found
+	static inline size_t findOperator(const std::string &str, bool isCondition, std::string &op)
+	{
+		if (isCondition) {
+			constexpr size_t numOps = 6;
+			const char *condOperators[numOps] = { "==", "!=", ">=", "<=", ">", "<" };
+
+			// Check always the longest operators first
+			for (size_t i = 0; i < numOps; ++i) {
+				size_t index = str.find(condOperators[i]);
+				if (index != std::string::npos) {
+					op = condOperators[i];
+					return index;
+				}
+			}
+		} else {
+			const char *assigOperator = "=";
+			size_t index = str.find(assigOperator);
+			if (index != std::string::npos) {
+				op = assigOperator;
+				return index;
+			}
+		}
+		return std::string::npos;
+	}
+
 	//! \brief Parse string representing a type
 	//!
 	//! By default this function parses boolean values in the form of 0/1, but
@@ -131,7 +168,19 @@ public:
 	//!
 	//! \returns whether the parsing succeeded
 	template <typename T>
-	static bool parse(const char *str, T &result, io_manipulator_t manipulator = std::noboolalpha);
+	static inline bool parse(const char *str, T &result, io_manipulator_t manipulator = std::noboolalpha)
+	{
+		std::istringstream iss(str);
+		T tmp = result;
+
+		iss >> manipulator >> tmp;
+
+		if (!iss.fail()) {
+			result = tmp;
+			return true;
+		}
+		return false;
+	}
 
 	//! \brief Parse string representing memory size
 	//!
@@ -191,20 +240,14 @@ public:
 	}
 };
 
-
-template <typename T>
-inline bool StringSupport::parse(const char *str, T &result, io_manipulator_t manipulator)
+inline StringifiedMemorySize::StringifiedMemorySize(const std::string &value)
 {
-	std::istringstream iss(str);
-	T tmp = result;
+	_value = StringSupport::parseMemory(value);
+}
 
-	iss >> manipulator >> tmp;
-
-	if (!iss.fail()) {
-		result = tmp;
-		return true;
-	}
-	return false;
+inline void StringifiedMemorySize::operator=(const std::string &value)
+{
+	_value = StringSupport::parseMemory(value);
 }
 
 template <>
@@ -214,6 +257,12 @@ inline bool StringSupport::parse(const char *str, std::string &result, io_manipu
 	return true;
 }
 
+template <>
+inline bool StringSupport::parse(const char *str, StringifiedMemorySize &result, io_manipulator_t)
+{
+	result = parseMemory(str);
+	return true;
+}
+
 
 #endif // STRING_SUPPORT_HPP
-
