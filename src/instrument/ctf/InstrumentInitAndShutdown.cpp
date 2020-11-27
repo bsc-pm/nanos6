@@ -206,25 +206,33 @@ void Instrument::shutdown()
 	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
+	CTFAPI::CTFKernelMetadata *kernelMetadata = trace.getKernelMetadata();
+	assert(kernelMetadata != nullptr);
 
-	// First disable kernel tracing
-	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
-		cpu = cpus[i];
-		CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
-		if (kernelStream) {
-			kernelStream->disableKernelEvents();
+	// First disable kernel tracing. We do so in a separate loop because we
+	// do not want to trace the cleanup process of the shutdown phase.
+	// Please, note that the cleanup of per-cpu ctf structures is being done
+	// sequentially by a single core.
+	if (kernelMetadata->enabled()) {
+		for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
+			cpu = cpus[i];
+			assert(cpu != nullptr);
+			CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
+			if (kernelStream != nullptr) {
+				kernelStream->disableKernelEvents();
+			}
 		}
 	}
 
 	// Shutdown Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
+		assert(cpu != nullptr);
 		CTFAPI::CTFStream       *userStream   = cpu->getInstrumentationData().userStream;
 		CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
 		assert(userStream != nullptr);
-		assert(kernelStream != nullptr);
 
-		if (kernelStream) {
+		if (kernelStream != nullptr) {
 			CTFAPI::updateKernelEvents(kernelStream, userStream);
 			uint64_t lost = kernelStream->getLostEventsCount();
 			kernelStream->shutdown();
@@ -262,17 +270,19 @@ void Instrument::shutdown()
 
 	// Disabling kernel tracing takes a considerable amount of time. Warn
 	// the user of it.
-	std::cout << "Shutting down Linux Kernel tracing facility, please wait " << std::flush;
-	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
-		cpu = cpus[i];
-		CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
-		assert(kernelStream != nullptr);
+	if (kernelMetadata->enabled()) {
+		std::cout << "Shutting down Linux Kernel tracing facility, please wait... " << std::flush;
+		for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
+			cpu = cpus[i];
+			assert(cpu != nullptr);
+			CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
 
-		if (kernelStream) {
-			delete kernelStream;
+			if (kernelStream != nullptr) {
+				delete kernelStream;
+			}
 		}
+		std::cout << "[DONE]" << std::endl;
 	}
-	std::cout << "[DONE]" << std::endl;
 }
 
 void Instrument::nanos6_preinit_finished()
