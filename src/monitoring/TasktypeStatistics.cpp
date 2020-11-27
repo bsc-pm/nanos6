@@ -8,7 +8,7 @@
 #include "TasktypeStatistics.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 
-ConfigVariable<int> TasktypeStatistics::_rollingWindow("monitoring.rolling_window", 20);
+ConfigVariable<int> TasktypeStatistics::_rollingWindow("monitoring.rolling_window");
 
 
 double TasktypeStatistics::getTimingPrediction(size_t cost)

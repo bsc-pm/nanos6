@@ -8,5 +8,5 @@
 
 
 CPUManagerInterface *CPUManager::_cpuManager;
-ConfigVariable<bool> CPUManager::_dlbEnabled("dlb.enabled", false);
+ConfigVariable<bool> CPUManager::_dlbEnabled("dlb.enabled");
 bool CPUManager::_preinitialized(false);

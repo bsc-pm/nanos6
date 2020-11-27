@@ -21,10 +21,10 @@
 #include "tasks/TaskInfo.hpp"
 
 
-ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", false);
-ConfigVariable<bool> Monitoring::_verbose("monitoring.verbose", true);
-ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.wisdom", false);
-ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "output-monitoring.txt");
+ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled");
+ConfigVariable<bool> Monitoring::_verbose("monitoring.verbose");
+ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.wisdom");
+ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file");
 JsonFile *Monitoring::_wisdom(nullptr);
 CPUMonitor *Monitoring::_cpuMonitor(nullptr);
 TaskMonitor *Monitoring::_taskMonitor(nullptr);

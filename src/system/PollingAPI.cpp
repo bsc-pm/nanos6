@@ -67,7 +67,7 @@ namespace PollingAPI {
 	services_t _services;
 
 	//! \brief Environment variable to enable/disable polling services
-	ConfigVariable<bool> _enabled("misc.polling", true);
+	ConfigVariable<bool> _enabled("misc.polling");
 
 
 	inline bool operator<(ServiceKey const &a, ServiceKey const &b)

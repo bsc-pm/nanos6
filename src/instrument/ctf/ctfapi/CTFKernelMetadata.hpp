@@ -30,9 +30,9 @@ namespace CTFAPI {
 		static const char *meta_stream;
 		static const char *meta_event;
 
-		static ConfigVariableList<std::string> _kernelEventPresets;
 		static ConfigVariable<std::string> _kernelEventFile;
-		static ConfigVariableList<std::string> _kernelExcludedEvents;
+		static ConfigVariableSet<std::string> _kernelEventPresets;
+		static ConfigVariableSet<std::string> _kernelExcludedEvents;
 		static std::map<std::string, std::vector<std::string> > _kernelEventPresetMap;
 
 		bool _enabled;

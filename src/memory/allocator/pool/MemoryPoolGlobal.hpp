@@ -66,8 +66,8 @@ private:
 
 public:
 	MemoryPoolGlobal(size_t NUMANodeId) :
-		_globalAllocSizeConfig("memory.pool.global_alloc_size", 8 * 1024 * 1024),
-		_memoryChunkSizeConfig("memory.pool.chunk_size", 128 * 1024),
+		_globalAllocSizeConfig("memory.pool.global_alloc_size"),
+		_memoryChunkSizeConfig("memory.pool.chunk_size"),
 		_globalAllocSize(0),
 		_memoryChunkSize(0),
 		_pageSize(sysconf(_SC_PAGESIZE)),

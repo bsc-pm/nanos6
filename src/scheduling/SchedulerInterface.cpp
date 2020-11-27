@@ -15,9 +15,9 @@
 #include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
-ConfigVariable<std::string> SchedulerInterface::_schedulingPolicy("scheduler.policy", "fifo");
-ConfigVariable<bool> SchedulerInterface::_enableImmediateSuccessor("scheduler.immediate_successor", true);
-ConfigVariable<bool> SchedulerInterface::_enablePriority("scheduler.priority", true);
+ConfigVariable<std::string> SchedulerInterface::_schedulingPolicy("scheduler.policy");
+ConfigVariable<bool> SchedulerInterface::_enableImmediateSuccessor("scheduler.immediate_successor");
+ConfigVariable<bool> SchedulerInterface::_enablePriority("scheduler.priority");
 
 
 SchedulerInterface::SchedulerInterface()

@@ -90,7 +90,7 @@ namespace Instrument {
 			accumulatedTaskInfo += taskInfoEntry.second;
 		}
 
-		ConfigVariable<std::string> _outputFilename("instrument.stats.output_file", "/dev/stderr");
+		ConfigVariable<std::string> _outputFilename("instrument.stats.output_file");
 		std::ofstream output(_outputFilename);
 
 		output << "STATS\t" << "Total CPUs\t" << CPUManager::getTotalCPUs() << std::endl;

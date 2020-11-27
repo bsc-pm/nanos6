@@ -16,10 +16,10 @@
 #include "tasks/Task.hpp"
 
 int Throttle::_pressure;
-ConfigVariable<bool> Throttle::_enabled("throttle.enabled", false);
-ConfigVariable<int> Throttle::_throttleTasks("throttle.tasks", 5000000);
-ConfigVariable<int> Throttle::_throttlePressure("throttle.pressure", 70);
-ConfigVariable<StringifiedMemorySize> Throttle::_throttleMem("throttle.max_memory", ((size_t) 0));
+ConfigVariable<bool> Throttle::_enabled("throttle.enabled");
+ConfigVariable<int> Throttle::_throttleTasks("throttle.tasks");
+ConfigVariable<int> Throttle::_throttlePressure("throttle.pressure");
+ConfigVariable<StringifiedMemorySize> Throttle::_throttleMem("throttle.max_memory");
 
 void Throttle::initialize()
 {

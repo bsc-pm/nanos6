@@ -20,13 +20,10 @@ VirtualMemoryManagement::vmm_lock_t VirtualMemoryManagement::_lock;
 
 void VirtualMemoryManagement::initialize()
 {
-	size_t totalPhysicalMemory = HardwareInfo::getPhysicalMemorySize();
-
-	// cluster.local_memory determines the size of the local address space per
-	// cluster node. Default value: Trying to map the minimum between 2GB and
+	// The cluster.local_memory variable determines the size of the local address
+	// space per cluster node. The default value is the minimum between 2GB and
 	// the 5% of the total physical memory of the machine
-	_size = std::min(2UL << 30, totalPhysicalMemory / 20);
-	ConfigVariable<StringifiedMemorySize> _sizeEnv("cluster.local_memory", _size);
+	ConfigVariable<StringifiedMemorySize> _sizeEnv("cluster.local_memory");
 	_size = _sizeEnv.getValue();
 	assert(_size > 0);
 

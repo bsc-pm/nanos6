@@ -93,7 +93,7 @@ static DataAccessRegion findSuitableMemoryRegion()
 	size_t length = maps.size();
 	DataAccessRegion gap;
 
-	//! Find the biggest gap locally
+	// Find the biggest gap locally
 	for (size_t i = 1; i < length; ++i) {
 		void *previousEnd = maps[i - 1].getEndAddress();
 		void *nextStart = maps[i].getStartAddress();
@@ -104,7 +104,7 @@ static DataAccessRegion findSuitableMemoryRegion()
 		}
 	}
 
-	//! If not in cluster mode, we are done here
+	// If not in cluster mode, we are done here
 	if (!ClusterManager::inClusterMode()) {
 		return gap;
 	}
@@ -161,28 +161,22 @@ static DataAccessRegion findSuitableMemoryRegion()
 
 void VirtualMemoryManagement::initialize()
 {
-	size_t totalPhysicalMemory = HardwareInfo::getPhysicalMemorySize();
-	size_t distribSize = 0;
-
-	/* cluster.distributed_memory determines the total address space to be
-	 * used for distributed allocations across the cluster.
-	 * Default value: 2GB */
-	ConfigVariable<StringifiedMemorySize> distribSizeEnv("cluster.distributed_memory", (2UL << 30));
-	distribSize = distribSizeEnv.getValue();
+	// The cluster.distributed_memory variable determines the total address space to be
+	// used for distributed allocations across the cluster The efault value is 2GB
+	ConfigVariable<StringifiedMemorySize> distribSizeEnv("cluster.distributed_memory");
+	size_t distribSize = distribSizeEnv.getValue();
 	assert(distribSize > 0);
 	distribSize = ROUND_UP(distribSize, HardwareInfo::getPageSize());
 
-	/* cluster.local_memory determines the size of the local address space
-	 * per cluster node.
-	 * Default value: Trying to map the minimum between 2GB and the 5% of
-	 * 		  the total physical memory of the machine*/
-	size_t localSize = std::min(2UL << 30, totalPhysicalMemory / 20);
-	ConfigVariable<StringifiedMemorySize> localSizeEnv("cluster.local_memory", localSize);
-	localSize = localSizeEnv.getValue();
+	// The cluster.local_memory variable determines the size of the local address space
+	// per cluster node. The default value is the minimum between 2GB and the 5% of the
+	// total physical memory of the machine
+	ConfigVariable<StringifiedMemorySize> localSizeEnv("cluster.local_memory");
+	size_t localSize = localSizeEnv.getValue();
 	assert(localSize > 0);
 	localSize = ROUND_UP(localSize, HardwareInfo::getPageSize());
 
-	ConfigVariable<uint64_t> startAddress("cluster.va_start", 0);
+	ConfigVariable<uint64_t> startAddress("cluster.va_start");
 	void *address = (void *) startAddress.getValue();
 	size_t size = distribSize + localSize * ClusterManager::clusterSize();
 
@@ -225,7 +219,7 @@ void VirtualMemoryManagement::setupMemoryLayout(void *address, size_t distribSiz
 	_genericVMA = new VirtualMemoryArea(distribAddress, distribSize);
 	void *localAddress = (void *)((char *)address + nodeIndex * localSize);
 
-	/* Register local addresses with the Directory */
+	// Register local addresses with the Directory
 	for (int i = 0; i < clusterSize; ++i) {
 		if (i == nodeIndex) {
 			continue;
@@ -236,14 +230,14 @@ void VirtualMemoryManagement::setupMemoryLayout(void *address, size_t distribSiz
 		Directory::insert(localRegion, ClusterManager::getMemoryNode(i));
 	}
 
-	/** We have one VMA per NUMA node. At the moment we divide the local
-	 * address space equally among these areas. */
+	// We have one VMA per NUMA node. At the moment we divide the local
+	// address space equally among these areas
 	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_localNUMAVMA.resize(numaNodeCount);
 
-	/** Divide the address space between the NUMA nodes and the
-	 * making sure that all areas have a size that is multiple
-	 * of PAGE_SIZE */
+	// Divide the address space between the NUMA nodes and the
+	// making sure that all areas have a size that is multiple
+	// of PAGE_SIZE
 	size_t localPages = localSize / HardwareInfo::getPageSize();
 	size_t pagesPerNUMA = localPages / numaNodeCount;
 	size_t extraPages = localPages % numaNodeCount;
@@ -257,7 +251,7 @@ void VirtualMemoryManagement::setupMemoryLayout(void *address, size_t distribSiz
 		}
 		_localNUMAVMA[i] = new VirtualMemoryArea(ptr, numaSize);
 
-		//! Register the region with the Directory
+		// Register the region with the Directory
 		DataAccessRegion numaRegion(ptr, numaSize);
 		Directory::insert(numaRegion, HardwareInfo::getMemoryPlace(
 					nanos6_host_device, i));

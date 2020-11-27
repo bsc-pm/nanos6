@@ -26,8 +26,8 @@ namespace Instrument {
 
 		SpinLock _graphLock;
 
-		ConfigVariable<bool> _showDependencyStructures("instrument.graph.show_dependency_structures", false);
-		ConfigVariable<bool> _showRegions("instrument.graph.show_regions", false);
-		ConfigVariable<bool> _showLog("instrument.graph.show_log", false);
+		ConfigVariable<bool> _showDependencyStructures("instrument.graph.show_dependency_structures");
+		ConfigVariable<bool> _showRegions("instrument.graph.show_regions");
+		ConfigVariable<bool> _showLog("instrument.graph.show_log");
 	}
 }

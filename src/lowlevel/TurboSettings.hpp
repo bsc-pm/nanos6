@@ -19,7 +19,7 @@ public:
 	static void initialize()
 	{
 #ifdef __SSE2__
-		ConfigVariable<bool> turbo("turbo.enabled", false);
+		ConfigVariable<bool> turbo("turbo.enabled");
 
 		if (turbo.getValue()) {
 			// Enable flush-to-zero (FZ) and denormals are zero (FAZ) floating-point optimizations

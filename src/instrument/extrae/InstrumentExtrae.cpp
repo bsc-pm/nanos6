@@ -16,8 +16,8 @@ namespace Instrument {
 	std::map<tracing_point_type_t, scope_tracing_point_info_t> _delayedScopeTracingPoints;
 	std::map<tracing_point_type_t, enumerated_tracing_point_info_t> _delayedEnumeratedTracingPoints;
 
-	const ConfigVariable<bool> _traceAsThreads("instrument.extrae.as_threads", false);
-	const ConfigVariable<unsigned int> _detailLevel("instrument.extrae.detail_level", 1);
+	const ConfigVariable<bool> _traceAsThreads("instrument.extrae.as_threads");
+	const ConfigVariable<unsigned int> _detailLevel("instrument.extrae.detail_level");
 
 	SpinLock _extraeLock;
 

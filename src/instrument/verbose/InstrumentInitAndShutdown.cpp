@@ -39,15 +39,8 @@ namespace Instrument {
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "verbose");
 
-		ConfigVariableList<std::string> verboseAreas("instrument.verbose.areas", {
-			"all",
-			"!ComputePlaceManagement",
-			"!DependenciesByAccess",
-			"!DependenciesByAccessLinks",
-			"!DependenciesByGroup",
-			"!LeaderThread",
-			"!TaskStatus",
-			"!ThreadManagement"});
+		ConfigVariableSet<std::string> verboseAreas("instrument.verbose.areas");
+
 		for (auto area : verboseAreas) {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
@@ -133,7 +126,7 @@ namespace Instrument {
 			}
 		}
 
-		ConfigVariable<std::string> outputFilename("instrument.verbose.output_file", "/dev/stderr");
+		ConfigVariable<std::string> outputFilename("instrument.verbose.output_file");
 #ifdef __ANDROID__
 		if (!outputFilename.isPresent()) {
 			_output = nullptr;
