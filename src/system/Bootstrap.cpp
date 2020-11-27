@@ -28,6 +28,7 @@
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "support/config/ConfigCentral.hpp"
+#include "support/config/ConfigChecker.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/Throttle.hpp"
@@ -119,6 +120,9 @@ void nanos6_preinit(void)
 
 	CPUManager::initialize();
 	Instrument::nanos6_preinit_finished();
+
+	// Assert config conditions if any
+	ConfigChecker::assertConditions();
 }
 
 

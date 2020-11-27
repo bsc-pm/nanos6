@@ -405,6 +405,7 @@ common_sources = \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.cpp \
 	src/support/GlobalLock.cpp \
 	src/support/config/ConfigCentral.cpp \
+	src/support/config/ConfigChecker.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
@@ -1290,6 +1291,7 @@ noinst_HEADERS = \
 	src/support/StringSupport.hpp \
 	src/support/bitset/AtomicBitset.hpp \
 	src/support/config/ConfigCentral.hpp \
+	src/support/config/ConfigChecker.hpp \
 	src/support/config/ConfigParser.hpp \
 	src/support/config/ConfigSupport.hpp \
 	src/support/config/ConfigVariable.hpp \
