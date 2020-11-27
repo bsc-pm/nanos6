@@ -151,12 +151,12 @@ public:
 
 	inline DataAccess *getSuccessor() const
 	{
-		return _successor;
+		return _successor.load(std::memory_order_acquire);
 	}
 
 	inline void setSuccessor(DataAccess *successor)
 	{
-		_successor = successor;
+		_successor.store(successor, std::memory_order_release);
 	}
 
 	inline bool isWeak() const
@@ -214,17 +214,17 @@ public:
 
 	inline DataAccess *getChild() const
 	{
-		return _child;
+		return _child.load(std::memory_order_acquire);
 	}
 
 	inline void setChild(DataAccess *child)
 	{
-		_child = child;
+		_child.store(child, std::memory_order_release);
 	}
 
 	inline access_flags_t getFlags() const
 	{
-		return _accessFlags;
+		return _accessFlags.load(std::memory_order_relaxed);
 	}
 
 	MemoryPlace const *getLocation() const

@@ -461,7 +461,7 @@ bool DataAccess::applyPropagated(DataAccessMessage &message)
 	bool isReduction = (getType() == REDUCTION_ACCESS_TYPE);
 	DataAccess *origin = (message.to == nullptr ? message.from : message.to);
 
-	access_flags_t oldFlags = _accessFlags.fetch_or(message.flagsAfterPropagation, std::memory_order_acquire);
+	access_flags_t oldFlags = _accessFlags.fetch_add(message.flagsAfterPropagation, std::memory_order_acquire);
 	Instrument::automataMessage(origin->getInstrumentationId(), message.from->getInstrumentationId(), message.flagsAfterPropagation, oldFlags);
 	// No references to the access from here, as it could be deleted by another thread.
 	// Any access without knowing for sure that a message will be generated is a use-after-free.
@@ -481,7 +481,7 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 	bool isReduction = (getType() == REDUCTION_ACCESS_TYPE);
 	DataAccessType type = getType();
 
-	access_flags_t oldFlags = _accessFlags.fetch_or(message.flagsForNext);
+	access_flags_t oldFlags = _accessFlags.fetch_add(message.flagsForNext, std::memory_order_acq_rel);
 	Instrument::automataMessage(message.from->getInstrumentationId(), message.to->getInstrumentationId(), message.flagsForNext, oldFlags);
 	// No references to the access from here, as it could be deleted by another thread.
 	// Any access without knowing for sure that a message will be generated is a use-after-free.
