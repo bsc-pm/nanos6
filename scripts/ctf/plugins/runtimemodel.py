@@ -69,6 +69,9 @@ class Task:
 	def type(self):
 		return self._type
 
+	def isUnitialized(self):
+		return self._status == self.Status.Uninitialized
+
 	def reset(self):
 		self._id   = -1
 		self._type = -1
@@ -100,7 +103,7 @@ class Thread:
 		self._id            = tid
 		self._vcpu          = None
 		self._isBusyWaiting = 0
-		self._currentTask   = Task()
+		self._tasks         = [Task()]
 
 	@property
 	def tid(self):
@@ -116,7 +119,7 @@ class Thread:
 
 	@property
 	def task(self):
-		return self._currentTask
+		return self._tasks[-1]
 
 	@property
 	def isBusyWaiting(self):
@@ -125,6 +128,22 @@ class Thread:
 	@isBusyWaiting.setter
 	def isBusyWaiting(self, value):
 		self._isBusyWaiting = value
+
+	def startTask(self, taskId, taskTypeId):
+		if not self._tasks[-1].isUnitialized():
+			# There was a task assigned to this thread already, hence we must
+			# be trying to execute an if0 task while holding another task
+			self._tasks.append(Task())
+		self._tasks[-1].start(taskId, taskTypeId)
+
+	def endTask(self):
+		if len(self._tasks) != 1:
+			# if the list of tasks is greater than one, it means we were running
+			# an if0 task. In that case, just pop the current task.
+			self._tasks.pop()
+		else:
+			# otherwise, reuse the task object by reinitializing it
+			self._tasks[-1].end()
 
 class TaskIDsDB:
 	def __init__(self):
@@ -299,7 +318,7 @@ class RuntimeModel:
 		taskId     = event["id"]
 		taskTypeId = cls.getTaskTypeId(taskId)
 		thread     = cls.getCurrentThread(event)
-		thread.task.start(taskId, taskTypeId)
+		thread.startTask(taskId, taskTypeId)
 
 	@classmethod
 	def hook_taskBlock(cls, event, _):
@@ -314,5 +333,5 @@ class RuntimeModel:
 	@classmethod
 	def hook_taskEnd(cls, event, _):
 		thread = cls.getCurrentThread(event)
-		thread.task.end()
+		thread.endTask()
 

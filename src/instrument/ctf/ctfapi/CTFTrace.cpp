@@ -258,7 +258,7 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 	// TODO do not copy the trace if it's located in the same filesystem,
 	// just rename it
 	//
-	std::cout << "Moving trace to current directory, please wait " << std::flush;
+	std::cout << "Moving trace to current directory, please wait... " << std::flush;
 
 	// create final trace name
 	std::string finalTracePath = mkTraceDirectoryName(_finalTraceBasePath,
@@ -377,7 +377,7 @@ void CTFAPI::CTFTrace::convertToParaver()
 		return;
 	}
 
-	std::cout << "Converting CTF trace to Paraver, please wait " << std::flush;
+	std::cout << "Converting CTF trace to Paraver, please wait... " << std::flush;
 
 	// Perform the conversion!
 	std::string command = converter + " " + _tmpTracePath;
