@@ -7,22 +7,30 @@
 #ifndef FATAL_ERROR_HANDLER_HPP
 #define FATAL_ERROR_HANDLER_HPP
 
-#include <string.h>
-
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <mutex>
 #include <sstream>
+#include <unistd.h>
 
 #include "lowlevel/SpinLock.hpp"
 
-#include <string.h>
-#include <unistd.h>
-
 
 class FatalErrorHandler {
+
+private:
+
+	//! NOTE: Private field as CUDAErrorHandler and MPIErrorHandler don't need it
+	//! A lock for the information channel (cout)
+	static SpinLock _infoLock;
+
 protected:
-	static SpinLock _lock;
+
+	//! A lock for the error channel (cerr)
+	static SpinLock _errorLock;
+
+protected:
 
 	template<typename T, typename... TS>
 	static inline void emitReasonParts(std::ostringstream &oss, T const &firstReasonPart, TS... reasonParts)
@@ -31,11 +39,11 @@ protected:
 		emitReasonParts(oss, reasonParts...);
 	}
 
-	static inline void emitReasonParts(__attribute__((unused)) std::ostringstream &oss)
+	static inline void emitReasonParts(std::ostringstream &)
 	{
 	}
 
-	static inline void safeEmitPart(__attribute__((unused)) char *buffer, __attribute__((unused)) size_t size, char part)
+	static inline void safeEmitPart(char *, size_t, char part)
 	{
 		write(2, &part, 1);
 	}
@@ -52,7 +60,7 @@ protected:
 		write(2, buffer, length);
 	}
 
-	static inline void safeEmitPart(__attribute__((unused)) char *buffer, __attribute__((unused)) size_t size, char const *part)
+	static inline void safeEmitPart(char *, size_t, char const *part)
 	{
 		write(2, part, strlen(part));
 	}
@@ -76,11 +84,12 @@ protected:
 		safeEmitReasonParts(buffer, size, reasonParts...);
 	}
 
-	static inline void safeEmitReasonParts(__attribute__((unused)) char *buffer, __attribute__((unused)) size_t size)
+	static inline void safeEmitReasonParts(char *, size_t)
 	{
 	}
 
 public:
+
 	template<typename... TS>
 	static inline void handle(int rc, TS... reasonParts)
 	{
@@ -94,7 +103,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 
@@ -105,7 +114,6 @@ public:
 #endif
 	}
 
-
 	template<typename... TS>
 	static inline void safeHandle(int rc, char *buffer, size_t size, TS... reasonParts)
 	{
@@ -114,7 +122,7 @@ public:
 		}
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			write(2, "Error: ", 7);
 			strerror_r(rc, buffer, size);
 			write(2, buffer, strlen(buffer));
@@ -129,7 +137,6 @@ public:
 #endif
 	}
 
-
 	template<typename... TS>
 	static inline void check(bool success, TS... reasonParts)
 	{
@@ -143,7 +150,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 
@@ -167,7 +174,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 
@@ -197,7 +204,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 	}
@@ -206,6 +213,29 @@ public:
 	static inline void warn(TS... reasonParts)
 	{
 		warnIf(true, reasonParts...);
+	}
+
+	template<typename... TS>
+	static inline void printIf(bool condition, TS... reasonParts)
+	{
+		if (__builtin_expect(!condition, 1)) {
+			return;
+		}
+
+		std::ostringstream oss;
+		emitReasonParts(oss, reasonParts...);
+		oss << std::endl;
+
+		{
+			std::lock_guard<SpinLock> guard(_infoLock);
+			std::cout << oss.str();
+		}
+	}
+
+	template<typename... TS>
+	static inline void print(TS... reasonParts)
+	{
+		printIf(true, reasonParts...);
 	}
 };
 

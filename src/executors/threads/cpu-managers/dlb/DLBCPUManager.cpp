@@ -50,9 +50,7 @@ void DLBCPUManager::preinitialize()
 	} else if (policyValue == "greedy") {
 		_cpuManagerPolicy = new GreedyPolicy(numCPUs);
 	} else {
-		FatalErrorHandler::failIf(
-			true, "Unexistent '", policyValue, "' CPU Manager Policy"
-		);
+		FatalErrorHandler::fail("Unexistent '", policyValue, "' CPU Manager Policy");
 	}
 	assert(_cpuManagerPolicy != nullptr);
 
@@ -151,16 +149,12 @@ void DLBCPUManager::preinitialize()
 	// taken (i.e. all the callbacks have been triggered before returning)
 	int ret = DLB_Init(numCPUs, &_cpuMask, "--lewi --quiet=yes");
 	if (ret == DLB_ERR_PERM) {
-		FatalErrorHandler::failIf(
-			true,
+		FatalErrorHandler::fail(
 			"The current CPU mask collides with another process' mask\n",
 			"Original error code while initializing DLB: ", ret
 		);
 	} else if (ret != DLB_SUCCESS) {
-		FatalErrorHandler::failIf(
-			true,
-			"Error code ", ret, " while initializing DLB"
-		);
+		FatalErrorHandler::fail("Error code ", ret, " while initializing DLB");
 	}
 
 	// Prepare callbacks to enable/disable CPUs from DLB

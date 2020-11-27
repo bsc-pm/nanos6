@@ -44,7 +44,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 
@@ -52,7 +52,7 @@ public:
 	}
 
 	template<typename... TS>
-	static inline void 
+	static inline void
 	handleErrorInStatus(int rc, MPI_Status *status, int statusSize, MPI_Comm comm, TS... reasonParts)
 	{
 		if (__builtin_expect(rc == MPI_SUCCESS, 1)) {

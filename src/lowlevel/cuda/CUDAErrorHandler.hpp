@@ -45,7 +45,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 
@@ -74,7 +74,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 
@@ -100,7 +100,7 @@ public:
 		oss << std::endl;
 
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_errorLock);
 			std::cerr << oss.str();
 		}
 	}
