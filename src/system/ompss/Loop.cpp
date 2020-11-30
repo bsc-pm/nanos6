@@ -36,10 +36,12 @@ void nanos6_create_loop(
 
 	// The compiler passes either the num deps of a single child or -1. However, the parent taskloop
 	// must register as many deps child_num_deps*numTasks.
-	if (num_deps != (size_t) -1) {
+	bool isTaskloop = flags & nanos6_taskloop_task;
+	if (num_deps != (size_t) -1 && isTaskloop) {
 		size_t numTasks = Taskloop::computeNumTasks((upper_bound - lower_bound), grainsize);
 		num_deps *= numTasks;
 	}
+
 	Task *task = AddTask::createTask(
 		task_info, task_invocation_info,
 		*args_block_pointer, args_block_size,

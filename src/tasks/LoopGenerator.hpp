@@ -103,7 +103,9 @@ public:
 			parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
 		}
 
-		size_t numDeps = parent->getMaxChildDeps();
+		// This number has been computed while registering the parent's dependencies.
+		size_t numDeps = parent->getMaxChildDependencies();
+
 		Task *task = AddTask::createTask(
 			parentTaskInfo, parentTaskInvocationInfo,
 			argsBlock, originalArgsBlockSize,

@@ -13,8 +13,8 @@ void nanos6_create_loop(
 	nanos6_task_info_t *task_info,
 	nanos6_task_invocation_info_t *task_invocation_info,
 	size_t args_block_size,
-	/* OUT */ void **args_block_pointer,
-	/* OUT */ void **task_pointer,
+	void **args_block_pointer,
+	void **task_pointer,
 	size_t flags,
 	size_t num_deps,
 	size_t lower_bound,
@@ -22,12 +22,12 @@ void nanos6_create_loop(
 	size_t grainsize,
 	size_t chunksize
 ) {
-	typedef void nanos6_create_task_t(
+	typedef void nanos6_create_loop_t(
 		nanos6_task_info_t *task_info,
 		nanos6_task_invocation_info_t *task_invocation_info,
 		size_t args_block_size,
-		/* OUT */ void **args_block_pointer,
-		/* OUT */ void **task_pointer,
+		void **args_block_pointer,
+		void **task_pointer,
 		size_t flags,
 		size_t num_deps,
 		size_t lower_bound,
@@ -42,7 +42,10 @@ void nanos6_create_loop(
 		symbol = (nanos6_create_loop_t *) _nanos6_resolve_symbol("nanos6_create_loop", "essential", NULL);
 	}
 
-	(*symbol)(task_info, task_invocation_info, args_block_size, args_block_pointer, task_pointer, flags, num_deps, lower_bound, upper_bound, grainsize, chunksize);
+	(*symbol)(task_info, task_invocation_info, args_block_size,
+			args_block_pointer, task_pointer, flags, num_deps,
+			lower_bound, upper_bound, grainsize, chunksize);
+
 }
 
 #pragma GCC visibility pop

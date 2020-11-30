@@ -9,6 +9,7 @@
 
 #include <cmath>
 
+#include "support/MathSupport.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -20,7 +21,6 @@ public:
 private:
 	bounds_t _bounds;
 	bool _source;
-	size_t _numTasks;
 	// In some cases, the compiler cannot precisely indicate the number of deps.
 	// In these cases, it passes -1 to the runtime so the deps are dynamically
 	// registered. We have a loop where the parent registers all the deps of the
@@ -50,7 +50,7 @@ public:
 			taskStatistics),
 		_bounds(),
 		_source(false),
-		_maxChildDeps((size_t) -1)
+		_maxChildDeps(0)
 	{
 	}
 
@@ -68,7 +68,6 @@ public:
 		if (_bounds.grainsize == 0) {
 			_bounds.grainsize = std::max(totalIterations /CPUManager::getTotalCPUs(), (size_t) 1);
 		}
-		_numTasks = ceil(totalIterations, _bounds.grainsize);
 	}
 
 	inline bounds_t &getBounds()
@@ -86,18 +85,14 @@ public:
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
 
-	inline size_t getNumTasks() const
-	{
-		return _numTasks;
-	}
-
 	void body(nanos6_address_translation_entry_t * = nullptr) override;
 
 	inline void registerDependencies(bool discrete = false) override
 	{
 		if (discrete && isTaskloopSource()) {
 			bounds_t tmpBounds;
-			for (size_t t = 0; t < _numTasks; t++) {
+			size_t numTasks = computeNumTasks(getIterationCount(), _bounds.grainsize);
+			for (size_t t = 0; t < numTasks; t++) {
 				// Store previous maxChildDeps
 				size_t maxChildDepsStart = _maxChildDeps;
 				// Reset
@@ -109,7 +104,7 @@ public:
 				getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &tmpBounds, this);
 
 				// Restore previous maxChildDeps if it is bigger than current one
-				if (maxChildDepsStart != (size_t) -1 && maxChildDepsStart > _maxChildDeps) {
+				if (maxChildDepsStart > _maxChildDeps) {
 					_maxChildDeps = maxChildDepsStart;
 				}
 			}
@@ -119,15 +114,14 @@ public:
 		}
 	}
 
-	inline size_t getMaxChildDeps() const
+	inline size_t getMaxChildDependencies() const
 	{
 		return _maxChildDeps;
 	}
 
-	inline void incrementMaxChildDeps()
+	inline void increaseMaxChildDependencies() override
 	{
 		if (_source) {
-			assert(_maxChildDeps != (size_t) -1);
 			_maxChildDeps++;
 		}
 	}
@@ -142,17 +136,12 @@ public:
 		return isTaskfor();
 	}
 
-	static inline size_t ceil(size_t x, size_t y)
-	{
-		return (x+(y-1))/y;
-	}
-
 	static inline size_t computeNumTasks(size_t iterations, size_t grainsize)
 	{
 		if (grainsize == 0) {
 			grainsize = std::max(iterations/CPUManager::getTotalCPUs(), (size_t) 1);
 		}
-		return ceil(iterations, grainsize);
+		return MathSupport::ceil(iterations, grainsize);
 	}
 };
 

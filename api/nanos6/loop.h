@@ -42,7 +42,11 @@ typedef struct {
 //! \param[in,out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call. Input if flags contains nanos6_preallocated_args_block, out otherwise
 //! \param[out] task_pointer a pointer to a location to store the task handler
 //! \param[in] flags the flags of the task
-//! \param[in] num_deps the expected number of dependencies of this task or -1 if undefined
+//! \param[in] num_deps the expected number of dependencies of this taskfor or a taskloop child or -1 if undefined
+//! \param[in] lower_bound The lower bound of the iteration space (inclusive)
+//! \param[in] upper_bound The upper bound of the iteration space (exclusive)
+//! \param[in] grainsize The minimum number of iterations which should be executed by a task
+//! \param[in] chunksize The minimum number of iterations which should be executed by a chunk
 void nanos6_create_loop(
 	nanos6_task_info_t *task_info,
 	nanos6_task_invocation_info_t *task_invocation_info,
