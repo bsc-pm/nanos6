@@ -65,8 +65,11 @@ void SpawnFunction::spawnFunction(
 	// Runtime Tracking Point - Entering the creation of a task
 	TrackingPoints::enterSpawnFunction(creator, fromUserCode);
 
-	// Increase the number of spawned functions
-	_pendingSpawnedFunctions++;
+	// Increase the number of spawned functions in case it is
+	// spawned from outside the runtime system
+	if (fromUserCode) {
+		_pendingSpawnedFunctions++;
+	}
 
 	nanos6_task_info_t *taskInfo = nullptr;
 	{
