@@ -21,10 +21,10 @@ private:
 
 		switch (err) {
 			case cudaErrorIllegalAddress:
-				oss << errName << ": Illegal Address accessed by CUDA, managed memory allocation is needed when using unified memory mode";
+				oss << errName << ": Illegal Address accessed by CUDA, managed memory allocation is needed when using unified memory mode - ";
 				break;
 			default:
-				oss << errName << ": " << errReason;
+				oss << errName << ": " << errReason << " - ";
 				break;
 		}
 	}
