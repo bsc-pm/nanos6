@@ -22,26 +22,47 @@ std::vector<DeviceInfo *> HardwareInfo::_infos;
 
 void HardwareInfo::initialize()
 {
-	_infos.resize(nanos6_device_t::nanos6_device_type_num);
+	_infos.resize(nanos6_device_type_num);
 
-	_infos[nanos6_device_t::nanos6_host_device] = new HostInfo();
+	_infos[nanos6_host_device] = new HostInfo();
 	// Prioritizing OpenACC over CUDA, as CUDA calls appear to break PGI contexts.
 	// The opposite fortunately does not appear to happen.
 #ifdef USE_OPENACC
-	_infos[nanos6_device_t::nanos6_openacc_device] = new OpenAccDeviceInfo();
+	_infos[nanos6_openacc_device] = new OpenAccDeviceInfo();
 #endif
 #ifdef USE_CUDA
-	_infos[nanos6_device_t::nanos6_cuda_device] = new CUDADeviceInfo();
+	_infos[nanos6_cuda_device] = new CUDADeviceInfo();
 #endif
 // Fill the rest of the devices accordingly, once implemented
 }
 
+void HardwareInfo::initializeDeviceServices()
+{
+	_infos[nanos6_host_device]->initializeDeviceServices();
+#ifdef USE_OPENACC
+	_infos[nanos6_openacc_device]->initializeDeviceServices();
+#endif
+#ifdef USE_CUDA
+	_infos[nanos6_cuda_device]->initializeDeviceServices();
+#endif
+}
+
 void HardwareInfo::shutdown()
 {
-	for (int i = 0; i < nanos6_device_t::nanos6_device_type_num; ++i) {
+	for (int i = 0; i < nanos6_device_type_num; ++i) {
 		if (_infos[i] != nullptr) {
 			delete _infos[i];
 		}
 	}
 }
 
+void HardwareInfo::shutdownDeviceServices()
+{
+	_infos[nanos6_host_device]->shutdownDeviceServices();
+#ifdef USE_OPENACC
+	_infos[nanos6_openacc_device]->shutdownDeviceServices();
+#endif
+#ifdef USE_CUDA
+	_infos[nanos6_cuda_device]->shutdownDeviceServices();
+#endif
+}

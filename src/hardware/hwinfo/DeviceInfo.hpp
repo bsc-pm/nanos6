@@ -35,6 +35,14 @@ public:
 		return _deviceInitialized;
 	}
 
+	virtual void initializeDeviceServices()
+	{
+	}
+
+	virtual void shutdownDeviceServices()
+	{
+	}
+
 	virtual size_t getComputePlaceCount() const = 0;
 
 	virtual ComputePlace *getComputePlace(int handler) const = 0;

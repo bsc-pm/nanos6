@@ -73,4 +73,42 @@ void Accelerator::finishTask(Task *task)
 			TaskFinalization::disposeTask(task);
 		}
 	}
-};
+}
+
+void Accelerator::initializeService()
+{
+	// Spawn service function
+	SpawnFunction::spawnFunction(
+		serviceFunction, this,
+		serviceCompleted, this,
+		"Device service", false
+	);
+}
+
+void Accelerator::shutdownService()
+{
+	// Notify the service to stop
+	_stopService = true;
+
+	// Wait until the service completes
+	while (!_finishedService);
+}
+
+void Accelerator::serviceFunction(void *data)
+{
+	Accelerator *accel = (Accelerator *) data;
+	assert(accel != nullptr);
+
+	// Execute the service loop
+	accel->acceleratorServiceLoop();
+}
+
+void Accelerator::serviceCompleted(void *data)
+{
+	Accelerator *accel = (Accelerator *) data;
+	assert(accel != nullptr);
+	assert(accel->_stopService);
+
+	// Mark the service as completed
+	accel->_finishedService = true;
+}

@@ -46,16 +46,6 @@ private:
 		_streamPool.releaseCUDAStream(env.stream);
 	}
 
-	inline void registerPolling() override
-	{
-		nanos6_register_polling_service("CUDA polling service", pollingService, (void *)this);
-	}
-
-	inline void unregisterPolling() override
-	{
-		nanos6_unregister_polling_service("CUDA polling service", pollingService, (void *)this);
-	}
-
 	void acceleratorServiceLoop() override;
 
 	void processCUDAEvents();
@@ -65,14 +55,16 @@ private:
 	void postRunTask(Task *task) override;
 
 public:
-	CUDAAccelerator(int cudaDeviceIndex);
+	CUDAAccelerator(int cudaDeviceIndex) :
+		Accelerator(cudaDeviceIndex, nanos6_cuda_device),
+		_streamPool(cudaDeviceIndex)
+	{
+		CUDAFunctions::getDeviceProperties(_deviceProperties, _deviceHandler);
+	}
 
 	~CUDAAccelerator()
 	{
-		unregisterPolling();
 	}
-
-	static int pollingService(void *data);
 
 	// Set current device as the active in the runtime
 	inline void setActiveDevice() override

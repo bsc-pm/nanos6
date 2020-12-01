@@ -50,22 +50,38 @@ public:
 		}
 	}
 
-	inline size_t getComputePlaceCount() const
+	inline void initializeDeviceServices() override
+	{
+		for (CUDAAccelerator *accelerator : _accelerators) {
+			assert(accelerator != nullptr);
+			accelerator->initializeService();
+		}
+	}
+
+	inline void shutdownDeviceServices() override
+	{
+		for (CUDAAccelerator *accelerator : _accelerators) {
+			assert(accelerator != nullptr);
+			accelerator->shutdownService();
+		}
+	}
+
+	inline size_t getComputePlaceCount() const override
 	{
 		return _deviceCount;
 	}
 
-	inline ComputePlace *getComputePlace(int handler) const
+	inline ComputePlace *getComputePlace(int handler) const override
 	{
 		return _accelerators[handler]->getComputePlace();
 	}
 
-	inline size_t getMemoryPlaceCount() const
+	inline size_t getMemoryPlaceCount() const override
 	{
 		return _deviceCount;
 	}
 
-	inline MemoryPlace *getMemoryPlace(int handler) const
+	inline MemoryPlace *getMemoryPlace(int handler) const override
 	{
 		return _accelerators[handler]->getMemoryPlace();
 	}

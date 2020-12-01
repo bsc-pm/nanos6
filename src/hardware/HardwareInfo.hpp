@@ -22,7 +22,11 @@ public:
 
 	static void initialize();
 
+	static void initializeDeviceServices();
+
 	static void shutdown();
+
+	static void shutdownDeviceServices();
 
 	static inline bool canDeviceRunTasks(nanos6_device_t type)
 	{

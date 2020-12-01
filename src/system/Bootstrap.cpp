@@ -100,6 +100,9 @@ void nanos6_preinit(void)
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();
 
+	// Initialize device services after initializing scheduler
+	HardwareInfo::initializeDeviceServices();
+
 	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
@@ -148,6 +151,9 @@ void nanos6_shutdown(void)
 	NUMAManager::shutdown();
 	StreamManager::shutdown();
 	LeaderThread::shutdown();
+
+	// Shutdown device services before CPU and thread managers
+	HardwareInfo::shutdownDeviceServices();
 
 	// Signal the shutdown to all CPUs and finalize threads
 	CPUManager::shutdownPhase1();

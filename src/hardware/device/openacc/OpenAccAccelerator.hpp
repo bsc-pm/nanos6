@@ -61,16 +61,6 @@ private:
 		_queuePool.releaseAsyncQueue(queue);
 	}
 
-	inline void registerPolling() override
-	{
-		nanos6_register_polling_service("OpenACC polling service", pollingService, (void *)this);
-	}
-
-	inline void unregisterPolling() override
-	{
-		nanos6_unregister_polling_service("OpenACC polling service", pollingService, (void *)this);
-	}
-
 	void acceleratorServiceLoop() override;
 
 	void processQueues();
@@ -80,15 +70,11 @@ public:
 		Accelerator(openaccDeviceIndex, nanos6_openacc_device),
 		_queuePool()
 	{
-		registerPolling();
 	}
 
 	~OpenAccAccelerator()
 	{
-		unregisterPolling();
 	}
-
-	static int pollingService(void *data);
 
 	// Set current device as the active in the runtime
 	inline void setActiveDevice() override
