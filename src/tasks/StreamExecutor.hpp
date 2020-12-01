@@ -85,8 +85,8 @@ private:
 	//! The identifier of the stream this executor is in charge of
 	size_t _streamId;
 
-	//! The blocking context of the executor task
-	void *_blockingContext;
+	//! Whether the executor task is blocked
+	bool _blocked;
 
 	//! Whether the runtime is shutting down
 	std::atomic<bool> _mustShutdown;
@@ -120,7 +120,7 @@ public:
 			flags, taskAccessInfo,
 			taskCountersAddress,
 			taskStatistics),
-		_blockingContext(nullptr),
+		_blocked(false),
 		_mustShutdown(false),
 		_queue(),
 		_spinlock(),
@@ -155,14 +155,15 @@ public:
 		_spinlock.lock();
 
 		_mustShutdown = true;
-		Task *task = static_cast<Task *>(_blockingContext);
-		_blockingContext = nullptr;
+
+		bool mustUnblock = _blocked;
+		_blocked = false;
 
 		_spinlock.unlock();
 
 		// Unblock the executor if it was blocked
-		if (task != nullptr) {
-			BlockingAPI::unblockTask(task);
+		if (mustUnblock) {
+			BlockingAPI::unblockTask(this);
 		}
 	}
 
@@ -173,14 +174,15 @@ public:
 		_spinlock.lock();
 
 		_queue.push_back(function);
-		Task *task = static_cast<Task *>(_blockingContext);
-		_blockingContext = nullptr;
+
+		bool mustUnblock = _blocked;
+		_blocked = false;
 
 		_spinlock.unlock();
 
 		// Unblock the executor if it was blocked
-		if (task != nullptr) {
-			BlockingAPI::unblockTask(task);
+		if (mustUnblock) {
+			BlockingAPI::unblockTask(this);
 		}
 	}
 
@@ -262,8 +264,8 @@ public:
 				delete function;
 			} else {
 				// Release the lock and block the task
-				assert(_blockingContext == nullptr);
-				_blockingContext = nanos6_get_current_blocking_context();
+				assert(!_blocked);
+				_blocked = true;
 
 				_spinlock.unlock();
 
