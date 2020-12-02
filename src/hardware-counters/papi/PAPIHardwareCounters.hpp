@@ -8,6 +8,7 @@
 #define PAPI_HARDWARE_COUNTERS_HPP
 
 #include <cassert>
+#include <string>
 #include <vector>
 
 #include "hardware-counters/HardwareCountersInterface.hpp"
