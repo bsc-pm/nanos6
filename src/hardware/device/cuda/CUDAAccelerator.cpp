@@ -13,29 +13,46 @@
 #include <DataAccessRegistration.hpp>
 #include <DataAccessRegistrationImplementation.hpp>
 
+
+ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned", true);
+ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us", 500);
+
 thread_local Task* CUDAAccelerator::_currentTask;
 
 
 void CUDAAccelerator::acceleratorServiceLoop()
 {
+	const size_t sleepTime = _usPollingPeriod.getValue();
+
 	while (!shouldStopService()) {
-		while (_streamPool.streamAvailable()) {
-			Task *task = Scheduler::getReadyTask(_computePlace);
-			if (task == nullptr)
-				break;
+		bool activeDevice = false;
+		do {
+			// Launch as many ready device tasks as possible
+			while (_streamPool.streamAvailable()) {
+				Task *task = Scheduler::getReadyTask(_computePlace);
+				if (task == nullptr)
+					break;
 
-			runTask(task);
-		}
+				runTask(task);
+			}
 
-		// Only do the setActiveDevice if there have been tasks launched
-		// Having setActiveDevice calls during e.g. bootstrap caused issues
-		if (!_activeEvents.empty()) {
-			setActiveDevice();
-			processCUDAEvents();
-		}
+			// Only set the active device if there have been tasks launched
+			// Setting the device during e.g. bootstrap caused issues
+			if (!_activeEvents.empty()) {
+				if (!activeDevice) {
+					activeDevice = true;
+					setActiveDevice();
+				}
+
+				// Process the active events
+				processCUDAEvents();
+			}
+
+			// Iterate while there are running tasks and pinned polling is enabled
+		} while (_pinnedPolling && !_activeEvents.empty());
 
 		// Sleep for 500 microseconds
-		BlockingAPI::waitForUs(500);
+		BlockingAPI::waitForUs(sleepTime);
 	}
 }
 

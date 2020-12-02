@@ -12,26 +12,43 @@
 #include "system/BlockingAPI.hpp"
 
 
+ConfigVariable<bool> OpenAccAccelerator::_pinnedPolling("devices.openacc.polling.pinned", true);
+ConfigVariable<size_t> OpenAccAccelerator::_usPollingPeriod("devices.openacc.polling.period_us", 500);
+
+
 void OpenAccAccelerator::acceleratorServiceLoop()
 {
+	const size_t sleepTime = _usPollingPeriod.getValue();
+
 	while (!shouldStopService()) {
-		while (isQueueAvailable()) {
-			Task *task = Scheduler::getReadyTask(_computePlace);
-			if (task == nullptr)
-				break;
+		bool activeDevice = false;
+		do {
+			// Launch as many ready device tasks as possible
+			while (isQueueAvailable()) {
+				Task *task = Scheduler::getReadyTask(_computePlace);
+				if (task == nullptr)
+					break;
 
-			runTask(task);
-		}
+				runTask(task);
+			}
 
-		// Only do the setActiveDevice if there have been tasks launched
-		// Having setActiveDevice calls during e.g. bootstrap caused issues
-		if (!_activeQueues.empty()) {
-			setActiveDevice();
-			processQueues();
-		}
+			// Only set the active device if there have been tasks launched
+			// Setting the device during e.g. bootstrap caused issues
+			if (!_activeQueues.empty()) {
+				if (!activeDevice) {
+					activeDevice = true;
+					setActiveDevice();
+				}
+
+				// Process the active events
+				processQueues();
+			}
+
+			// Iterate while there are running tasks and pinned polling is enabled
+		} while (_pinnedPolling && !_activeQueues.empty());
 
 		// Sleep for 500 microseconds
-		BlockingAPI::waitForUs(500);
+		BlockingAPI::waitForUs(sleepTime);
 	}
 }
 

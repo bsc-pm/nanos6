@@ -137,6 +137,18 @@ __require_CUDA
 		page_size = 0x8000
 		# Maximum CUDA streams per GPU. Default is 16
 		streams = 16
+		# CUDA device polling services options. There is a service for each GPU device. They run
+		# periodically and manage the launching and finalization of ready CUDA tasks on the GPU
+		# devices. While running, each service occupies an available CPU from the system
+		[devices.cuda.polling]
+			# Indicate whether the CUDA services should constantly run while there are CUDA tasks
+			# running on their GPU. Enabling this option may reduce the latency of processing CUDA
+			# tasks at the expenses of occupiying a CPU from the system. Default is true
+			pinned = true
+			# The time period in microseconds between CUDA service runs. During that time, the CPUs
+			# occupied by the services are available to execute ready tasks. Setting this option to 0
+			# makes the services to constantly run. Default is 500
+			period_us = 500
 __!require_CUDA
 __require_OPENACC
 	# OmpSs-2 @ OpenACC
@@ -146,6 +158,18 @@ __require_OPENACC
 		# The maximum number of async queues per device. This option also indicates the maximum
 		# number of tasks that can be run concurrently per device. Default is 128
 		max_queues = 128
+		# OpenACC device polling services options. There is a service for each GPU device. They run
+		# periodically and manage the launching and finalization of ready OpenACC tasks on the GPU
+		# devices. While running, each service occupies an available CPU from the system
+		[devices.openacc.polling]
+			# Indicate whether the OpenACC services should constantly run while there are OpenACC
+			# tasks running on their GPU. Enabling this option may reduce the latency of processing
+			# OpenACC tasks at the expenses of occupying a CPU from the system. Default is true
+			pinned = true
+			# The time period in microseconds between OpenACC service runs. During that time, the
+			# CPUs occupied by the services are available to execute ready tasks. Setting this option
+			# to 0 makes the services to constantly run. Default is 500
+			period_us = 500
 __!require_OPENACC
 
 [instrument]

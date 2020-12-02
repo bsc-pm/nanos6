@@ -14,12 +14,19 @@
 #include "OpenAccFunctions.hpp"
 #include "OpenAccQueuePool.hpp"
 #include "hardware/device/Accelerator.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 class OpenAccAccelerator : public Accelerator {
 private:
 	std::deque<OpenAccQueue *> _activeQueues;
 
 	OpenAccQueuePool _queuePool;
+
+	// Whether the device service should run while there are running tasks
+	static ConfigVariable<bool> _pinnedPolling;
+
+	// The time period in microseconds between device service runs
+	static ConfigVariable<size_t> _usPollingPeriod;
 
 	inline bool isQueueAvailable()
 	{

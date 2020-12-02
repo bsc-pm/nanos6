@@ -133,4 +133,7 @@ applications though, C parts can be compiled with `mcc -c` as described in READM
 
 The runtime provides the following configuration variables related to CUDA:
 
-1. `devices.cuda.streams`: The max number of tasks that can be concurrently run *per device*. Default value is 16.
+1. `devices.cuda.streams`: The maximum number of tasks that can be concurrently run *per device*. Default value is 16.
+1. `devices.cuda.page_size`: The CUDA device page size. Default value is 0x8000.
+1. `devices.cuda.polling.pinned`: Indicates whether the CUDA polling services should constantly run while there are CUDA tasks running on their GPU. Enabling this option may reduce the latency of processing CUDA tasks at the expenses of occupiying a CPU from the system. Default value is true.
+1. `devices.cuda.polling.period_us`: The time period in microseconds between CUDA service runs. During that time, the CPUs occupied by the services are available to execute ready tasks. Setting this option to 0 makes the services to constantly run. Default value is 500 microseconds.

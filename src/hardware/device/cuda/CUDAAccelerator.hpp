@@ -14,6 +14,7 @@
 #include "CUDAFunctions.hpp"
 #include "CUDAStreamPool.hpp"
 #include "hardware/device/Accelerator.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "tasks/Task.hpp"
 
 class CUDAAccelerator : public Accelerator {
@@ -27,6 +28,12 @@ private:
 	std::list<CUDAEvent> _activeEvents, _preallocatedEvents;
 	cudaDeviceProp _deviceProperties;
 	CUDAStreamPool _streamPool;
+
+	// Whether the device service should run while there are running tasks
+	static ConfigVariable<bool> _pinnedPolling;
+
+	// The time period in microseconds between device service runs
+	static ConfigVariable<size_t> _usPollingPeriod;
 
 	// To be used in order to obtain the current task in nanos6_get_current_cuda_stream() call
 	thread_local static Task* _currentTask;
