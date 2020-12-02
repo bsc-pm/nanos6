@@ -251,7 +251,7 @@ void nanos6_create_task(
 	size_t flags,
 	size_t num_deps
 ) {
-	//TODO: Temporary check until multiple implementations are supported
+	// TODO: Temporary check until multiple implementations are supported
 	assert(task_info->implementation_count == 1);
 
 	nanos6_device_t deviceType = (nanos6_device_t) task_info->implementations[0].device_type_id;

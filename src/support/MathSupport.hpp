@@ -8,12 +8,16 @@
 #ifndef MATH_SUPPORT_HPP
 #define MATH_SUPPORT_HPP
 
-namespace MathSupport {
+#include <cstddef>
+
+
+class MathSupport {
+public:
 	static inline size_t ceil(size_t x, size_t y)
 	{
-		return (x+(y-1))/y;
+		return (x + (y - 1)) / y;
 	}
-}
+};
 
 
 #endif // MATH_SUPPORT_HPP

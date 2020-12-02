@@ -26,7 +26,7 @@ void nanos6_create_loop(
 	size_t grainsize,
 	size_t chunksize
 ) {
-	//TODO: Temporary check until multiple implementations are supported
+	// TODO: Temporary check until multiple implementations are supported
 	assert(task_info->implementation_count == 1);
 
 	nanos6_device_t deviceType = (nanos6_device_t) task_info->implementations[0].device_type_id;
@@ -35,7 +35,7 @@ void nanos6_create_loop(
 	}
 
 	// The compiler passes either the num deps of a single child or -1. However, the parent taskloop
-	// must register as many deps child_num_deps*numTasks.
+	// must register as many deps as num_deps * numTasks
 	bool isTaskloop = flags & nanos6_taskloop_task;
 	if (num_deps != (size_t) -1 && isTaskloop) {
 		size_t numTasks = Taskloop::computeNumTasks((upper_bound - lower_bound), grainsize);

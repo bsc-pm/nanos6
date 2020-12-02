@@ -78,12 +78,12 @@ struct TaskDataAccesses {
 		_flags()
 #endif
 	{
-		// Theoretically, 0.75 is a great load factor to prevent frequent rehashes.
+		// Theoretically, 0.75 is a great load factor to prevent frequent rehashes
 		_subaccessBottomMap.max_load_factor(0.75);
 		if (_maxDeps > ACCESS_LINEAR_CUTOFF) {
 			_accessMap = MemoryAllocator::newObject<access_map_t>();
 			assert(_accessMap != nullptr);
-			// Theoretically, 0.75 is a great load factor to prevent frequent rehashes.
+			// Theoretically, 0.75 is a great load factor to prevent frequent rehashes
 			_accessMap->max_load_factor(0.75);
 
 			_accessMap->reserve((_maxDeps != (size_t) -1) ? _maxDeps : ACCESS_LINEAR_CUTOFF);

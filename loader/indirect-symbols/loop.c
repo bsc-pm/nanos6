@@ -43,9 +43,8 @@ void nanos6_create_loop(
 	}
 
 	(*symbol)(task_info, task_invocation_info, args_block_size,
-			args_block_pointer, task_pointer, flags, num_deps,
-			lower_bound, upper_bound, grainsize, chunksize);
-
+		args_block_pointer, task_pointer, flags, num_deps,
+		lower_bound, upper_bound, grainsize, chunksize);
 }
 
 #pragma GCC visibility pop

@@ -20,7 +20,9 @@ public:
 
 private:
 	bounds_t _bounds;
+
 	bool _source;
+
 	// In some cases, the compiler cannot precisely indicate the number of deps.
 	// In these cases, it passes -1 to the runtime so the deps are dynamically
 	// registered. We have a loop where the parent registers all the deps of the
@@ -139,7 +141,7 @@ public:
 	static inline size_t computeNumTasks(size_t iterations, size_t grainsize)
 	{
 		if (grainsize == 0) {
-			grainsize = std::max(iterations/CPUManager::getTotalCPUs(), (size_t) 1);
+			grainsize = std::max(iterations / CPUManager::getTotalCPUs(), (size_t) 1);
 		}
 		return MathSupport::ceil(iterations, grainsize);
 	}
