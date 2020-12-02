@@ -7,7 +7,7 @@
 #include "Taskfor.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
-void Taskfor::run(Taskfor &source)
+void Taskfor::run(Taskfor &source, nanos6_address_translation_entry_t *translationTable)
 {
 	assert(getParent()->isTaskfor() && getParent() == &source);
 	assert(getMyChunk() >= 0);
@@ -35,7 +35,7 @@ void Taskfor::run(Taskfor &source)
 	size_t completedIterations = 0;
 
 	do {
-		taskInfo.implementations[0].run(argsBlock, &_bounds, nullptr);
+		taskInfo.implementations[0].run(argsBlock, &_bounds, translationTable);
 
 		completedIterations += myIterations;
 

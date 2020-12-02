@@ -27,8 +27,16 @@ public:
 		nanos6_address_translation_entry_t *stackTable,
 		/* output */ size_t &tableSize
 	) {
+		Task *target = task;
+		// Taskfor collaborators have their accesses on the source, which have to be translated.
+		if (task->isTaskfor()) {
+			assert(!task->isTaskforSource());
+			target = task->getParent();
+			assert(target->isTaskforSource());
+		}
+
 		nanos6_address_translation_entry_t *table = nullptr;
-		nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
+		nanos6_task_info_t const *const taskInfo = target->getTaskInfo();
 		int numSymbols = taskInfo->num_symbols;
 		if (numSymbols == 0)
 			return nullptr;
@@ -43,7 +51,7 @@ public:
 				MemoryAllocator::alloc(tableSize);
 		}
 
-		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
+		DataAccessRegistration::translateReductionAddresses(target, computePlace, table, numSymbols);
 
 		return table;
 	}
