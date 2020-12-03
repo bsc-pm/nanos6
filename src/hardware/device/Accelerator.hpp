@@ -43,7 +43,7 @@ protected:
 
 	inline bool shouldStopService() const
 	{
-		return _stopService;
+		return _stopService.load(std::memory_order_relaxed);
 	}
 
 	// Set the current instance as the selected/active device for subsequent operations
