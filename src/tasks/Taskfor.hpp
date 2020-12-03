@@ -9,6 +9,7 @@
 
 #include <cmath>
 
+#include "support/MathSupport.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -98,19 +99,19 @@ public:
 
 		if (_bounds.chunksize == 0) {
 			// Just distribute iterations over collaborators if no hint.
-			_bounds.chunksize = std::max(ceil(totalIterations, maxCollaborators), (size_t) 1);
+			_bounds.chunksize = std::max(MathSupport::ceil(totalIterations, maxCollaborators), (size_t) 1);
 		} else {
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
 			size_t alignedChunksize = closestMultiple(newChunksize, _bounds.chunksize);
-			if (ceil(totalIterations, alignedChunksize) < maxCollaborators) {
+			if (MathSupport::ceil(totalIterations, alignedChunksize) < maxCollaborators) {
 				alignedChunksize = std::max(alignedChunksize - _bounds.chunksize, _bounds.chunksize);
 			}
 			assert(alignedChunksize % _bounds.chunksize == 0);
 			_bounds.chunksize = alignedChunksize;
 		}
 
-		size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
+		size_t totalChunks = MathSupport::ceil(totalIterations, _bounds.chunksize);
 		// Each bit of the _pendingChunks var represents a chunk. 1 is pending, 0 is already executed.
 		FatalErrorHandler::failIf(totalChunks > PENDING_CHUNKS_SIZE * NUM_UINT64_BITS, "Too many chunks required.");
 		_remainingChunks.store(totalChunks, std::memory_order_relaxed);
@@ -164,7 +165,7 @@ public:
 		assert(!isRunnable());
 
 		size_t totalIterations = _bounds.upper_bound - _bounds.lower_bound;
-		size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
+		size_t totalChunks = MathSupport::ceil(totalIterations, _bounds.chunksize);
 		int chunkId = -1;
 		size_t fetched = 0;
 
@@ -340,11 +341,6 @@ private:
 	static inline size_t closestMultiple(size_t n, size_t multipleOf)
 	{
 		return ((n + multipleOf - 1) / multipleOf) * multipleOf;
-	}
-
-	static inline size_t ceil(size_t x, size_t y)
-	{
-		return (x+(y-1))/y;
 	}
 
 	// Function to right rotate x by y bits

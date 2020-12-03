@@ -1283,6 +1283,7 @@ noinst_HEADERS = \
 	src/support/InstrumentedThread.hpp \
 	src/support/JsonFile.hpp \
 	src/support/JsonNode.hpp \
+	src/support/MathSupport.hpp \
 	src/support/Objectified.hpp \
 	src/support/StringLiteral.hpp \
 	src/support/StringSupport.hpp \

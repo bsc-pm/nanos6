@@ -98,7 +98,6 @@ struct TaskDataAccesses {
 	{
 		return 0;
 	}
-
 };
 
 

@@ -103,11 +103,13 @@ public:
 			parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
 		}
 
-		// Create the task with undefined number of dependencies
+		// This number has been computed while registering the parent's dependencies
+		size_t numDeps = parent->getMaxChildDependencies();
+
 		Task *task = AddTask::createTask(
 			parentTaskInfo, parentTaskInvocationInfo,
 			argsBlock, originalArgsBlockSize,
-			flags, -1, fromTaskContext
+			flags, numDeps, fromTaskContext
 		);
 		assert(task != nullptr);
 
