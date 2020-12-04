@@ -87,7 +87,7 @@ public:
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
 
-	void body(nanos6_address_translation_entry_t * = nullptr) override;
+	void body(nanos6_address_translation_entry_t *translationTable) override;
 
 	inline void registerDependencies(bool discrete = false) override
 	{
