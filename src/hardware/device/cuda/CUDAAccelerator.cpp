@@ -15,7 +15,7 @@
 
 
 ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned", true);
-ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us", 500);
+ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us", 1000);
 
 thread_local Task* CUDAAccelerator::_currentTask;
 

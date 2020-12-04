@@ -147,8 +147,8 @@ __require_CUDA
 			pinned = true
 			# The time period in microseconds between CUDA service runs. During that time, the CPUs
 			# occupied by the services are available to execute ready tasks. Setting this option to 0
-			# makes the services to constantly run. Default is 500
-			period_us = 500
+			# makes the services to constantly run. Default is 1000
+			period_us = 1000
 __!require_CUDA
 __require_OPENACC
 	# OmpSs-2 @ OpenACC
@@ -168,8 +168,8 @@ __require_OPENACC
 			pinned = true
 			# The time period in microseconds between OpenACC service runs. During that time, the
 			# CPUs occupied by the services are available to execute ready tasks. Setting this option
-			# to 0 makes the services to constantly run. Default is 500
-			period_us = 500
+			# to 0 makes the services to constantly run. Default is 1000
+			period_us = 1000
 __!require_OPENACC
 
 [instrument]
