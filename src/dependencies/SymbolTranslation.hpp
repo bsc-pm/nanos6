@@ -32,7 +32,6 @@ public:
 		if (task->isTaskfor()) {
 			assert(!task->isTaskforSource());
 			target = task->getParent();
-			assert(target->isTaskforSource());
 		}
 
 		nanos6_address_translation_entry_t *table = nullptr;
