@@ -84,7 +84,7 @@ AC_DEFUN([ADD_AS_NEEDED_SUPPORT_TO_LIBTOOL],
 			# Concatenate dependency_libs only if link_all_deplibs != no
 			case="link) libs=\"\$deplibs %DEPLIBS% \$dependency_libs\" ;;"
 			newcase="link) libs=\"\$deplibs %DEPLIBS%\"\n"
-			newcase+="\t\ttest \"X\$link_all_deplibs\" != Xno \&\& libs=\"\$libs \$dependency_libs\" ;;"
+			newcase=$newcase"\t\ttest \"X\$link_all_deplibs\" != Xno \&\& libs=\"\$libs \$dependency_libs\" ;;"
 			script_1="s/$case/$newcase/"
 			
 			# In the step of checking convenience libraries, iterate dependency_libs only if libdir is empty
@@ -128,21 +128,21 @@ AC_DEFUN([ADD_AS_NEEDED_SUPPORT_TO_LIBTOOL],
 			# library list to have any effect.
 			
 			parse_flags="       -Wl,*--as-needed*)\n"
-			parse_flags+="        deplibs=\"\$deplibs \$wl--as-needed\"\n"
-			parse_flags+="        ;;\n"
-			parse_flags+="      -Wl,*--no-as-needed*)\n"
-			parse_flags+="        deplibs=\"\$deplibs \$wl--no-as-needed\"\n"
-			parse_flags+="        ;;\n"
+			parse_flags=$parse_flags"        deplibs=\"\$deplibs \$wl--as-needed\"\n"
+			parse_flags=$parse_flags"        ;;\n"
+			parse_flags=$parse_flags"      -Wl,*--no-as-needed*)\n"
+			parse_flags=$parse_flags"        deplibs=\"\$deplibs \$wl--no-as-needed\"\n"
+			parse_flags=$parse_flags"        ;;\n"
 			
 			iter_flags="          -Wl,--as-needed)\n"
-			iter_flags+="           if test \"\$linkmode,\$pass\" = \"prog,link\"; then\n"
-			iter_flags+="             compile_deplibs=\"\$deplib \$compile_deplibs\"\n"
-			iter_flags+="             finalize_deplibs=\"\$deplib \$finalize_deplibs\"\n"
-			iter_flags+="          else\n"
-			iter_flags+="            deplibs=\"\$deplib \$deplibs\"\n"
-			iter_flags+="          fi\n"
-			iter_flags+="          continue\n"
-			iter_flags+="          ;;\n"
+			iter_flags=$iter_flags"           if test \"\$linkmode,\$pass\" = \"prog,link\"; then\n"
+			iter_flags=$iter_flags"             compile_deplibs=\"\$deplib \$compile_deplibs\"\n"
+			iter_flags=$iter_flags"             finalize_deplibs=\"\$deplib \$finalize_deplibs\"\n"
+			iter_flags=$iter_flags"          else\n"
+			iter_flags=$iter_flags"            deplibs=\"\$deplib \$deplibs\"\n"
+			iter_flags=$iter_flags"          fi\n"
+			iter_flags=$iter_flags"          continue\n"
+			iter_flags=$iter_flags"          ;;\n"
 			script_3="
 				# Match only from within the func_mode_link() function
 				/func_mode_link\s*\(\)/,/^}/ {
