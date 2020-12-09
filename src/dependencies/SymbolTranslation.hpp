@@ -29,9 +29,10 @@ public:
 	) {
 		Task *target = task;
 		// Taskfor collaborators have their accesses on the source, which have to be translated.
-		if (task->isTaskfor()) {
+		if (task->isTaskforCollaborator()) {
 			assert(!task->isTaskforSource());
 			target = task->getParent();
+			assert(target->isTaskforSource());
 		}
 
 		nanos6_address_translation_entry_t *table = nullptr;
