@@ -8,8 +8,8 @@
 #define DEADLINE_QUEUE_HPP
 
 #include "scheduling/ReadyQueue.hpp"
+#include "support/Chrono.hpp"
 #include "support/Containers.hpp"
-#include "support/chronometers/std/Chrono.hpp"
 #include "tasks/Task.hpp"
 
 //! This kind of ready queue supports deadlines

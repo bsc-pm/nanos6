@@ -15,7 +15,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "support/chronometers/std/Chrono.hpp"
+#include "support/Chrono.hpp"
 
 
 void BlockingAPI::blockCurrentTask(bool fromUserCode)

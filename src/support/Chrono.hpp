@@ -4,12 +4,10 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CHRONO_STD_HPP
-#define CHRONO_STD_HPP
+#ifndef CHRONO_HPP
+#define CHRONO_HPP
 
 #include <chrono>
-
-
 
 
 class Chrono {
@@ -85,4 +83,4 @@ public:
 	}
 };
 
-#endif // CHRONO_STD_HPP
+#endif // CHRONO_HPP

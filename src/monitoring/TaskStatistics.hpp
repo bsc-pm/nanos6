@@ -13,8 +13,8 @@
 #include "MonitoringSupport.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "support/Chrono.hpp"
 
-#include <Chrono.hpp>
 
 class TasktypeStatistics;
 

@@ -726,19 +726,6 @@ endif
 
 dist_memory_sources = $(memory_default_sources) $(memory_debug_sources)
 
-# Chronometers
-chronometers_sources =
-chronometers_cppflags =
-if CHRONO_ARCH
-chronometers_sources  += src/support/chronometers/arch/Chrono.cpp
-chronometers_cppflags += -I$(srcdir)/src/support/chronometers/arch
-else
-chronometers_cppflags += -I$(srcdir)/src/support/chronometers/std
-endif
-
-# Add chronometer-related sources to common sources
-common_sources += $(chronometers_sources)
-
 
 # DLB + CPUManager
 cpu_manager_sources  =
@@ -1292,6 +1279,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
 	src/support/BitManipulation.hpp \
+	src/support/Chrono.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/Containers.hpp \
 	src/support/GenericFactory.hpp \
@@ -1331,8 +1319,6 @@ noinst_HEADERS = \
 	src/support/config/toml/types.hpp \
 	src/support/config/toml/utility.hpp \
 	src/support/config/toml/value.hpp \
-	src/support/chronometers/arch/Chrono.hpp \
-	src/support/chronometers/std/Chrono.hpp \
 	src/system/APICheck.hpp \
 	src/system/BlockingAPI.hpp \
 	src/system/If0Task.hpp \
@@ -1369,7 +1355,7 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_cppflags) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
 common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 
 # This is needed for debuggable spinlocks

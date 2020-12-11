@@ -7,7 +7,7 @@
 #ifndef CPU_STATISTICS_HPP
 #define CPU_STATISTICS_HPP
 
-#include <Chrono.hpp>
+#include "support/Chrono.hpp"
 
 
 class CPUStatistics {

@@ -289,29 +289,6 @@ AC_MSG_RESULT([$ac_discrete_deps])
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test x"${ac_discrete_deps}" = x"yes"])
 
 AC_ARG_ENABLE(
-	[chrono-arch],
-	[AS_HELP_STRING([--enable-chrono-arch], [use an architecture-dependent chrono for timing instead of the default one (std)])],
-	[
-		case "${enableval}" in
-		yes)
-			ac_chrono_arch=yes
-			;;
-		no)
-			ac_chrono_arch=no
-			;;
-		*)
-			AC_MSG_ERROR([bad value ${enableval} for --enable-chrono-arch])
-			;;
-		esac
-	],
-	[ac_chrono_arch=no]
-)
-AM_CONDITIONAL([CHRONO_ARCH], [test x"${ac_chrono_arch}" = x"yes"])
-if test x"${ac_chrono_arch}" = x"yes" ; then
-	AC_DEFINE([CHRONO_ARCH], [1], [Define if the architecture-dependent chrono is used.])
-fi
-
-AC_ARG_ENABLE(
 	[extra-debug],
 	[AS_HELP_STRING([--enable-extra-debug], [enable extra assertions and checks in debug - may cause significant slowdown])],
 	[
@@ -450,14 +427,6 @@ if test x"${ac_use_memkind}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([	Memkind CPPFLAGS... ${memkind_CPPFLAGS}])
 	_AS_ECHO([	Memkind LIBS... ${memkind_LIBS}])
-else
-	AC_MSG_RESULT([no])
-fi
-
-_AS_ECHO([])
-_AS_ECHO_N([   Chrono Arch is enabled... ])
-if test x"${ac_chrono_arch}" = x"yes" ; then
-	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])
 fi
