@@ -87,6 +87,12 @@ void ConfigCentral::initialize()
 	registerOption<string_t>("instrument.verbose.output_file", "/dev/stderr");
 	registerOption<bool_t>("instrument.verbose.timestamps", true);
 
+	// Loader
+	registerOption<bool_t>("loader.verbose", false);
+	registerOption<bool_t>("loader.warn_envars", true);
+	registerOption<string_t>("loader.library_path", "");
+	registerOption<string_t>("loader.report_prefix", "");
+
 	// Memory allocator
 	registerOption<memory_t>("memory.pool.global_alloc_size", 8 * 1024 * 1024);
 	registerOption<memory_t>("memory.pool.chunk_size", 128 * 1024);
