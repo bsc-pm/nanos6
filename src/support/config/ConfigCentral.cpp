@@ -103,6 +103,7 @@ void ConfigCentral::initialize()
 	registerOption<memory_t>("misc.stack_size", 8 * 1024 * 1024);
 
 	// Monitoring
+	registerOption<integer_t>("monitoring.cpuusage_prediction_rate", 100);
 	registerOption<bool_t>("monitoring.enabled", false);
 	registerOption<integer_t>("monitoring.rolling_window", 20);
 	registerOption<bool_t>("monitoring.verbose", true);
