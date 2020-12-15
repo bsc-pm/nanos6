@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <cstdint>
+#include <cstdio>
 #include <cinttypes>
 #include <vector>
 
@@ -44,12 +45,7 @@ const char *CTFAPI::CTFUserMetadata::meta_env =
 	"	tracer_name = \"lttng-ust\";\n"
 	"	tracer_major = 2;\n"
 	"	tracer_minor = 11;\n"
-	"	tracer_patchlevel = 0;\n"
-	"	/* ctf2prv converter variables */\n"
-	"	cpu_list = \"%s\";\n"
-	"	binary_name = \"%s\";\n"
-	"	pid = %" PRIu64 ";\n"
-	"};\n\n";
+	"	tracer_patchlevel = 0;\n";
 
 const char *CTFAPI::CTFUserMetadata::meta_clock =
 	"clock {\n"
@@ -144,14 +140,14 @@ void CTFAPI::CTFUserMetadata::writeEventMetadata(FILE *f, CTFAPI::CTFEvent *even
 	fprintf(f, meta_eventMetadataFields, event->getMetadataFields());
 }
 
-void CTFAPI::CTFUserMetadata::writeMetadataFile(std::string userPath)
+void CTFAPI::CTFUserMetadata::writeMetadataFile()
 {
 	int ret;
 	FILE *f;
-	std::string path;
 	CTFTrace &trace = CTFTrace::getInstance();
 
-	path = userPath + "/metadata";
+	std::string userPath = trace.getUserTracePath();
+	std::string path = userPath + "/metadata";
 
 	f = fopen(path.c_str(), "w");
 	FatalErrorHandler::failIf(f == NULL, std::string("Instrumentation: ctf: writting metadata file: ") + strerror(errno));
@@ -159,10 +155,8 @@ void CTFAPI::CTFUserMetadata::writeMetadataFile(std::string userPath)
 	fputs(meta_header, f);
 	fputs(meta_typedefs, f);
 	fputs(meta_trace, f);
-	fprintf(f, meta_env,
-		_cpuList.c_str(),
-		trace.getBinaryName(),
-		trace.getPid());
+	fputs(meta_env, f);
+	printCommonMetaEnv(f);
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
 
 	// print context additional structures

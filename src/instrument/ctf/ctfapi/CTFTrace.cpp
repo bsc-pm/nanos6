@@ -241,7 +241,7 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &basePath, std::string
 	_userPath += "/uid";
 	ret = mkdir(_userPath.c_str(), 0766);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/1000";
+	_userPath += "/1000"; // TODO get real user ID
 	ret = mkdir(_userPath.c_str(), 0766);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 	_userPath += "/64-bit";
@@ -397,6 +397,11 @@ void CTFAPI::CTFTrace::initializeTraceTimer()
 	// tracepoints. On Linux, this timestamp is actually relative to boot
 	// time.
 	_absoluteStartTime = CTFAPI::getTimestamp();
+}
+
+void CTFAPI::CTFTrace::finalizeTraceTimer()
+{
+	_absoluteEndTime = CTFAPI::getTimestamp();
 }
 
 void CTFAPI::CTFTrace::clean()

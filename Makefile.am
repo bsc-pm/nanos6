@@ -555,6 +555,7 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/CTFUserMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
+	src/instrument/ctf/InstrumentExternalThreadLocalData.cpp \
 	src/instrument/ctf/InstrumentInitAndShutdown.cpp \
 	src/instrument/ctf/InstrumentTaskId.cpp \
 	src/instrument/ctf/InstrumentTasktypeData.cpp \

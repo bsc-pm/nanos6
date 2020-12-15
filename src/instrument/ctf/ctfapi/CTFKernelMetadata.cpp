@@ -19,7 +19,6 @@
 #include "support/JsonFile.hpp"
 
 
-// TODO factor out common operations/data with CTFMetadata
 ConfigVariable<std::string> CTFAPI::CTFKernelMetadata::_kernelEventFile("instrument.ctf.events.kernel.file");
 ConfigVariableSet<std::string> CTFAPI::CTFKernelMetadata::_kernelEventPresets("instrument.ctf.events.kernel.presets");
 ConfigVariableSet<std::string> CTFAPI::CTFKernelMetadata::_kernelExcludedEvents("instrument.ctf.events.kernel.exclude");
@@ -81,12 +80,7 @@ const char *CTFAPI::CTFKernelMetadata::meta_env =
 	"	tracer_name = \"lttng-modules\";\n"
 	"	tracer_major = 2;\n"
 	"	tracer_minor = 10;\n"
-	"	tracer_patchlevel = 10;\n"
-	"	/* ctf2prv converter variables */\n"
-	"	cpu_list = \"%s\";\n"
-	"	binary_name = \"%s\";\n"
-	"	pid = %" PRIu64 ";\n"
-	"};\n\n";
+	"	tracer_patchlevel = 10;\n";
 
 const char *CTFAPI::CTFKernelMetadata::meta_clock =
 	"clock {\n"
@@ -317,18 +311,17 @@ void CTFAPI::CTFKernelMetadata::translateEvents()
 	}
 }
 
-void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
+void CTFAPI::CTFKernelMetadata::writeMetadataFile()
 {
 	int ret;
 	FILE *f;
-	std::string path;
 
 	if (!_enabled)
 		return;
 
 	CTFTrace &trace = CTFTrace::getInstance();
-
-	path = kernelPath + "/metadata";
+	std::string kernelPath = trace.getKernelTracePath();
+	std::string path = kernelPath + "/metadata";
 
 	f = fopen(path.c_str(), "w");
 	if (f == NULL) {
@@ -343,10 +336,9 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 	fputs(meta_trace, f);
 	fprintf(f, meta_env,
 		_kernelRelease.c_str(),
-		_kernelVersion.c_str(),
-		_cpuList.c_str(),
-		trace.getBinaryName(),
-		trace.getPid());
+		_kernelVersion.c_str()
+	);
+	printCommonMetaEnv(f);
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
 	fprintf(f, meta_stream, CTFKernelStreamId);
 

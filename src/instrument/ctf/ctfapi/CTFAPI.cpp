@@ -101,8 +101,11 @@ void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(CTFStream *stream, CTFStream *
 	}
 }
 
-void CTFAPI::updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userStream)
-{
+void CTFAPI::updateKernelEvents(
+	CTFKernelStream *kernelStream,
+	CTFStream *userStream,
+	bool emitTracepointOnFlush
+) {
 	// only worker threads call this function, no need to take the stream lock
 	uint64_t tsBefore, tsAfter;
 
@@ -111,7 +114,9 @@ void CTFAPI::updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userSt
 		// If the kernel stream buffer is full, flush it and write a
 		// flushing tracepoint to this CPU's user stream.
 		flushAll(kernelStream, &tsBefore, &tsAfter);
-		writeFlushingTracepoint(userStream, tsBefore, tsAfter);
+
+		if (emitTracepointOnFlush)
+			writeFlushingTracepoint(userStream, tsBefore, tsAfter);
 	}
 	kernelStream->consumeKernelEvents();
 }

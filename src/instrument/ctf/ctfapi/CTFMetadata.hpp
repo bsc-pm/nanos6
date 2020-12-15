@@ -8,15 +8,22 @@
 #define CTF_METADATA_HPP
 
 
+#include <cstdint>
+#include <cstdio>
 #include <string>
 
 namespace CTFAPI {
 	class CTFMetadata {
 	public:
-		static void collectCommonInformation();
+		static void collectCommonInformationAtInit();
+		static void collectCommonInformationAtShutdown();
 	protected:
-		static std::string _cpuList;
+		static const char *_meta_commonEnv;
 
+		static std::string _cpuList;
+		static uint32_t _externalThreadsCount;
+
+		static void printCommonMetaEnv(FILE *f);
 	};
 }
 
