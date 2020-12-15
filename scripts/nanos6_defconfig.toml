@@ -145,11 +145,11 @@ __require_CTF
 		# Choose the temporary directory where to store intermediate CTF files. Default is none
 		# (not set), which means that $TMPDIR will be used if present, or /tmp otherwise
 		# tmpdir = "/tmp"
-		[instrument.ctf.conversor]
-			# Indicate whether the trace conversor should automatically generate the trace after
+		[instrument.ctf.converter]
+			# Indicate whether the trace converter should automatically generate the trace after
 			# executing a program with CTF instrumentation
 			enabled = true
-			# Indicate the location of the ctf2prv conversor script. Default is none (not set),
+			# Indicate the location of the ctf2prv converter script. Default is none (not set),
 			# which means that the $CTF2PRV will be used if present, or ctf2prv in $PATH
 			# otherwise
 			# location = "path/to/ctf2prv"
