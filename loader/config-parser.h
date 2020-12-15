@@ -30,5 +30,7 @@ typedef struct {
 
 extern _nanos6_loader_config_t _config;
 extern char _nanos6_config_path[MAX_CONFIG_PATH];
+extern char _nanos6_default_config_path[MAX_CONFIG_PATH];
+
 
 #endif // NANOS6_LOADER_CONFIG_PARSER_H
