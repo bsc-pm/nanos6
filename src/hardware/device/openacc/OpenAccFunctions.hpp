@@ -43,13 +43,13 @@ public:
 
 	static inline size_t getInitialQueueNum()
 	{
-		static ConfigVariable<size_t> initQueues("devices.openacc.default_queues", 64);
+		static ConfigVariable<size_t> initQueues("devices.openacc.default_queues");
 		return initQueues;
 	}
 
 	static inline size_t getMaxQueues()
 	{
-		static ConfigVariable<size_t> maxQueues("devices.openacc.max_queues", 128);
+		static ConfigVariable<size_t> maxQueues("devices.openacc.max_queues");
 		return maxQueues;
 	}
 

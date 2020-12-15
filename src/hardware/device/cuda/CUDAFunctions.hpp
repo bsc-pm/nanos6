@@ -55,7 +55,7 @@ public:
 
 	static size_t getPageSize()
 	{
-		static ConfigVariable<size_t> pageSize("devices.cuda.page_size", 0x8000);
+		static ConfigVariable<size_t> pageSize("devices.cuda.page_size");
 		return pageSize;
 	}
 

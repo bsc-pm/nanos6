@@ -80,57 +80,6 @@ public:
 
 
 template <>
-class EnvironmentVariable<StringifiedBool> {
-private:
-	StringifiedBool _value;
-	bool _isPresent;
-	std::string _name;
-
-public:
-	EnvironmentVariable(const std::string &name, StringifiedBool defaultValue = StringifiedBool()) :
-		_value(defaultValue),
-		_name(name)
-	{
-		char const *value = getenv(name.c_str());
-		if (value != nullptr) {
-			bool booleanValue;
-			if (StringSupport::parse<bool>(value, booleanValue, std::boolalpha)) {
-				_isPresent = true;
-				_value = booleanValue;
-			} else {
-				std::cerr << "Warning: invalid value for environment variable " << name << ". Defaulting to " << defaultValue << "." << std::endl;
-				_isPresent = false;
-			}
-		} else {
-			_isPresent = false;
-		}
-	}
-
-	inline bool isPresent() const
-	{
-		return _isPresent;
-	}
-
-	inline StringifiedBool getValue() const
-	{
-		return _value;
-	}
-
-	operator StringifiedBool() const
-	{
-		return _value;
-	}
-
-	inline void setValue(StringifiedBool value, bool makePresent=false)
-	{
-		_value = value;
-		_isPresent |= makePresent;
-	}
-
-};
-
-
-template <>
 class EnvironmentVariable<StringifiedMemorySize> {
 private:
 	StringifiedMemorySize _value;

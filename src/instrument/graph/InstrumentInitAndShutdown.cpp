@@ -40,15 +40,15 @@ namespace Instrument {
 
 	static long _nextCluster = 1;
 
-	static ConfigVariable<bool> _shortenFilenames("instrument.graph.shorten_filenames", false);
-	static ConfigVariable<bool> _showSpuriousDependencyStructures("instrument.graph.show_spurious_dependency_structures", false);
-	static ConfigVariable<bool> _showDeadDependencyStructures("instrument.graph.show_dead_dependency_structures", false);
-	static ConfigVariable<bool> _showDeadDependencies("instrument.graph.show_dead_dependencies", false);
-	static ConfigVariable<bool> _showAllSteps("instrument.graph.show_all_steps", false);
-	static ConfigVariable<bool> _showSuperAccessLinks("instrument.graph.show_superaccess_links", true);
-	static ConfigVariable<bool> _autoDisplay("instrument.graph.display", false);
+	static ConfigVariable<bool> _shortenFilenames("instrument.graph.shorten_filenames");
+	static ConfigVariable<bool> _showSpuriousDependencyStructures("instrument.graph.show_spurious_dependency_structures");
+	static ConfigVariable<bool> _showDeadDependencyStructures("instrument.graph.show_dead_dependency_structures");
+	static ConfigVariable<bool> _showDeadDependencies("instrument.graph.show_dead_dependencies");
+	static ConfigVariable<bool> _showAllSteps("instrument.graph.show_all_steps");
+	static ConfigVariable<bool> _showSuperAccessLinks("instrument.graph.show_superaccess_links");
+	static ConfigVariable<bool> _autoDisplay("instrument.graph.display");
 
-	static ConfigVariable<std::string> _displayCommand("instrument.graph.display_command", "xdg-open");
+	static ConfigVariable<std::string> _displayCommand("instrument.graph.display_command");
 
 
 	static inline bool isComposite(task_id_t taskId)

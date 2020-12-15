@@ -51,7 +51,7 @@ void ClusterManager::initializeCluster(std::string const &commType)
 
 void ClusterManager::initialize()
 {
-	ConfigVariable<std::string> commType("cluster.communication", "disabled");
+	ConfigVariable<std::string> commType("cluster.communication");
 	RuntimeInfo::addEntry("cluster_communication", "Cluster Communication Implementation", commType);
 
 	/** If a communicator has not been specified through the

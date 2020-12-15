@@ -25,7 +25,7 @@ private:
 public:
 	CUDAStreamPool(int device)
 	{
-		static ConfigVariable<int> maxStreams("devices.cuda.streams", 16);
+		static ConfigVariable<int> maxStreams("devices.cuda.streams");
 		CUDAFunctions::setActiveDevice(device);
 		for (int i = 0; i < maxStreams; ++i)
 			_streams.emplace(CUDAFunctions::createStream());

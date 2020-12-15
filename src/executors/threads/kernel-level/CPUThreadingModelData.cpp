@@ -12,7 +12,7 @@
 #include "system/RuntimeInfo.hpp"
 
 
-ConfigVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("misc.stack_size", 8 * 1024 * 1024);
+ConfigVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("misc.stack_size");
 
 
 void CPUThreadingModelData::initialize(__attribute__((unused)) CPU *cpu)

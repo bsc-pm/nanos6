@@ -22,8 +22,8 @@
 #endif
 
 
-ConfigVariable<bool> HardwareCounters::_verbose("hardware_counters.verbose", false);
-ConfigVariable<std::string> HardwareCounters::_verboseFile("hardware_counters.verbose_file", "nanos6-output-hwcounters.txt");
+ConfigVariable<bool> HardwareCounters::_verbose("hardware_counters.verbose");
+ConfigVariable<std::string> HardwareCounters::_verboseFile("hardware_counters.verbose_file");
 HardwareCountersInterface *HardwareCounters::_papiBackend(nullptr);
 HardwareCountersInterface *HardwareCounters::_pqosBackend(nullptr);
 HardwareCountersInterface *HardwareCounters::_raplBackend(nullptr);
@@ -35,14 +35,14 @@ size_t HardwareCounters::_numEnabledCounters;
 
 void HardwareCounters::loadConfiguration()
 {
-	ConfigVariable<bool> papiEnabled("hardware_counters.papi.enabled", false);
-	ConfigVariable<bool> pqosEnabled("hardware_counters.pqos.enabled", false);
-	ConfigVariable<bool> raplEnabled("hardware_counters.rapl.enabled", false);
+	ConfigVariable<bool> papiEnabled("hardware_counters.papi.enabled");
+	ConfigVariable<bool> pqosEnabled("hardware_counters.pqos.enabled");
+	ConfigVariable<bool> raplEnabled("hardware_counters.rapl.enabled");
 
 	// Check which PAPI events are enabled in the config file
 	if (papiEnabled) {
 		bool papiCounterAdded = false;
-		ConfigVariableSet<std::string> counterSet("hardware_counters.papi.counters", {});
+		ConfigVariableSet<std::string> counterSet("hardware_counters.papi.counters");
 		for (short i = HWCounters::HWC_PAPI_MIN_EVENT; i <= HWCounters::HWC_PAPI_MAX_EVENT; ++i) {
 			std::string eventDescription(HWCounters::counterDescriptions[i]);
 			if (counterSet.contains(eventDescription)) {
@@ -60,7 +60,7 @@ void HardwareCounters::loadConfiguration()
 	// Check which PQOS events are enabled in the config file
 	if (pqosEnabled) {
 		bool pqosCounterAdded = false;
-		ConfigVariableSet<std::string> counterSet("hardware_counters.pqos.counters", {});
+		ConfigVariableSet<std::string> counterSet("hardware_counters.pqos.counters");
 		for (short i = HWCounters::HWC_PQOS_MIN_EVENT; i <= HWCounters::HWC_PQOS_MAX_EVENT; ++i) {
 			std::string eventDescription(HWCounters::counterDescriptions[i]);
 			if (counterSet.contains(eventDescription)) {

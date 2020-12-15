@@ -47,7 +47,7 @@ void LeaderThread::body()
 	initializeHelperThread();
 	Instrument::threadHasResumed(getInstrumentationId());
 	// Minimum polling interval in microseconds
-	ConfigVariable<int> pollingFrequency("misc.polling_frequency", 1000);
+	ConfigVariable<int> pollingFrequency("misc.polling_frequency");
 
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		struct timespec delay = {0, pollingFrequency * 1000};

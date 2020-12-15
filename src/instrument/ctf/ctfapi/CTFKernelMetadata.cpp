@@ -20,9 +20,9 @@
 
 
 // TODO factor out common operations/data with CTFMetadata
-ConfigVariableList<std::string> CTFAPI::CTFKernelMetadata::_kernelEventPresets("instrument.ctf.events.kernel.presets", {});
 ConfigVariable<std::string> CTFAPI::CTFKernelMetadata::_kernelEventFile("instrument.ctf.events.kernel.file");
-ConfigVariableList<std::string> CTFAPI::CTFKernelMetadata::_kernelExcludedEvents("instrument.ctf.events.kernel.exclude", {});
+ConfigVariableSet<std::string> CTFAPI::CTFKernelMetadata::_kernelEventPresets("instrument.ctf.events.kernel.presets");
+ConfigVariableSet<std::string> CTFAPI::CTFKernelMetadata::_kernelExcludedEvents("instrument.ctf.events.kernel.exclude");
 
 // TODO manage old alternative event names
 std::map<std::string, std::vector<std::string> > CTFAPI::CTFKernelMetadata::_kernelEventPresetMap {
