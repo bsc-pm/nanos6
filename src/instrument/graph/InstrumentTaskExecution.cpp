@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "ExecutionSteps.hpp"
@@ -15,41 +15,47 @@
 
 namespace Instrument {
 	using namespace Graph;
-	
-	
+
+
 	void startTask(__attribute__((unused)) task_id_t taskId, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		enter_task_step_t *enterTaskStep = new enter_task_step_t(context);
 		_executionSequence.push_back(enterTaskStep);
 	}
-	
+
 	void endTask(__attribute__((unused)) task_id_t taskId, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		exit_task_step_t *exitTaskStep = new exit_task_step_t(context);
 		_executionSequence.push_back(exitTaskStep);
 	}
-	
+
 	void startTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) bool first, InstrumentationContext const &context)
 	{
+		assert(_taskToInfoMap.find(taskforId) != _taskToInfoMap.end());
+		task_info_t &taskforInfo = _taskToInfoMap[taskforId];
+
 		std::lock_guard<SpinLock> guard(_graphLock);
-		if (taskforId.getState() == INITIAL) {
+		if (taskforInfo._state == INITIAL) {
 			enter_task_step_t *enterTaskStep = new enter_task_step_t(context);
 			_executionSequence.push_back(enterTaskStep);
-			taskforId.setState(STARTED);
+			taskforInfo._state = STARTED;
 		}
-		assert(taskforId.getState() == STARTED);
+		assert(taskforInfo._state == STARTED);
 	}
-	
+
 	void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, bool last, InstrumentationContext const &context)
 	{
 		if (last) {
+			assert(_taskToInfoMap.find(taskforId) != _taskToInfoMap.end());
+			task_info_t &taskforInfo = _taskToInfoMap[taskforId];
+
 			std::lock_guard<SpinLock> guard(_graphLock);
-			assert(taskforId.getState() == STARTED);
+			assert(taskforInfo._state == STARTED);
 			exit_task_step_t *exitTaskStep = new exit_task_step_t(context);
 			_executionSequence.push_back(exitTaskStep);
-			taskforId.setState(FINISHED);
+			taskforInfo._state = FINISHED;
 		}
 	}
 }
