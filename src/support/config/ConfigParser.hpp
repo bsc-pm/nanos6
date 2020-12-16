@@ -11,6 +11,7 @@
 #include <dlfcn.h>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
@@ -81,6 +82,25 @@ private:
 		}
 	}
 
+	//! \brief Recursively check the config file options
+	//!
+	//! \param node The toml node to search
+	//! \param key The previous subkeys found until now
+	//! \param invalidOptions The set of invalid options found
+	static void checkFileOptions(
+		const toml::value &node,
+		std::string key,
+		std::unordered_set<std::string> &invalidOptions
+	);
+
+	//! \brief Check the file and override option names
+	//!
+	//! This function checks the names of the options that are
+	//! defined in both config file and override envar. The
+	//! execution aborts if it detects that any of the options
+	//! is not registered in the config central
+	void checkFileAndOverrideOptions();
+
 	//! \brief Private constructor of config parser
 	//!
 	//! This function parses both the config file and the
@@ -104,6 +124,9 @@ private:
 
 		// Parse the config envar
 		parseEnvironmentConfig();
+
+		// Check config options
+		checkFileAndOverrideOptions();
 	}
 
 public:

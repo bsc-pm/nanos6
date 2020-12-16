@@ -50,8 +50,8 @@ void ConfigCentral::initialize()
 	registerOption<string_t>("hardware_counters.pqos.counters", {});
 
 	// CTF instrumentation
-	registerOption<bool_t>("instrument.ctf.conversor.enabled", true);
-	registerOption<string_t>("instrument.ctf.conversor.location", "");
+	registerOption<bool_t>("instrument.ctf.converter.enabled", true);
+	registerOption<string_t>("instrument.ctf.converter.location", "");
 	registerOption<string_t>("instrument.ctf.events.kernel.exclude", {});
 	registerOption<string_t>("instrument.ctf.events.kernel.file", "");
 	registerOption<string_t>("instrument.ctf.events.kernel.presets", {});
@@ -103,6 +103,7 @@ void ConfigCentral::initialize()
 	registerOption<memory_t>("misc.stack_size", 8 * 1024 * 1024);
 
 	// Monitoring
+	registerOption<integer_t>("monitoring.cpuusage_prediction_rate", 100);
 	registerOption<bool_t>("monitoring.enabled", false);
 	registerOption<integer_t>("monitoring.rolling_window", 20);
 	registerOption<bool_t>("monitoring.verbose", true);

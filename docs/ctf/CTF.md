@@ -56,7 +56,7 @@ To generate a CTF trace, run the application with the `version.instrument` confi
 This will create a `trace-<app_name>-<app_pid>` folder in the current directory, hereinafter refered to as `$TRACE` for convenience.
 The subdirectory `$TRACE/ctf` contains the ctf trace as recorded by Nanos6.
 
-By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.conversor.enabled = false`.
+By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.converter.enabled = false`.
 The converted Paraver trace will be stored under the `$TRACE/prv` subdirectory.
 The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
 Please note that the conversion tool requires python3 and the babeltrace2 package.

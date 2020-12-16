@@ -406,6 +406,7 @@ common_sources = \
 	src/support/GlobalLock.cpp \
 	src/support/config/ConfigCentral.cpp \
 	src/support/config/ConfigChecker.cpp \
+	src/support/config/ConfigParser.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \

@@ -30,8 +30,8 @@
 
 
 ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir");
-ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.conversor.location");
-ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.conversor.enabled");
+ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.converter.location");
+ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.converter.enabled");
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
 
 static bool copyFile(std::string &src, std::string &dst)

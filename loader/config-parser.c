@@ -20,8 +20,10 @@
 	#error "INSTALLED_CONFIG_DIR should be defined at make time"
 #endif
 
-char _nanos6_config_path[MAX_CONFIG_PATH];
 _nanos6_loader_config_t _config;
+
+char _nanos6_config_path[MAX_CONFIG_PATH];
+char _nanos6_default_config_path[MAX_CONFIG_PATH];
 
 extern char **environ;
 
@@ -58,6 +60,13 @@ static int _nanos6_find_config(void)
 {
 	int cnt;
 	const char *config_path = getenv("NANOS6_CONFIG");
+
+	// Build the default config file path
+	cnt = snprintf(_nanos6_default_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
+	if (cnt >= MAX_CONFIG_PATH) {
+		fprintf(stderr, "Error: The installation path for the default Nanos6 config file is too long.\n");
+		return -1;
+	}
 
 	// 1. NANOS6_CONFIG
 	if (config_path != NULL) {
@@ -98,15 +107,11 @@ static int _nanos6_find_config(void)
 		}
 	}
 
-	// 3. Installation path
-	cnt = snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
+	// 3. Default config path (installation)
+	strncpy(_nanos6_config_path, _nanos6_default_config_path, MAX_CONFIG_PATH);
 
-	if (cnt >= MAX_CONFIG_PATH) {
-		fprintf(stderr, "Warning: The installation path for the default Nanos6 config file is too long.\n");
-	} else {
-		if (!access(_nanos6_config_path, R_OK)) {
-			return 0;
-		}
+	if (!access(_nanos6_config_path, R_OK)) {
+		return 0;
 	}
 
 	fprintf(stderr, "Error: Failed to find the Nanos6 config file.\n");
@@ -298,15 +303,10 @@ static void _nanos6_loader_check_envars(void)
 	}
 
     if (warn) {
-		char *default_config_path = (char *) malloc(MAX_CONFIG_PATH * sizeof(char));
-		assert(default_config_path != NULL);
-
-		snprintf(default_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
-
 		fprintf(stderr, "\n\n");
 		fprintf(stderr, "From now on, the behavior of the Nanos6 runtime can be tuned using a configuration file in TOML format.\n");
 		fprintf(stderr, "The default configuration file is located at the documentation directory of the Nanos6 installation.\n");
-		fprintf(stderr, "In this installation, the default configuration file is:\n\t%s\n\n", default_config_path);
+		fprintf(stderr, "In this installation, the default configuration file is:\n\t%s\n\n", _nanos6_default_config_path);
 
 		fprintf(stderr, "We recommend to take a look at the configuration file to see the different options that Nanos6 provides.\n");
 		fprintf(stderr, "Additionally, we recommend to copy that default file to your directory and change the options that you want to override.\n");
@@ -325,8 +325,6 @@ static void _nanos6_loader_check_envars(void)
 		fprintf(stderr, "Therefore, the only relevant NANOS6 variables are NANOS6_CONFIG and NANOS6_CONFIG_OVERRIDE; the rest are ignored by the runtime.\n");
 		fprintf(stderr, "For more information, please check the OmpSs-2 User Guide (https://pm.bsc.es/ftp/ompss-2/doc/user-guide).\n");
 		fprintf(stderr, "Note that you can disable this warning by setting the option 'loader.warn_envars' to false.\n\n");
-
-		free(default_config_path);
     }
 }
 
