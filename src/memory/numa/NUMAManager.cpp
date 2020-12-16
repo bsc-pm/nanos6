@@ -14,5 +14,5 @@ NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAll;
 NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAllActive;
 NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAnyActive;
 std::atomic<bool> NUMAManager::_trackingEnabled;
-ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report", false);
-ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking", "auto");
+ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
+ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
