@@ -39,6 +39,13 @@ HostInfo::HostInfo() :
 	//! Hardware discovery
 	hwloc_topology_t topology;
 	hwloc_topology_init(&topology);  // initialization
+
+#if HWLOC_API_VERSION >= 0x00020100
+	// Do not omit empty NUMA nodes. This option is only supported from hwloc 2.1.0
+	// It will mimic the behaviour of hwloc 1.x with disallowed resources.
+	hwloc_topology_set_flags(topology, HWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED);
+#endif
+
 	hwloc_topology_load(topology);   // actual detection
 
 	//! Create NUMA addressSpace
