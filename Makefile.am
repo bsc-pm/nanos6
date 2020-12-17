@@ -898,8 +898,11 @@ noinst_HEADERS = \
 	src/hardware/device/openacc/OpenAccQueuePool.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
-	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
+	src/hardware/places/CPUPlace.hpp \
+	src/hardware/places/HardwareCache.hpp \
+	src/hardware/places/L2Cache.hpp \
+	src/hardware/places/L3Cache.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
 	src/hardware-counters/CPUHardwareCounters.hpp \
