@@ -46,18 +46,18 @@ UnsyncScheduler::UnsyncScheduler(
 UnsyncScheduler::~UnsyncScheduler()
 {
 	for (uint64_t i = 0; i < _numQueues; i++) {
-		delete _queues[i];
+		if (_queues[i] != nullptr) {
+			delete _queues[i];
+		}
 	}
 
-	if (_enablePriority) {
-		MemoryAllocator::free(_queues, _numQueues * sizeof(ReadyQueue *));
-	}
+	MemoryAllocator::free(_queues, _numQueues * sizeof(ReadyQueue *));
 }
 
-void UnsyncScheduler::regularAddReadyTask(Task *task, ReadyTaskHint hint)
+void UnsyncScheduler::regularAddReadyTask(Task *task, bool unblocked)
 {
 	uint64_t NUMAid = task->getNUMAHint();
-	//std::cout << "[Pre]NUMAid: " << NUMAid << std::endl;
+
 	// In case there is no hint, use round robin to balance the load
 	if (NUMAid == (uint64_t) -1) {
 		do {
@@ -69,7 +69,7 @@ void UnsyncScheduler::regularAddReadyTask(Task *task, ReadyTaskHint hint)
 	assert(NUMAid < _numQueues);
 
 	assert(_queues[NUMAid] != nullptr);
-	_queues[NUMAid]->addReadyTask(task, hint == UNBLOCKED_TASK_HINT);
+	_queues[NUMAid]->addReadyTask(task, unblocked);
 }
 
 Task *UnsyncScheduler::regularGetReadyTask(ComputePlace *computePlace)
@@ -102,12 +102,15 @@ Task *UnsyncScheduler::regularGetReadyTask(ComputePlace *computePlace)
 				if (numReadyTasks > 0) {
 					uint64_t distance = distances[i*_numQueues+NUMAid];
 					uint64_t loadFactor = numReadyTasks;
+
 					if (distance < DataTrackingSupport::getDistanceThreshold() &&
 							loadFactor > DataTrackingSupport::getLoadThreshold())
 					{
 						chosen = i;
 						break;
 					}
+
+					assert(distance != 0);
 					uint64_t tmpscore = 100/distance + loadFactor/5;
 					if (tmpscore >= score) {
 						score = tmpscore;
@@ -120,8 +123,6 @@ Task *UnsyncScheduler::regularGetReadyTask(ComputePlace *computePlace)
 		if (chosen != (uint64_t) -1) {
 			result = _queues[chosen]->getReadyTask(computePlace);
 			assert(result != nullptr);
-
-			return result;
 		}
 	}
 

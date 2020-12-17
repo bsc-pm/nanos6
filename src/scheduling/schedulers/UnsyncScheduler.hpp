@@ -63,7 +63,7 @@ public:
 					Task *currentIS = _immediateSuccessorTasks[immediateSuccessorId];
 					if (currentIS != nullptr) {
 						assert(!currentIS->isTaskfor());
-						regularAddReadyTask(currentIS, hint);
+						regularAddReadyTask(currentIS, hint == UNBLOCKED_TASK_HINT);
 					}
 					_immediateSuccessorTasks[immediateSuccessorId] = task;
 				} else {
@@ -76,7 +76,7 @@ public:
 					} else if (currentIS2 == nullptr) {
 						_immediateSuccessorTaskfors[immediateSuccessorId+1] = task;
 					} else {
-						regularAddReadyTask(currentIS1, hint);
+						regularAddReadyTask(currentIS1, hint == UNBLOCKED_TASK_HINT);
 						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
 					}
 				}
@@ -94,7 +94,7 @@ public:
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
 protected:
-	void regularAddReadyTask(Task *task, ReadyTaskHint hint);
+	void regularAddReadyTask(Task *task, bool unblocked);
 
 	Task *regularGetReadyTask(ComputePlace *computePlace);
 };

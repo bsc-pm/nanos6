@@ -641,7 +641,7 @@ namespace DataAccessRegistration {
 
 			// The homeNode couldn't be propagated, check it in the directory
 			if (!weak && setHomeNode) {
-				size_t length = access->getAccessRegion().getSize();
+				size_t length = access->getLength();
 				uint8_t homeNode = NUMAManager::getHomeNode(address, length);
 				access->setHomeNode(homeNode);
 			}
