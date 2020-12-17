@@ -30,7 +30,6 @@ static const nanos6_api_versions_t apiVersions = {
 	.lint_api_version = nanos6_lint_api,
 	.locking_api_version = nanos6_locking_api,
 	.monitoring_api_version = nanos6_monitoring_api,
-	.numa_api_version = nanos6_numa_api,
 	.polling_api_version = nanos6_polling_api,
 	.reductions_api_version = nanos6_reductions_api,
 	.task_constraints_api_version = nanos6_task_constraints_api,

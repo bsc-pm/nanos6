@@ -20,7 +20,6 @@
 #include "loop.h"
 #include "major.h"
 #include "monitoring.h"
-#include "numa.h"
 #include "polling.h"
 #include "reductions.h"
 #include "task-info-registration.h"
@@ -68,7 +67,6 @@ typedef struct {
 	enum nanos6_lint_api_t lint_api_version;
 	enum nanos6_locking_api_t locking_api_version;
 	enum nanos6_monitoring_api_t monitoring_api_version;
-	enum nanos6_numa_api_t numa_api_version;
 	enum nanos6_polling_api_t polling_api_version;
 	enum nanos6_reductions_api_t reductions_api_version;
 	enum nanos6_task_constraints_api_t task_constraints_api_version;
