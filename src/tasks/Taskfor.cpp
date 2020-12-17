@@ -36,6 +36,8 @@ void Taskfor::run(Taskfor &source, nanos6_address_translation_entry_t *translati
 
 	do {
 		taskInfo.implementations[0].run(argsBlock, &_bounds, translationTable);
+		// Prevent translating twice the addresses because the argsBlock is overwritten
+		translationTable = nullptr;
 
 		completedIterations += myIterations;
 

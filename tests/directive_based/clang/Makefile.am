@@ -59,7 +59,8 @@ base_tests += \
 	taskloop-for-dep-multiaxpy.clang.test \
 	taskloop-for-nested-dep-multiaxpy.clang.test \
 	taskloop-for-nonpod.clang.test \
-	taskloop-for-nqueens.clang.test
+	taskloop-for-nqueens.clang.test \
+	taskloop-for-reduction.clang.test
 
 
 # Ignore CPU Activation test if we have DLB
@@ -110,7 +111,8 @@ discrete_tests += \
 	discrete-taskloop-for-dep-multiaxpy.clang.test \
 	discrete-taskloop-for-nested-dep-multiaxpy.clang.test \
 	discrete-taskloop-for-nonpod.clang.test \
-	discrete-taskloop-for-nqueens.clang.test
+	discrete-taskloop-for-nqueens.clang.test \
+	discrete-taskloop-for-reduction.clang.test
 
 base_tests +=  \
 	blocking.clang.debug.test \
@@ -138,7 +140,8 @@ base_tests +=  \
 	taskloop-for-dep-multiaxpy.clang.debug.test \
 	taskloop-for-nested-dep-multiaxpy.clang.debug.test \
 	taskloop-for-nonpod.clang.debug.test \
-	taskloop-for-nqueens.clang.debug.test
+	taskloop-for-nqueens.clang.debug.test \
+	taskloop-for-reduction.clang.debug.test
 
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
@@ -186,7 +189,8 @@ discrete_tests += \
 	discrete-taskloop-for-dep-multiaxpy.clang.debug.test \
 	discrete-taskloop-for-nested-dep-multiaxpy.clang.debug.test \
 	discrete-taskloop-for-nonpod.clang.debug.test \
-	discrete-taskloop-for-nqueens.clang.debug.test
+	discrete-taskloop-for-nqueens.clang.debug.test \
+	discrete-taskloop-for-reduction.clang.debug.test
 
 endif
 
@@ -531,6 +535,15 @@ taskloop_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
 taskloop_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
 
+taskloop_for_reduction_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
+taskloop_for_reduction_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_reduction_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_for_reduction_clang_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
+taskloop_for_reduction_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_for_reduction_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_reduction_clang_test_LDFLAGS = $(test_common_ldflags)
+
 discrete_taskloop_for_multiaxpy_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
 discrete_taskloop_for_multiaxpy_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_for_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -575,6 +588,15 @@ discrete_taskloop_for_nqueens_clang_test_SOURCES = ../discrete-taskloop-for/task
 discrete_taskloop_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_taskloop_for_reduction_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
+discrete_taskloop_for_reduction_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_reduction_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_taskloop_for_reduction_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
+discrete_taskloop_for_reduction_clang_test_CPPFLAGS = -DNDEBUG
+discrete_taskloop_for_reduction_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_reduction_clang_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_clang_debug_test_SOURCES = ../linear-regions/lr-nonest.cpp
 lr_nonest_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

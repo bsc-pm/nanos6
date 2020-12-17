@@ -61,7 +61,8 @@ base_tests += \
 	taskloop-for-dep-multiaxpy.mercurium.test \
 	taskloop-for-nested-dep-multiaxpy.mercurium.test \
 	taskloop-for-nonpod.mercurium.test \
-	taskloop-for-nqueens.mercurium.test
+	taskloop-for-nqueens.mercurium.test \
+	taskloop-for-reduction.mercurium.test
 
 
 if USE_CUDA
@@ -118,7 +119,8 @@ discrete_tests += \
 	discrete-taskloop-for-dep-multiaxpy.mercurium.test \
 	discrete-taskloop-for-nested-dep-multiaxpy.mercurium.test \
 	discrete-taskloop-for-nonpod.mercurium.test \
-	discrete-taskloop-for-nqueens.mercurium.test
+	discrete-taskloop-for-nqueens.mercurium.test \
+	discrete-taskloop-for-reduction.mercurium.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -157,7 +159,8 @@ base_tests +=  \
 	taskloop-for-dep-multiaxpy.mercurium.debug.test \
 	taskloop-for-nested-dep-multiaxpy.mercurium.debug.test \
 	taskloop-for-nonpod.mercurium.debug.test \
-	taskloop-for-nqueens.mercurium.debug.test
+	taskloop-for-nqueens.mercurium.debug.test \
+	taskloop-for-reduction.mercurium.debug.test
 
 if USE_CUDA
 base_tests += cuda-saxpy.mercurium.debug.test
@@ -211,7 +214,8 @@ discrete_tests += \
 	discrete-taskloop-for-dep-multiaxpy.mercurium.debug.test \
 	discrete-taskloop-for-nested-dep-multiaxpy.mercurium.debug.test \
 	discrete-taskloop-for-nonpod.mercurium.debug.test \
-	discrete-taskloop-for-nqueens.mercurium.debug.test
+	discrete-taskloop-for-nqueens.mercurium.debug.test \
+	discrete-taskloop-for-reduction.mercurium.debug.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -593,6 +597,15 @@ taskloop_for_nqueens_mercurium_test_CPPFLAGS = -DNDEBUG
 taskloop_for_nqueens_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_for_nqueens_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
+taskloop_for_reduction_mercurium_debug_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
+taskloop_for_reduction_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_reduction_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_for_reduction_mercurium_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
+taskloop_for_reduction_mercurium_test_CPPFLAGS = -DNDEBUG
+taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_reduction_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
 discrete_taskloop_for_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
 discrete_taskloop_for_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_for_multiaxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -637,6 +650,15 @@ discrete_taskloop_for_nqueens_mercurium_test_SOURCES = ../discrete-taskloop-for/
 discrete_taskloop_for_nqueens_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_for_nqueens_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_for_nqueens_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_taskloop_for_reduction_mercurium_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
+discrete_taskloop_for_reduction_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_reduction_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_taskloop_for_reduction_mercurium_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
+discrete_taskloop_for_reduction_mercurium_test_CPPFLAGS = -DNDEBUG
+discrete_taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_reduction_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_mercurium_debug_test_SOURCES = ../linear-regions/lr-nonest.cpp
 lr_nonest_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
