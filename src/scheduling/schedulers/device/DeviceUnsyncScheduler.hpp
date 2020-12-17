@@ -24,6 +24,11 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
+
+	virtual bool enableNUMA()
+	{
+		return false;
+	}
 };
 
 

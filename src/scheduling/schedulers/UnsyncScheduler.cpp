@@ -15,12 +15,15 @@ UnsyncScheduler::UnsyncScheduler(
 	bool enablePriority,
 	bool enableImmediateSuccessor
 ) :
+	_numQueues(1),
 	_deadlineTasks(nullptr),
 	_roundRobinQueues(0),
 	_enableImmediateSuccessor(enableImmediateSuccessor),
 	_enablePriority(enablePriority)
 {
-	_numQueues = NUMAManager::getTrackingNodes();
+	if (enableNUMA()) {
+		_numQueues = NUMAManager::getTrackingNodes();
+	}
 	assert(_numQueues > 0);
 
 	_queues = (ReadyQueue **) MemoryAllocator::alloc(_numQueues * sizeof(ReadyQueue *));
@@ -76,6 +79,7 @@ Task *UnsyncScheduler::regularGetReadyTask(ComputePlace *computePlace)
 {
 	uint64_t NUMAid = 0;
 	if (_numQueues > 1) {
+		assert(computePlace->getType() == nanos6_host_device);
 		NUMAid =  ((CPU *)computePlace)->getNumaNodeId();
 	}
 

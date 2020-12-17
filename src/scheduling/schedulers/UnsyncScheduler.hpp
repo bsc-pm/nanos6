@@ -97,6 +97,11 @@ protected:
 	void regularAddReadyTask(Task *task, bool unblocked);
 
 	Task *regularGetReadyTask(ComputePlace *computePlace);
+
+	virtual bool enableNUMA()
+	{
+		return true;
+	}
 };
 
 
