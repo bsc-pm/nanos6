@@ -241,7 +241,7 @@ public:
 		setRunnable(true);
 	}
 
-	inline void body(nanos6_address_translation_entry_t * = nullptr) override
+	inline void body(nanos6_address_translation_entry_t *translationTable) override
 	{
 		assert(hasCode());
 		assert(isRunnable());
@@ -251,7 +251,7 @@ public:
 		assert(parent != nullptr);
 		assert(parent->isTaskfor());
 
-		run(*((Taskfor *)parent));
+		run(*((Taskfor *)parent), translationTable);
 	}
 
 	inline bounds_t &getBounds()
@@ -336,7 +336,7 @@ public:
 	}
 
 private:
-	void run(Taskfor &source);
+	void run(Taskfor &source, nanos6_address_translation_entry_t *translationTable);
 
 	static inline size_t closestMultiple(size_t n, size_t multipleOf)
 	{

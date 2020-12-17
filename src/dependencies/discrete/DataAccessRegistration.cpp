@@ -139,7 +139,7 @@ namespace DataAccessRegistration {
 	{
 		DataAccessType oldType = access->getType();
 		// Let's not allow combining reductions with other types as it causes problems.
-		assert(oldType != REDUCTION_ACCESS_TYPE && newType != REDUCTION_ACCESS_TYPE);
+		assert((oldType != REDUCTION_ACCESS_TYPE && newType != REDUCTION_ACCESS_TYPE) || (newType == oldType));
 
 		access->setType(combineTypes(oldType, newType));
 
