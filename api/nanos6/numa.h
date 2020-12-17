@@ -42,7 +42,7 @@ typedef uint64_t nanos6_bitmask_t;
 //! the following block is sent to the next NUMA node enabled in the bitmask, and so on. A single
 //! NUMA node may receive more than one block.
 //!
-//! \param[in] size The total size of the memory chunk to be allocated
+//! \param[in] size The total size of the memory chunk to be allocated. It must be greater or equal than pagesize.
 //! \param[in] bitmask A bitmask specifying which NUMA nodes should contain a block of this chunk.
 //! \param[in] block_size The block size to perform the interleaving
 //!

@@ -147,7 +147,8 @@ public:
 
 	static void *alloc(size_t size, const bitmask_t *bitmask, size_t blockSize)
 	{
-		assert(size > 0);
+		size_t pageSize = HardwareInfo::getPageSize();
+		FatalErrorHandler::failIf(size < pageSize, "size cannot be smaller than pagesize (", pageSize, ")");
 		assert(bitmask != nullptr);
 		assert(*bitmask != 0);
 		assert(blockSize > 0);
@@ -160,7 +161,6 @@ public:
 
 		bitmask_t bitmaskCopy = *bitmask;
 
-		size_t pageSize = HardwareInfo::getPageSize();
 		if (blockSize % pageSize != 0) {
 			blockSize = MathSupport::closestMultiple(blockSize, pageSize);
 		}
