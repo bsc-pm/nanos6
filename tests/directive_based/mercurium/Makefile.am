@@ -603,7 +603,7 @@ taskloop_for_reduction_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflag
 
 taskloop_for_reduction_mercurium_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
 taskloop_for_reduction_mercurium_test_CPPFLAGS = -DNDEBUG
-taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_for_reduction_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_taskloop_for_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
@@ -657,7 +657,7 @@ discrete_taskloop_for_reduction_mercurium_debug_test_LDFLAGS = $(test_common_deb
 
 discrete_taskloop_for_reduction_mercurium_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
 discrete_taskloop_for_reduction_mercurium_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_for_reduction_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_mercurium_debug_test_SOURCES = ../linear-regions/lr-nonest.cpp
