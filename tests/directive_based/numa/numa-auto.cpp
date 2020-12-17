@@ -26,6 +26,14 @@ int main(int argc, char **argv) {
 
 	nanos6_bitmask_t bitmask;
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL);
+	size_t numaNodes = nanos6_count_setbits(&bitmask);
+
+	if (numaNodes == 1) {
+		tap.skip("This test does not work with just 1 NUMA node");
+		tap.end();
+		return 0;
+	}
+
 	void *ptr = nanos6_numa_alloc_block_interleave(4096, &bitmask, 4096);
 	enabled = nanos6_is_numa_tracking_enabled();
 	tap.evaluate(
