@@ -159,12 +159,12 @@ HostInfo::HostInfo() :
 
 		// Check that L3 cache object is actually an L3. If there is no L3, it will be another obj type.
 #if HWLOC_API_VERSION >= 0x00020000
-		if (L3CacheObj->type == HWLOC_OBJ_L3CACHE &&
+		if (L3CacheObj->type == HWLOC_OBJ_L3CACHE
 #else
-		if (L3CacheObj->type == HWLOC_OBJ_CACHE &&
+		if (L3CacheObj->type == HWLOC_OBJ_CACHE
 #endif
-				L3CacheObj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
-				L3CacheObj->attr->cache.depth == 3)
+			&& L3CacheObj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED
+			&& L3CacheObj->attr->cache.depth == 3)
 		{
 			//! Check if L3 cache object is already created.
 			if (_l3Caches.size() > L3CacheObj->logical_index) {
@@ -294,7 +294,8 @@ HostInfo::HostInfo() :
 		}
 	}
 
-	_NUMADistances.resize(memNodesCount*memNodesCount, 0);
+	_NUMADistances.resize(memNodesCount * memNodesCount, 0);
+
 	if (memNodesCount > 1) {
 #if HWLOC_API_VERSION >= 0x00020000
 		//! Get matrix of NUMA distances

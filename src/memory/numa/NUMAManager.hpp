@@ -31,9 +31,11 @@ struct DirectoryInfo {
 	size_t _size;
 	uint8_t _homeNode;
 
-	DirectoryInfo(size_t size, uint8_t homeNode)
-		: _size(size), _homeNode(homeNode)
-	{}
+	DirectoryInfo(size_t size, uint8_t homeNode) :
+		_size(size),
+		_homeNode(homeNode)
+	{
+	}
 };
 
 class NUMAManager {
@@ -42,26 +44,35 @@ private:
 	typedef Container::map<void *, DirectoryInfo> directory_t;
 	typedef Container::map<void *, uint64_t> alloc_info_t;
 
-	// Directory to store the homeNode of each memory region
+	//! Directory to store the homeNode of each memory region
 	static directory_t _directory;
-	// RWlock to access the directory
+
+	//! RWlock to access the directory
 	static RWSpinLock _lock;
 
-	// Map to store the size of each allocation, to be able to free memory
+	//! Map to store the size of each allocation, to be able to free memory
 	static alloc_info_t _allocations;
-	// Lock to access the allocations map
+
+	//! Lock to access the allocations map
 	static SpinLock _allocationsLock;
 
-	// The bitmask for wildcard NUMA_ALL
+	//! The bitmask for wildcard NUMA_ALL
 	static bitmask_t _bitmaskNumaAll;
-	// The bitmask for wildcard NUMA_ALL_ACTIVE
+
+	//! The bitmask for wildcard NUMA_ALL_ACTIVE
 	static bitmask_t _bitmaskNumaAllActive;
-	// The bitmask for wildcard NUMA_ANY_ACTIVE
+
+	//! The bitmask for wildcard NUMA_ANY_ACTIVE
 	static bitmask_t _bitmaskNumaAnyActive;
 
-	static ConfigVariable<bool> _reportEnabled;
+	//! Whether the tracking is enabled
 	static std::atomic<bool> _trackingEnabled;
+
+	//! The tracking mode "on", "off" or "auto"
 	static ConfigVariable<std::string> _trackingMode;
+
+	//! Whether should report NUMA information
+	static ConfigVariable<bool> _reportEnabled;
 
 public:
 	static void initialize()
@@ -69,16 +80,16 @@ public:
 		_trackingEnabled = false;
 		std::string trackingMode = _trackingMode.getValue();
 		if (trackingMode == "on") {
-			// Mark tracking as enabled.
+			// Mark tracking as enabled
 			_trackingEnabled = true;
 		} else if (trackingMode != "auto" && trackingMode != "off") {
 			FatalErrorHandler::fail("Invalid data tracking mode: ", trackingMode);
 		}
 
-		// For both "on" or "auto", we initialize everything. However, in the case of
-		// "auto", we only mark _trackingEnabled as true in the first alloc/allocSentinels call.
+		// We always initialize everything, even in the "off" case. If "auto" we
+		// enable the tracking in the first alloc/allocSentinels call
 
-		// Initialize bitmasks to 0
+		// Initialize bitmasks to zero
 		clearAll(&_bitmaskNumaAll);
 		clearAll(&_bitmaskNumaAllActive);
 		clearAll(&_bitmaskNumaAnyActive);
@@ -88,10 +99,12 @@ public:
 		size_t numNumaAnyActive = 0;
 
 		numNumaAll = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
+
 		// Currently, we are using uint64_t as type for the bitmasks. In case we have
-		// more than 64 nodes, the bitmask cannot represent all the NUMA nodes.
+		// more than 64 nodes, the bitmask cannot represent all the NUMA nodes
 		FatalErrorHandler::failIf((numNumaAll > 64), "We cannot support such a high number of NUMA nodes.");
 		FatalErrorHandler::failIf((numNumaAll <= 0), "There must be at least one NUMA node.");
+
 		// The number of CPUs assigned to this process that each NUMA node contains
 		std::vector<size_t> cpusPerNumaNode(numNumaAll, 0);
 
@@ -99,7 +112,7 @@ public:
 		const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
 		// Iterate over the CPU list to annotate CPUs per NUMA node
 		for (CPU *cpu : cpus) {
-			// In case DLB is enabled, we only want the CPUs we own.
+			// In case DLB is enabled, we only want the CPUs we own
 			if (cpu->isOwned()) {
 				cpusPerNumaNode[cpu->getNumaNodeId()]++;
 			}
@@ -107,15 +120,15 @@ public:
 
 		// Enable corresponding bits in the bitmasks
 		for (size_t numaNode = 0; numaNode < cpusPerNumaNode.size(); numaNode++) {
-			// NUMA_ALL -> enable a bit per NUMA node available in the system
+			// NUMA_ALL enables a bit per NUMA node available in the system
 			BitManipulation::enableBit(&_bitmaskNumaAll, numaNode);
 
-			// NUMA_ANY_ACTIVE -> enable a bit per NUMA node containing at least one CPU assigned to this process
+			// NUMA_ANY_ACTIVE enables a bit per NUMA node containing at least one CPU assigned to this process
 			if (cpusPerNumaNode[numaNode] > 0) {
 				BitManipulation::enableBit(&_bitmaskNumaAnyActive, numaNode);
 				numNumaAnyActive++;
 
-				// NUMA_ALL_ACTIVE -> enable a bit per NUMA node containing all the CPUs assigned to this process
+				// NUMA_ALL_ACTIVE enables a bit per NUMA node containing all the CPUs assigned to this process
 				NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
 				assert(numaPlace != nullptr);
 				if (cpusPerNumaNode[numaNode] == numaPlace->getNumLocalCores()) {
@@ -148,7 +161,10 @@ public:
 	static void *alloc(size_t size, const bitmask_t *bitmask, size_t blockSize)
 	{
 		size_t pageSize = HardwareInfo::getPageSize();
-		FatalErrorHandler::failIf(size < pageSize, "size cannot be smaller than pagesize (", pageSize, ")");
+		if (size < pageSize) {
+			FatalErrorHandler::fail("Allocation size cannot be smaller than pagesize ", pageSize);
+		}
+
 		assert(bitmask != nullptr);
 		assert(*bitmask != 0);
 		assert(blockSize > 0);
@@ -230,7 +246,7 @@ public:
 		void *res = nullptr;
 		size_t pageSize = HardwareInfo::getPageSize();
 
-		if (size < (size_t) pageSize) {
+		if (size < pageSize) {
 			// Use malloc for small allocations
 			res = malloc(size);
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
@@ -251,7 +267,7 @@ public:
 
 		// In this case, the whole allocation is inside the same page. However, it
 		// is important for scheduling purposes to annotate in the directory as if
-		// we could really split the allocation as requested.
+		// we could really split the allocation as requested
 		for (size_t i = 0; i < size; i += blockSize) {
 			uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
@@ -316,7 +332,6 @@ public:
 			return (uint8_t) -1;
 		}
 
-		uint8_t homeNode = (uint8_t ) -1;
 		// Search in the directory
 		_lock.readLock();
 		auto it = _directory.lower_bound(ptr);
@@ -324,13 +339,12 @@ public:
 		// lower_bound returns the first element not considered to go before ptr
 		// Thus, if ptr is exactly the start of the region, lower_bound will return
 		// the desired region. Otherwise, if ptr belongs to the region but its start
-		// address is greater than the region start, lower_bound returns the next region.
-		// In consequence, we should apply a decrement to the it.
-		// Get homeNode
+		// address is greater than the region start, lower_bound returns the next
+		// region. In consequence, we should apply a decrement to the iterator
 		if (it == _directory.end() || ptr < it->first) {
 			if (it == _directory.begin()) {
 				_lock.readUnlock();
-				return homeNode;
+				return (uint8_t) -1;
 			}
 			it--;
 		}
@@ -338,17 +352,20 @@ public:
 		// Not present
 		if (it == _directory.end() || getContainedBytes(ptr, size, it->first, it->second._size) == 0) {
 			_lock.readUnlock();
-			return homeNode;
+			return (uint8_t) -1;
 		}
 
-		// It could happen that the region we are checking resides in several directory regions.
-		// We will return as the homeNode the one containing more bytes.
-		size_t foundBytes = 0;
+		// If the target region resides in several directory regions, we return as the
+		// homeNode the one containing more bytes
+
 		size_t numNumaAll = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
 		assert(numNumaAll > 0);
-		size_t *bytesInNUMA = (size_t *) alloca(numNumaAll*sizeof(size_t));
-		std::memset(bytesInNUMA, 0, numNumaAll*sizeof(size_t));
+
+		size_t *bytesInNUMA = (size_t *) alloca(numNumaAll * sizeof(size_t));
+		std::memset(bytesInNUMA, 0, numNumaAll * sizeof(size_t));
+
 		int idMax = 0;
+		size_t foundBytes = 0;
 		do {
 			size_t containedBytes = getContainedBytes(it->first, it->second._size, ptr, size);
 
@@ -356,7 +373,7 @@ public:
 			if (containedBytes == 0)
 				break;
 
-			homeNode = it->second._homeNode;
+			uint8_t homeNode = it->second._homeNode;
 			assert(homeNode != (uint8_t) -1);
 			bytesInNUMA[homeNode] += containedBytes;
 
@@ -374,6 +391,7 @@ public:
 			it++;
 		} while (foundBytes != size && it != _directory.end());
 		_lock.readUnlock();
+
 		assert(bytesInNUMA[idMax] > 0);
 
 		return idMax;
@@ -445,11 +463,12 @@ public:
 	static inline uint64_t getTrackingNodes()
 	{
 		// This method is called from UnsyncScheduler::UnsyncScheduler()
-		// before calling NUMAManager::initialize().
+		// before calling NUMAManager::initialize()
 		std::string trackingMode = _trackingMode.getValue();
 		if (trackingMode == "off") {
 			return 1;
 		} else {
+			// Return the total number of NUMAs
 			return HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
 		}
 	}
@@ -465,7 +484,7 @@ private:
 		uintptr_t end = std::min(end1, end2);
 
 		if (start < end)
-				return end - start;
+			return end - start;
 
 		return 0;
 	}

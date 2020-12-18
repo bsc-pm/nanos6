@@ -22,25 +22,27 @@ class ReadyQueueMap : public ReadyQueue {
 	size_t _numReadyTasks;
 
 public:
-	ReadyQueueMap(SchedulingPolicy policy)
-		: ReadyQueue(policy),
+	ReadyQueueMap(SchedulingPolicy policy) :
+		ReadyQueue(policy),
 		_numReadyTasks(0)
 	{
 	}
 
 	~ReadyQueueMap()
 	{
+		assert(_numReadyTasks == 0);
+
 		for (ready_map_t::iterator it = _readyMap.begin(); it != _readyMap.end(); it++) {
 			assert(it->second.empty());
 		}
 		_readyMap.clear();
 	}
 
-	void addReadyTask(Task *task, bool unblocked)
+	inline void addReadyTask(Task *task, bool unblocked)
 	{
 		Task::priority_t priority = task->getPriority();
 
-		// Get ready queue for the given priority, if exists. If not, create it, and return it.
+		// Get ready queue for the given priority if exists, otherwise create it
 		ready_map_t::iterator it = (_readyMap.emplace(priority, ready_queue_t())).first;
 		assert(it != _readyMap.end());
 
@@ -53,7 +55,7 @@ public:
 		++_numReadyTasks;
 	}
 
-	Task *getReadyTask(ComputePlace *)
+	inline Task *getReadyTask(ComputePlace *)
 	{
 		if (_numReadyTasks == 0) {
 			return nullptr;
@@ -75,7 +77,9 @@ public:
 			}
 		}
 
-		FatalErrorHandler::failIf(true, "There must be a ready task.");
+		// There must be a ready task
+		assert(false);
+
 		return nullptr;
 	}
 

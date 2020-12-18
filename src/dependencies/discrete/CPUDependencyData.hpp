@@ -99,6 +99,7 @@ struct CPUDependencyData {
 	~CPUDependencyData()
 	{
 		assert(empty());
+
 		if (_bytesInNUMA != nullptr) {
 			std::free(_bytesInNUMA);
 		}
@@ -144,8 +145,8 @@ struct CPUDependencyData {
 	{
 		if (_bytesInNUMA == nullptr) {
 			_bytesInNUMA = (size_t *) std::malloc(sizeof(size_t) * numNUMANodes);
+			assert(_bytesInNUMA != nullptr);
 		}
-		assert(_bytesInNUMA != nullptr);
 	}
 };
 

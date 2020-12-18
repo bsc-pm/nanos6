@@ -29,7 +29,7 @@ protected:
 	std::vector<CPU *> _cpus;
 
 public:
-	HardwareCache (int id, size_t cacheSize, size_t cacheLineSize, HardwareCacheLevel cacheLevel) :
+	HardwareCache(int id, size_t cacheSize, size_t cacheLineSize, HardwareCacheLevel cacheLevel) :
 		_id(id),
 		_cacheSize(cacheSize),
 		_cacheLineSize(cacheLineSize),

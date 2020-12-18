@@ -21,10 +21,10 @@ private:
 	//! List of NUMA nodes on the system
 	std::vector<MemoryPlace *> _memoryPlaces;
 
-	//!< List of L2 caches on the system
+	//! List of L2 caches on the system
 	std::vector<L2Cache *> _l2Caches;
 
-	//!< List of L3 caches on the system
+	//! List of L3 caches on the system
 	std::vector<L3Cache *> _l3Caches;
 
 	//! L1 Cache line size

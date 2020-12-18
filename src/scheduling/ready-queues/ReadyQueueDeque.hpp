@@ -15,19 +15,23 @@ class ReadyQueueDeque : public ReadyQueue {
 	typedef Container::deque<Task *> ready_queue_t;
 
 	ready_queue_t _readyDeque;
+
 	size_t _numReadyTasks;
 
 public:
 	ReadyQueueDeque(SchedulingPolicy policy) :
-		ReadyQueue(policy), _numReadyTasks(0)
+		ReadyQueue(policy),
+		_numReadyTasks(0)
 	{
 	}
 
 	~ReadyQueueDeque()
 	{
+		assert(_numReadyTasks == 0);
+		assert(_readyDeque.empty());
 	}
 
-	void addReadyTask(Task *task, bool unblocked)
+	inline void addReadyTask(Task *task, bool unblocked)
 	{
 		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
 			_readyDeque.push_front(task);
@@ -38,7 +42,7 @@ public:
 		++_numReadyTasks;
 	}
 
-	Task *getReadyTask(ComputePlace *)
+	inline Task *getReadyTask(ComputePlace *)
 	{
 		if (_numReadyTasks == 0) {
 			return nullptr;
@@ -58,7 +62,6 @@ public:
 	{
 		return _numReadyTasks;
 	}
-
 };
 
 

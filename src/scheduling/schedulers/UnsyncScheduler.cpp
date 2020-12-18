@@ -86,47 +86,48 @@ void UnsyncScheduler::regularAddReadyTask(Task *task, bool unblocked)
 Task *UnsyncScheduler::regularGetReadyTask(ComputePlace *computePlace)
 {
 	uint64_t NUMAid = 0;
+
 	if (_numQueues > 1) {
 		assert(computePlace->getType() == nanos6_host_device);
-		NUMAid =  ((CPU *)computePlace)->getNumaNodeId();
+		NUMAid = ((CPU *)computePlace)->getNumaNodeId();
 	}
+	assert(NUMAid < _numQueues);
 
 	Task *result = nullptr;
 	result = _queues[NUMAid]->getReadyTask(computePlace);
-
 	if (result != nullptr)
 		return result;
 
 	if (_numQueues > 1) {
-		// Try to steal.
-		// Stealing must consider distance and load balance
+		// Try to steal considering distance and load balance
 		const std::vector<uint64_t> &distances = HardwareInfo::getNUMADistances();
-		// Ideally, we want to steal from closer sockets with many tasks
-		// We will use this score function: score = 100/distance + ready_tasks/5
-		// The highest score, the better
+
+		const double distanceThold = DataTrackingSupport::getDistanceThreshold();
+		const double loadThold = DataTrackingSupport::getLoadThreshold();
+
+		// Ideally, we want to steal from closer sockets with many tasks, so we
+		// will use this score function: score = 100/distance + ready_tasks/5
+		// The highest score the better
 		uint64_t score = 0;
 		uint64_t chosen = (uint64_t) -1;
-		for (uint64_t i = 0; i < _numQueues; i++) {
-			if (i != NUMAid && _queues[i] != nullptr) {
-				size_t numReadyTasks;
-				numReadyTasks = _queues[i]->getNumReadyTasks();
+		for (uint64_t q = 0; q < _numQueues; q++) {
+			if (q != NUMAid && _queues[q] != nullptr) {
+				size_t numReadyTasks = _queues[q]->getNumReadyTasks();
 
 				if (numReadyTasks > 0) {
-					uint64_t distance = distances[i*_numQueues+NUMAid];
+					uint64_t distance = distances[q * _numQueues + NUMAid];
 					uint64_t loadFactor = numReadyTasks;
 
-					if (distance < DataTrackingSupport::getDistanceThreshold() &&
-							loadFactor > DataTrackingSupport::getLoadThreshold())
-					{
-						chosen = i;
+					if (distance < distanceThold && loadFactor > loadThold) {
+						chosen = q;
 						break;
 					}
 
 					assert(distance != 0);
-					uint64_t tmpscore = 100/distance + loadFactor/5;
+					uint64_t tmpscore = 100 / distance + loadFactor / 5;
 					if (tmpscore >= score) {
 						score = tmpscore;
-						chosen = i;
+						chosen = q;
 					}
 				}
 			}

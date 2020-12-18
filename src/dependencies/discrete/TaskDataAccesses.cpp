@@ -11,8 +11,8 @@
 uint64_t TaskDataAccesses::computeNUMAAffinity(ComputePlace *computePlace)
 {
 	if (_totalDataSize == 0 ||
-			!NUMAManager::isTrackingEnabled() ||
-			!DataTrackingSupport::isNUMASchedulingEnabled())
+		!NUMAManager::isTrackingEnabled() ||
+		!DataTrackingSupport::isNUMASchedulingEnabled())
 	{
 		return (uint64_t) -1;
 	}
@@ -21,7 +21,7 @@ uint64_t TaskDataAccesses::computeNUMAAffinity(ComputePlace *computePlace)
 	size_t *bytesInNUMA = computePlace->getDependencyData()._bytesInNUMA;
 	assert(bytesInNUMA != nullptr);
 
-	// Init bytesInNUMA to 0.
+	// Init bytesInNUMA to zero
 	std::memset(bytesInNUMA, 0, numNUMANodes * sizeof(size_t));
 
 	std::minstd_rand0 &randomEngine = computePlace->getRandomEngine();

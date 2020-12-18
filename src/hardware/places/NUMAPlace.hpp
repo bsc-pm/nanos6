@@ -9,10 +9,12 @@
 
 #include "MemoryPlace.hpp"
 
-class NUMAPlace: public MemoryPlace {
+class NUMAPlace : public MemoryPlace {
 	typedef std::map<int, ComputePlace *> compute_places_t;
+
 	//! ComputePlaces able to interact with this MemoryPlace
 	compute_places_t _computePlaces;
+
 	//! Cores that belong to this NUMA node
 	size_t _numLocalCores;
 

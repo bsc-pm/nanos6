@@ -12,8 +12,8 @@
 class Task;
 
 class DataTrackingSupport {
-	//! This is a developer option. Thus, it is not in the config file.
-	//! This may be used for debugging purposes or performance evaluation.
+	//! This is a developer option, it is not in the config file, and it
+	//! may be used for debugging purposes or performance evaluation
 	static ConfigVariable<bool> _NUMASchedulingEnabled;
 
 	static const double _rwBonusFactor;

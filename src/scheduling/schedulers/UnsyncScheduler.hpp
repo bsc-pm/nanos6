@@ -15,8 +15,6 @@
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
 
-class ReadyQueueDeque;
-class ReadyQueueMap;
 
 class UnsyncScheduler {
 protected:
@@ -27,9 +25,11 @@ protected:
 
 	ReadyQueue **_queues;
 	size_t _numQueues;
-	DeadlineQueue *_deadlineTasks;
-	// When tasks does not have a NUMA hint, we assign it in a round robin basis.
+
+	// When tasks do not have a NUMA hints we assign them in a round robin basis
 	uint64_t _roundRobinQueues;
+
+	DeadlineQueue *_deadlineTasks;
 
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
@@ -93,9 +93,19 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+
 protected:
+	//! \brief Add ready task considering NUMA queues
+	//!
+	//! \param[in] task the ready task to add
+	//! \param[in] unblocked whether it is an unblocked task or not
 	void regularAddReadyTask(Task *task, bool unblocked);
 
+	//! \brief Get a ready task considering NUMA queues
+	//!
+	//! \param[in] computePlace the hardware place asking for scheduling orders
+	//!
+	//! \returns a ready task or nullptr
 	Task *regularGetReadyTask(ComputePlace *computePlace);
 
 	virtual bool enableNUMA()
