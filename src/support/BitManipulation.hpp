@@ -8,6 +8,8 @@
 #ifndef BIT_MANIPULATION_HPP
 #define BIT_MANIPULATION_HPP
 
+#include <cstdint>
+
 
 class BitManipulation {
 public:
