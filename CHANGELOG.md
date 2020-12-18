@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.5.1, Fri Dec 18, 2020
+The 2.5.1 release corresponds to the OmpSs-2 2020.11.1 release. It introduces bug fixes and code improvements.
+
+### General
+- Unify instrumentation, monitoring and hwcounter points
+- Efficient support for taskloop dependencies
+- Fix reductions in taskloops and taskfors
+- Centralize configuration variables
+- Fully implement `assert` directive
+- Abort execution when an invalid config variable is enabled
+- Fix CTF instrumentation bugs
+- Bugfixes, performance and code improvements
+
+
 ## Version 2.5, Wed Nov 18, 2020
 The 2.5 release corresponds to the OmpSs-2 2020.11 release. It introduces several features and fixes that improve
 general performance. It replaces the configuration environment variables with a configuration file, improving the
