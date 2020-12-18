@@ -17,6 +17,18 @@ int main(int argc, char **argv) {
 
 	nanos6_wait_for_full_initialization();
 
+	nanos6_bitmask_t bitmask;
+	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
+	size_t numaNodes = nanos6_count_setbits(&bitmask);
+
+	if (numaNodes == 1) {
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.skip("This test does not work with just 1 active NUMA node");
+		tap.end();
+		return 0;
+	}
+
 	tap.registerNewTests(2);
 	tap.begin();
 
@@ -26,15 +38,7 @@ int main(int argc, char **argv) {
 		"Check that NUMA tracking is disabled, because there was no allocation yet"
 	);
 
-	nanos6_bitmask_t bitmask;
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL);
-	size_t numaNodes = nanos6_count_setbits(&bitmask);
-
-	if (numaNodes == 1) {
-		tap.skip("This test does not work with just 1 NUMA node");
-		tap.end();
-		return 0;
-	}
 
 	int pagesize = getpagesize();
 	void *ptr = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
@@ -44,25 +48,30 @@ int main(int argc, char **argv) {
 		enabled,
 		"Check that NUMA tracking is enabled, because we already did an allocation"
 	);
+	nanos6_numa_free(ptr);
+	nanos6_numa_free(ptr_sentinel);
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL_ACTIVE);
-	void *ptr2 = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
-	void *ptr2_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
+	// It may happen that we don't have any NUMA node with all the cores.
+	numaNodes = nanos6_count_setbits(&bitmask);
+	if (numaNodes < 1) {
+		tap.skip("This test requires all the cores of at least 1 NUMA node");
+	} else {
+		void *ptr2 = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
+		void *ptr2_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
+		nanos6_numa_free(ptr2);
+		nanos6_numa_free(ptr2_sentinel);
+	}
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
 	void *ptr3 = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
 	void *ptr3_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
+	nanos6_numa_free(ptr3);
+	nanos6_numa_free(ptr3_sentinel);
 
 	tap.bailOutAndExitIfAnyFailed();
 
 	tap.end();
-
-	nanos6_numa_free(ptr);
-	nanos6_numa_free(ptr_sentinel);
-	nanos6_numa_free(ptr2);
-	nanos6_numa_free(ptr2_sentinel);
-	nanos6_numa_free(ptr3);
-	nanos6_numa_free(ptr3_sentinel);
 
 	return 0;
 }

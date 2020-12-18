@@ -15,18 +15,22 @@ int main(int argc, char **argv) {
 
 	nanos6_wait_for_full_initialization();
 
-	tap.registerNewTests(1);
-	tap.begin();
-
 	nanos6_bitmask_t bitmask;
-	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL);
+	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
 	size_t numaNodes = nanos6_count_setbits(&bitmask);
 
 	if (numaNodes == 1) {
-		tap.skip("This test does not work with just 1 NUMA node");
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.skip("This test does not work with just 1 active NUMA node");
 		tap.end();
 		return 0;
 	}
+
+	tap.registerNewTests(1);
+	tap.begin();
+
+	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL);
 
 	int enabled = nanos6_is_numa_tracking_enabled();
 	tap.evaluate(
