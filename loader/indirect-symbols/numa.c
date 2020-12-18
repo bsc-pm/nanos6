@@ -67,7 +67,7 @@ void nanos6_bitmask_clearall(
 
 	static nanos6_bitmask_clearall_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_bitmask_clearall *) _nanos6_resolve_symbol("nanos6_bitmask_clearall", "numa", NULL);
+		symbol = (nanos6_bitmask_clearall_t *) _nanos6_resolve_symbol("nanos6_bitmask_clearall", "numa", NULL);
 	}
 
 	(*symbol)(bitmask);
@@ -140,7 +140,7 @@ uint64_t nanos6_bitmask_isbitset(
 	 const nanos6_bitmask_t *bitmask,
 	 uint64_t n
 ) {
-	typedef void nanos6_bitmask_isbitset_t(
+	typedef uint64_t nanos6_bitmask_isbitset_t(
 		const nanos6_bitmask_t *bitmask, uint64_t n
 	);
 
@@ -155,7 +155,7 @@ uint64_t nanos6_bitmask_isbitset(
 uint64_t nanos6_count_setbits(
 	 const nanos6_bitmask_t *bitmask
 ) {
-	typedef void nanos6_count_setbits_t(
+	typedef uint64_t nanos6_count_setbits_t(
 		const nanos6_bitmask_t *bitmask
 	);
 

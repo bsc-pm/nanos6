@@ -29,15 +29,23 @@ UnsyncScheduler::UnsyncScheduler(
 	_queues = (ReadyQueue **) MemoryAllocator::alloc(_numQueues * sizeof(ReadyQueue *));
 	assert(_queues != nullptr);
 
-	for (uint64_t i = 0; i < _numQueues; i++) {
-		if (NUMAManager::isValidNUMA(i)) {
-			if (enablePriority) {
-				_queues[i] = new ReadyQueueMap(policy);
+	if (_numQueues > 0) {
+		for (uint64_t i = 0; i < _numQueues; i++) {
+			if (NUMAManager::isValidNUMA(i)) {
+				if (enablePriority) {
+					_queues[i] = new ReadyQueueMap(policy);
+				} else {
+					_queues[i] = new ReadyQueueDeque(policy);
+				}
 			} else {
-				_queues[i] = new ReadyQueueDeque(policy);
+				_queues[i] = nullptr;
 			}
+		}
+	} else {
+		if (enablePriority) {
+			_queues[0] = new ReadyQueueMap(policy);
 		} else {
-			_queues[i] = nullptr;
+			_queues[0] = new ReadyQueueDeque(policy);
 		}
 	}
 

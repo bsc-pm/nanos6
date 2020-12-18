@@ -166,20 +166,14 @@ public:
 		}
 
 		void *res = nullptr;
-		if (size < (size_t) pageSize) {
-			// Use malloc for small allocations
-			res = malloc(size);
-			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
-		} else {
-			// Allocate space using mmap
-			int prot = PROT_READ | PROT_WRITE;
-			int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
-			int fd = -1;
-			int offset = 0;
-			void *addr = nullptr;
-			res = mmap(addr, size, prot, flags, fd, offset);
-			FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
-		}
+		// Allocate space using mmap
+		int prot = PROT_READ | PROT_WRITE;
+		int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
+		int fd = -1;
+		int offset = 0;
+		void *addr = nullptr;
+		res = mmap(addr, size, prot, flags, fd, offset);
+		FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
 
 		_allocationsLock.lock();
 		_allocations.emplace(res, size);

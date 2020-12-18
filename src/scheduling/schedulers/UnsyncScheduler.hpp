@@ -63,7 +63,7 @@ public:
 					Task *currentIS = _immediateSuccessorTasks[immediateSuccessorId];
 					if (currentIS != nullptr) {
 						assert(!currentIS->isTaskfor());
-						regularAddReadyTask(currentIS, hint == UNBLOCKED_TASK_HINT);
+						regularAddReadyTask(currentIS, false);
 					}
 					_immediateSuccessorTasks[immediateSuccessorId] = task;
 				} else {
@@ -76,7 +76,7 @@ public:
 					} else if (currentIS2 == nullptr) {
 						_immediateSuccessorTaskfors[immediateSuccessorId+1] = task;
 					} else {
-						regularAddReadyTask(currentIS1, hint == UNBLOCKED_TASK_HINT);
+						regularAddReadyTask(currentIS1, false);
 						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
 					}
 				}
@@ -84,7 +84,7 @@ public:
 			}
 		}
 
-		regularAddReadyTask(task, hint);
+		regularAddReadyTask(task, hint == UNBLOCKED_TASK_HINT);
 	}
 
 	//! \brief Get a ready task for execution
