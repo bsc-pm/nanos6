@@ -139,16 +139,16 @@ public:
 		}
 
 		if (_reportEnabled) {
-			std::cout << "---------- MANAGER NUMA REPORT ----------" << std::endl;
-			std::cout << "NUMA_ALL:" << std::endl;
-			std::cout << "  Number of NUMA nodes: " << numNumaAll << std::endl;
-			std::cout << "  bitmask: " << _bitmaskNumaAll << std::endl;
-			std::cout << "NUMA_ALL_ACTIVE:" << std::endl;
-			std::cout << "  Number of NUMA nodes: " << numNumaAllActive << std::endl;
-			std::cout << "  bitmask: " << _bitmaskNumaAllActive << std::endl;
-			std::cout << "NUMA_ANY_ACTIVE:" << std::endl;
-			std::cout << "  Number of NUMA nodes: " << numNumaAnyActive << std::endl;
-			std::cout << "  bitmask: " << _bitmaskNumaAnyActive << std::endl;
+			FatalErrorHandler::print("---------- MANAGER NUMA REPORT ----------");
+			FatalErrorHandler::print("NUMA_ALL:");
+			FatalErrorHandler::print("  Number of NUMA nodes: ", numNumaAll);
+			FatalErrorHandler::print("  bitmask: ", _bitmaskNumaAll);
+			FatalErrorHandler::print("NUMA_ALL_ACTIVE:");
+			FatalErrorHandler::print("  Number of NUMA nodes: ", numNumaAllActive);
+			FatalErrorHandler::print("  bitmask: ", _bitmaskNumaAllActive);
+			FatalErrorHandler::print("NUMA_ANY_ACTIVE:");
+			FatalErrorHandler::print("  Number of NUMA nodes: ", numNumaAnyActive);
+			FatalErrorHandler::print("  bitmask: ", _bitmaskNumaAnyActive);
 		}
 	}
 
@@ -182,14 +182,16 @@ public:
 		}
 
 		void *res = nullptr;
-		// Allocate space using mmap
-		int prot = PROT_READ | PROT_WRITE;
-		int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
-		int fd = -1;
-		int offset = 0;
-		void *addr = nullptr;
-		res = mmap(addr, size, prot, flags, fd, offset);
-		FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
+		{
+			// Allocate space using mmap
+			int prot = PROT_READ | PROT_WRITE;
+			int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
+			int fd = -1;
+			int offset = 0;
+			void *addr = nullptr;
+			res = mmap(addr, size, prot, flags, fd, offset);
+			FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
+		}
 
 		_allocationsLock.lock();
 		_allocations.emplace(res, size);
@@ -515,75 +517,11 @@ private:
 	}
 
 #ifndef NDEBUG
-	static inline void checkAllocationCorrectness(void *res, size_t size, const bitmask_t *bitmask, size_t blockSize)
-	{
-		size_t pageSize = HardwareInfo::getPageSize();
-		int pid = 0;
-		unsigned long numPages = MathSupport::ceil(size, pageSize);
-		void **pages = (void **) MemoryAllocator::alloc(numPages * sizeof(void *));
-		int *nodes = nullptr;
-		int *status = (int *) MemoryAllocator::alloc(numPages * sizeof(int));
-		int flags = 0;
-		size_t page = 0;
-		bitmask_t bitmaskCopy = *bitmask;
-		uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
-		BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
-		if (bitmaskCopy == 0) {
-			bitmaskCopy = *bitmask;
-		}
-
-		size_t blockBytes = 0;
-		for (size_t i = 0; i < size; i += pageSize) {
-			if (blockBytes >= blockSize) {
-				currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
-				BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
-				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
-				}
-				blockBytes = 0;
-			}
-
-			char *tmp = (char *) res+i;
-			tmp[0] = 0;
-			pages[page] = tmp;
-
-			blockBytes += pageSize;
-			page++;
-		}
-		assert(numPages == page);
-
-		// move_pages
-		__attribute__((unused)) long ret = move_pages(pid, numPages, pages, nodes, status, flags);
-		assert(ret == 0);
-
-		// Check pages are properly distributed
-		bitmaskCopy = *bitmask;
-		currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
-		BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
-		if (bitmaskCopy == 0) {
-			bitmaskCopy = *bitmask;
-		}
-
-		blockBytes = 0;
-		for (size_t i = 0; i < numPages; i++) {
-			if (blockBytes >= blockSize) {
-				currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
-				BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
-				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
-				}
-				blockBytes = 0;
-			}
-
-			assert(status[i] >= 0);
-			FatalErrorHandler::warnIf(status[i] != currentNodeIndex, "Page is not where it should.");
-
-			blockBytes += pageSize;
-		}
-
-		MemoryAllocator::free(pages, numPages * sizeof(void *));
-		MemoryAllocator::free(status, numPages * sizeof(int));
-	}
+	static void checkAllocationCorrectness(
+		void *res, size_t size,
+		const bitmask_t *bitmask,
+		size_t blockSize
+	);
 #endif
 };
 
