@@ -846,6 +846,11 @@ namespace DataAccessRegistration {
 	{
 		assert(false);
 	}
+
+	bool supportsDataTracking()
+	{
+		return true;
+	}
 } // namespace DataAccessRegistration
 
 #pragma GCC visibility pop

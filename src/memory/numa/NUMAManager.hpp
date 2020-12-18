@@ -452,28 +452,14 @@ public:
 		return BitManipulation::countEnabledBits(bitmask);
 	}
 
-	static inline bool isTrackingEnabled()
-	{
-		return (_trackingEnabled.load(std::memory_order_relaxed) && getValidTrackingNodes() > 1);
-	}
+	static bool isTrackingEnabled();
 
 	static inline bool isValidNUMA(uint64_t bitIndex)
 	{
 		return BitManipulation::checkBit(&_bitmaskNumaAnyActive, bitIndex);
 	}
 
-	static inline uint64_t getTrackingNodes()
-	{
-		// This method is called from UnsyncScheduler::UnsyncScheduler()
-		// before calling NUMAManager::initialize()
-		std::string trackingMode = _trackingMode.getValue();
-		if (trackingMode == "off") {
-			return 1;
-		} else {
-			// Return the total number of NUMAs
-			return HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
-		}
-	}
+	static uint64_t getTrackingNodes();
 
 private:
 	static inline size_t getContainedBytes(void *ptr1, size_t size1, void *ptr2, size_t size2)

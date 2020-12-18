@@ -6,6 +6,8 @@
 
 #include "NUMAManager.hpp"
 
+#include <DataAccessRegistration.hpp>
+
 NUMAManager::directory_t NUMAManager::_directory;
 RWSpinLock NUMAManager::_lock;
 NUMAManager::alloc_info_t NUMAManager::_allocations;
@@ -16,7 +18,6 @@ NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAnyActive;
 std::atomic<bool> NUMAManager::_trackingEnabled;
 ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
 ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
-
 
 #ifndef NDEBUG
 void NUMAManager::checkAllocationCorrectness(
@@ -101,3 +102,22 @@ void NUMAManager::checkAllocationCorrectness(
 	MemoryAllocator::free(status, numPages * sizeof(int));
 }
 #endif
+
+bool NUMAManager::isTrackingEnabled()
+{
+	return (_trackingEnabled.load(std::memory_order_relaxed) &&
+			getValidTrackingNodes() > 1 &&
+			DataAccessRegistration::supportsDataTracking());
+}
+
+uint64_t NUMAManager::getTrackingNodes()
+{
+	// This method is called from UnsyncScheduler::UnsyncScheduler()
+	// before calling NUMAManager::initialize().
+	std::string trackingMode = _trackingMode.getValue();
+	if (trackingMode == "off" || !DataAccessRegistration::supportsDataTracking()) {
+		return 1;
+	} else {
+		return HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
+	}
+}
