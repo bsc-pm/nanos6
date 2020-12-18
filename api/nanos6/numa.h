@@ -46,7 +46,7 @@ typedef uint64_t nanos6_bitmask_t;
 //! \param[in] bitmask A bitmask specifying which NUMA nodes should contain a block of this chunk.
 //! \param[in] block_size The block size to perform the interleaving
 //!
-//! \returns a pointer to the allocated memory
+//! \returns A pointer to the allocated memory
 void *nanos6_numa_alloc_block_interleave(
 	uint64_t size,
 	const nanos6_bitmask_t *bitmask,
@@ -64,7 +64,7 @@ void *nanos6_numa_alloc_block_interleave(
 //! \param[in] bitmask A bitmask specifying which NUMA nodes should contain a block of this chunk.
 //! \param[in] block_size The block size to perform the interleaving
 //!
-//! \returns a pointer to the allocated memory
+//! \returns A pointer to the allocated memory
 void *nanos6_numa_alloc_sentinels(
 	uint64_t size,
 	const nanos6_bitmask_t *bitmask,
@@ -76,42 +76,30 @@ void *nanos6_numa_alloc_sentinels(
 //! This function deallocates a chunk of memory and deallocate the corresponding entries in the directory
 //!
 //! \param[in] ptr The pointer to deallocate
-void nanos6_numa_free(
-	void *ptr
-);
+void nanos6_numa_free(void *ptr);
 
 //! \brief Sets to 0 all the bits of the bitmask
 //!
 //! \param[in] bitmask The bitmask to clear all the bits
-void nanos6_bitmask_clearall(
-	nanos6_bitmask_t *bitmask
-);
+void nanos6_bitmask_clearall(nanos6_bitmask_t *bitmask);
 
 //! \brief Sets to 0 the n-th bit of the bitmask
 //!
 //! \param[in] bitmask The bitmask to clear the n-th bit
 //! \param[in] n The position to disable
-void nanos6_bitmask_clearbit(
-	nanos6_bitmask_t *bitmask,
-	uint64_t n
-);
+void nanos6_bitmask_clearbit(nanos6_bitmask_t *bitmask, uint64_t n);
 
 //! \brief Enables the N least significant bits of the bitmask, being N the number of NUMA nodes
 //! available in the machine
 //!
 //! \param[in] bitmask The bitmask to set the bits
-void nanos6_bitmask_setall(
-	nanos6_bitmask_t *bitmask
-);
+void nanos6_bitmask_setall(nanos6_bitmask_t *bitmask);
 
 //! \brief Sets to 1 the n-th bit of the bitmask
 //!
 //! \param[in] bitmask The bitmask to clear the n-th bit
 //! \param[in] n The position to enable
-void nanos6_bitmask_setbit(
-	nanos6_bitmask_t *bitmask,
-	uint64_t n
-);
+void nanos6_bitmask_setbit(nanos6_bitmask_t *bitmask, uint64_t n);
 
 //! \brief Enables the bits of the bitmask corresponding to the wildcard
 //!
@@ -126,19 +114,16 @@ void nanos6_bitmask_set_wildcard(
 //!
 //! \param[in] bitmask The bitmask to check the n-th bit
 //! \param[in] n The position to check
-//! \returns the value of the n-th bit of the bitmask
-uint64_t nanos6_bitmask_isbitset(
-	const nanos6_bitmask_t *bitmask,
-	uint64_t n
-);
+//!
+//! \returns The value of the n-th bit of the bitmask
+uint64_t nanos6_bitmask_isbitset(const nanos6_bitmask_t *bitmask, uint64_t n);
 
 //! \brief Returns the amount of enabled bits in the bitmask
 //!
 //! \param[in] bitmask The bitmask to count the enabled bits
-//! \returns the number of enabled bits in the bitmask
-uint64_t nanos6_count_setbits(
-	const nanos6_bitmask_t *bitmask
-);
+//!
+//! \returns The number of enabled bits in the bitmask
+uint64_t nanos6_count_setbits(const nanos6_bitmask_t *bitmask);
 
 #ifdef __cplusplus
 }
