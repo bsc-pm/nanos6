@@ -373,6 +373,7 @@ nodist_common_sources = \
 	$(nanos6_generated_headers)
 
 common_sources = \
+	src/dependencies/DataTrackingSupport.cpp \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPUManager.cpp \
 	src/executors/threads/CPUManagerInterface.cpp \

@@ -7,7 +7,6 @@
 #ifndef DATA_TRACKING_SUPPORT_HPP
 #define DATA_TRACKING_SUPPORT_HPP
 
-#include "hardware/HardwareInfo.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -21,7 +20,14 @@ namespace DataTrackingSupport {
 	static const double RW_BONUS_FACTOR = 2.0;
 	static const uint64_t DISTANCE_THRESHOLD = 15;
 	static const uint64_t LOAD_THRESHOLD = 20;
+	extern uint64_t IS_THRESHOLD;
 
+	typedef int16_t location_t;
+
+	enum HardwareCacheLevel {
+		L2_LEVEL = 2,
+		L3_LEVEL
+	};
 
 	static inline bool isNUMATrackingEnabled()
 	{
@@ -38,14 +44,9 @@ namespace DataTrackingSupport {
 		return _NUMAStealingEnabled;
 	}
 
-	static inline size_t getNUMATrackingNodes()
-	{
-        if (_NUMATrackingEnabled) {
-            return HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
-        } else {
-            return 1;
-        }
-	}
+	extern size_t getNUMATrackingNodes();
+
+	extern void setISThreshold(uint64_t threshold);
 }
 
 #endif // DATA_TRACKING_SUPPORT_HPP

@@ -13,6 +13,7 @@
 
 #include "MemoryAllocator.hpp"
 #include "UnsyncScheduler.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/DelegationLock.hpp"
@@ -128,6 +129,9 @@ public:
 			assert(tasks[t] != nullptr);
 			// Set temporary info that is used when processing ready tasks
 			tasks[t]->setComputePlace(computePlace);
+			if (tasks[t]->getDataAccesses().getTotalDataSize() > DataTrackingSupport::IS_THRESHOLD) {
+				hint = NO_HINT;
+			}
 			tasks[t]->setSchedulingHint(hint);
 			tasks[t]->computeNUMAAffinity(computePlace->getRandomEngine());
 		}
