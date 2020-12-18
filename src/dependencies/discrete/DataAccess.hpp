@@ -36,6 +36,9 @@ private:
 	//! 16-byte fields
 	//! The region covered by the access
 	DataAccessRegion _region;
+	//! Data tracking
+	SpinLock _trackingLock;
+	DataTrackingSupport::DataTrackingInfo *_trackingInfo;
 
 	//! 8-byte fields
 	//! The originator of the access
@@ -69,6 +72,8 @@ private:
 	//! 1-byte fields
 	//! The type of the access
 	DataAccessType _type;
+	//! Id of the NUMA node where the access was allocated
+	uint8_t _homeNode;
 
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
@@ -84,12 +89,15 @@ private:
 public:
 	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
 		_region(address, length),
+		_trackingInfo(DataTrackingSupport::isTrackingEnabled() ? new DataTrackingSupport::DataTrackingInfo() : nullptr),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
-		_type(type)
+		_type(type),
+		_location(nullptr),
+		_homeNode((uint8_t) -1)
 	{
 		assert(originator != nullptr);
 
@@ -99,12 +107,14 @@ public:
 
 	DataAccess(const DataAccess &other) :
 		_region(other.getAccessRegion()),
+		_trackingInfo(other._trackingInfo),
 		_originator(other.getOriginator()),
 		_reductionInfo(other.getReductionInfo()),
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags()),
-		_type(other.getType())
+		_type(other.getType()),
+		_homeNode(other.getHomeNode())
 	{
 	}
 
@@ -182,14 +192,9 @@ public:
 		return _instrumentDataAccessId;
 	}
 
-	inline size_t getReductionLength() const
+	inline size_t getLength() const
 	{
-		return _reductionLength;
-	}
-
-	inline void setReductionLength(size_t reductionLength)
-	{
-		_reductionLength = reductionLength;
+		return _region.getSize();
 	}
 
 	inline reduction_type_and_operator_index_t getReductionOperator() const
@@ -237,6 +242,16 @@ public:
 		return nullptr;
 	}
 
+	virtual inline DataTrackingSupport::DataTrackingInfo *getTrackingInfo()
+	{
+		return nullptr;
+	}
+
+	virtual void updateTrackingInfo(DataTrackingSupport::location_t, DataTrackingSupport::timestamp_t, DataTrackingSupport::timestamp_t)
+	{
+		FatalErrorHandler::failIf(1, "This method cannot be used in this class.");
+	}
+
 	inline bool isReleased() const
 	{
 		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
@@ -260,6 +275,16 @@ public:
 	symbols_t getSymbols() const
 	{
 		return _symbols;
+	}
+
+	uint8_t getHomeNode() const
+	{
+		return _homeNode;
+	}
+
+	void setHomeNode(uint8_t id)
+	{
+		_homeNode = id;
 	}
 };
 

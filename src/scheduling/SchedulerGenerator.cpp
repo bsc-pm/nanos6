@@ -13,9 +13,10 @@ HostScheduler *SchedulerGenerator::createHostScheduler(
 	size_t totalComputePlaces,
 	SchedulingPolicy policy,
 	bool enablePriority,
-	bool enableImmediateSuccessor)
+	bool enableImmediateSuccessor,
+    bool enableLocality)
 {
-	return new HostScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor);
+	return new HostScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, enableLocality);
 }
 
 DeviceScheduler *SchedulerGenerator::createDeviceScheduler(

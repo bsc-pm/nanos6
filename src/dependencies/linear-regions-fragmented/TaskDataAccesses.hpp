@@ -19,6 +19,7 @@
 #include "TaskDataAccessLinkingArtifactsImplementation.hpp"
 #include "TaskDataAccessesInfo.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
+#include "scheduling/ReadyQueue.hpp"
 
 
 struct DataAccess;

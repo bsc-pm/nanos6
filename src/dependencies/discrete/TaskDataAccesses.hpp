@@ -16,6 +16,7 @@
 #include "CommutativeSemaphore.hpp"
 #include "TaskDataAccessesInfo.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
+#include "scheduling/ReadyQueue.hpp"
 #include "support/Containers.hpp"
 
 #include <DependencySystem.hpp>
@@ -26,6 +27,7 @@ struct DataAccess;
 struct TaskDataAccesses {
 	typedef Container::unordered_map<void *, BottomMapEntry> bottom_map_t;
 	typedef Container::unordered_map<void *, DataAccess> access_map_t;
+	typedef Container::unordered_map<void *, DataAccessTracking> accessTracking_map_t;
 
 #ifndef NDEBUG
 	enum flag_bits_t {
@@ -37,6 +39,7 @@ struct TaskDataAccesses {
 	//! This will handle the dependencies of nested tasks.
 	bottom_map_t _subaccessBottomMap;
 	DataAccess *_accessArray;
+	DataAccessTracking *_accessTrackingArray;
 	void **_addressArray;
 	size_t _maxDeps;
 	size_t _currentIndex;
@@ -44,6 +47,8 @@ struct TaskDataAccesses {
 
 	std::atomic<int> _deletableCount;
 	access_map_t *_accessMap;
+	accessTracking_map_t *_accessTrackingMap;
+	size_t _totalDataSize;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
@@ -52,12 +57,15 @@ struct TaskDataAccesses {
 	TaskDataAccesses() :
 		_subaccessBottomMap(),
 		_accessArray(nullptr),
+		_accessTrackingArray(nullptr),
 		_addressArray(nullptr),
 		_maxDeps(0),
 		_currentIndex(0),
 		_commutativeMask(0),
 		_deletableCount(0),
-		_accessMap(nullptr)
+		_accessMap(nullptr),
+		_accessTrackingMap(nullptr),
+		_totalDataSize(0)
 #ifndef NDEBUG
 		,
 		_flags()
@@ -67,12 +75,15 @@ struct TaskDataAccesses {
 
 	TaskDataAccesses(TaskDataAccessesInfo taskAccessInfo) :
 		_subaccessBottomMap(),
-		_accessArray(taskAccessInfo.getAccessArrayLocation()),
+		_accessArray(nullptr),
+		_accessTrackingArray(nullptr),
 		_addressArray(taskAccessInfo.getAddressArrayLocation()),
 		_maxDeps(taskAccessInfo.getNumDeps()),
 		_currentIndex(0),
 		_deletableCount(0),
-		_accessMap(nullptr)
+		_accessMap(nullptr),
+		_accessTrackingMap(nullptr),
+		_totalDataSize(0)
 #ifndef NDEBUG
 		,
 		_flags()
@@ -95,7 +106,13 @@ struct TaskDataAccesses {
 		assert(!hasBeenDeleted());
 
 		if (_accessMap != nullptr) {
+			assert(!DataTrackingSupport::isTrackingEnabled());
 			MemoryAllocator::deleteObject(_accessMap);
+		}
+
+		if (_accessTrackingMap != nullptr) {
+			assert(DataTrackingSupport::isTrackingEnabled());
+			MemoryAllocator::deleteObject(_accessTrackingMap);
 		}
 
 #ifndef NDEBUG
@@ -133,13 +150,23 @@ struct TaskDataAccesses {
 	inline DataAccess *findAccess(void *address) const
 	{
 		if (_accessMap != nullptr) {
+			assert(!DataTrackingSupport::isTrackingEnabled());
 			access_map_t::iterator itAccess = _accessMap->find(address);
 			if (itAccess != _accessMap->end())
 				return &itAccess->second;
+		} else if (_accessTrackingMap != nullptr) {
+			assert(DataTrackingSupport::isTrackingEnabled());
+			accessTracking_map_t::iterator itAccess = _accessTrackingMap->find(address);
+			if (itAccess != _accessTrackingMap->end())
+				return &itAccess->second;
 		} else {
 			for (size_t i = 0; i < _currentIndex; ++i) {
-				if (_addressArray[i] == address)
-					return &_accessArray[i];
+				if (_addressArray[i] == address) {
+					if (_accessArray != nullptr)
+						return &_accessArray[i];
+					else
+						return &_accessTrackingArray[i];
+				}
 			}
 		}
 
@@ -162,17 +189,40 @@ struct TaskDataAccesses {
 		return info.getAllocationSize();
 	}
 
+	inline size_t getTotalDataSize() const
+	{
+		return _totalDataSize;
+	}
+
+	inline void incrementTotalDataSize(size_t size)
+	{
+		_totalDataSize += size;
+	}
+
 	inline DataAccess *allocateAccess(void *address, DataAccessType type, Task *originator, size_t length, bool weak, bool &existing)
 	{
-		if (_accessMap != nullptr) {
-			std::pair<access_map_t::iterator, bool> emplaced = _accessMap->emplace(std::piecewise_construct,
-				std::forward_as_tuple(address),
-				std::forward_as_tuple(type, originator, address, length, weak));
+		if (_accessMap != nullptr || _accessTrackingMap != nullptr) {
+			if (_accessMap != nullptr) {
+				assert(!DataTrackingSupport::isTrackingEnabled());
+				std::pair<access_map_t::iterator, bool> emplaced = _accessMap->emplace(std::piecewise_construct,
+						std::forward_as_tuple(address),
+						std::forward_as_tuple(type, originator, address, length, weak));
+				existing = !emplaced.second;
+				if (!existing)
+					_currentIndex++;
 
-			existing = !emplaced.second;
-			if (!existing)
-				_currentIndex++;
-			return &emplaced.first->second;
+				return &emplaced.first->second;
+			} else {
+				assert(DataTrackingSupport::isTrackingEnabled());
+				std::pair<accessTracking_map_t::iterator, bool> emplaced = _accessTrackingMap->emplace(std::piecewise_construct,
+						std::forward_as_tuple(address),
+						std::forward_as_tuple(type, originator, address, length, weak));
+				existing = !emplaced.second;
+				if (!existing)
+					_currentIndex++;
+
+				return &emplaced.first->second;
+			}
 		} else {
 			DataAccess *ret = findAccess(address);
 			existing = (ret != nullptr);
@@ -180,8 +230,13 @@ struct TaskDataAccesses {
 
 			if (!existing) {
 				_addressArray[_currentIndex] = address;
-				ret = &_accessArray[_currentIndex++];
-				new (ret) DataAccess(type, originator, address, length, weak);
+				if (DataTrackingSupport::isTrackingEnabled()) {
+					ret = &_accessTrackingArray[_currentIndex++];
+					new (ret) DataAccessTracking(type, originator, address, length, weak);
+				} else {
+					ret = &_accessArray[_currentIndex++];
+					new (ret) DataAccess(type, originator, address, length, weak);
+				}
 			}
 
 			return ret;
@@ -191,6 +246,7 @@ struct TaskDataAccesses {
 	inline bool forAll(std::function<bool(void *, DataAccess *)> callback)
 	{
 		if (_accessMap != nullptr) {
+			assert(!DataTrackingSupport::isTrackingEnabled());
 			access_map_t::iterator itAccess = _accessMap->begin();
 
 			while (itAccess != _accessMap->end()) {
@@ -198,15 +254,41 @@ struct TaskDataAccesses {
 					return false;
 				itAccess++;
 			}
+		} else if (_accessTrackingMap != nullptr) {
+			assert(DataTrackingSupport::isTrackingEnabled());
+			accessTracking_map_t::iterator itAccess = _accessTrackingMap->begin();
+
+			while (itAccess != _accessTrackingMap->end()) {
+				if (!callback(itAccess->first, &itAccess->second))
+					return false;
+				itAccess++;
+			}
 		} else {
 			for (size_t i = 0; i < getRealAccessNumber(); ++i) {
-				if (!callback(_addressArray[i], &_accessArray[i]))
-					return false;
+				if (_accessArray != nullptr) {
+					assert(!DataTrackingSupport::isTrackingEnabled());
+					if (!callback(_addressArray[i], &_accessArray[i]))
+						return false;
+				} else {
+					assert(DataTrackingSupport::isTrackingEnabled());
+					if (!callback(_addressArray[i], &_accessTrackingArray[i]))
+						return false;
+				}
 			}
 		}
 
 		return true;
 	}
+
+	void **getAddressArray()
+	{
+		return _addressArray;
+	}
+
+	void trackDataLocation(CPU *cpu);
+	void computeTaskAffinity(unsigned int &chosenL2id, unsigned int &chosenL3id);
+	void computeNUMAAffinity(uint8_t &chosenNUMAid);
+	bool checkExpiration(unsigned int &chosenL2id, unsigned int &chosenL3id);
 };
 
 #endif // TASK_DATA_ACCESSES_HPP

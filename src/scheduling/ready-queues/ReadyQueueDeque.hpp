@@ -13,43 +13,100 @@
 class ReadyQueueDeque : public ReadyQueue {
 	typedef Container::deque<Task *> ready_queue_t;
 
-	ready_queue_t _readyDeque;
+	ready_queue_t *_readyDeques;
+	uint8_t _numQueues;
+	// When tasks does not have a NUMA hint, we assign it in a round robin basis.
+	uint8_t _roundRobinQueues;
+
+	size_t _numReadyTasks;
 public:
-	ReadyQueueDeque(SchedulingPolicy policy) :
-		ReadyQueue(policy)
+	ReadyQueueDeque(SchedulingPolicy policy)
+		: ReadyQueue(policy), _roundRobinQueues(0), _numReadyTasks(0)
 	{
+		_numQueues = DataTrackingSupport::isNUMATrackingEnabled() ?
+			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
+		_readyDeques = (ready_queue_t *) MemoryAllocator::alloc(_numQueues * sizeof(ready_queue_t));
+
+		for (uint8_t i = 0; i < _numQueues; i++) {
+			new (&_readyDeques[i]) ready_queue_t();
+		}
 	}
 
 	~ReadyQueueDeque()
 	{
-		assert(_readyDeque.empty());
+		for (uint8_t i = 0; i < _numQueues; i++) {
+			assert(_readyDeques[i].empty());
+			_readyDeques[i].~ready_queue_t();
+		}
+		MemoryAllocator::free(_readyDeques, _numQueues * sizeof(ready_queue_t));
 	}
 
 	void addReadyTask(Task *task, bool unblocked)
 	{
-		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
-			_readyDeque.push_front(task);
-		} else {
-			_readyDeque.push_back(task);
+		uint8_t NUMAid = 0;
+		if (DataTrackingSupport::isNUMATrackingEnabled()) {
+			NUMAid = task->getNUMAhint();
+			if (NUMAid == (uint8_t) -1) {
+				NUMAid = _roundRobinQueues;
+				_roundRobinQueues = (_roundRobinQueues + 1) % _numQueues;
+			}
 		}
+
+		assert(NUMAid < _numQueues);
+
+		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
+			_readyDeques[NUMAid].push_front(task);
+		} else {
+			_readyDeques[NUMAid].push_back(task);
+		}
+
+		++_numReadyTasks;
 	}
 
-	Task *getReadyTask(ComputePlace *)
+	Task *getReadyTask(ComputePlace *computePlace)
 	{
-		if (_readyDeque.empty()) {
+		if (_numReadyTasks == 0) {
 			return nullptr;
 		}
 
-		Task *result = _readyDeque.front();
-		assert(result != nullptr);
+		uint8_t NUMAid = DataTrackingSupport::isNUMATrackingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
+		// 1. Try to get from my NUMA queue.
+		if (!_readyDeques[NUMAid].empty()) {
+			Task *result = _readyDeques[NUMAid].front();
+			assert(result != nullptr);
 
-		_readyDeque.pop_front();
-		return result;
+			_readyDeques[NUMAid].pop_front();
+
+			--_numReadyTasks;
+
+			return result;
+		}
+
+		// 2. Try to steal from other NUMA queues.
+		if (DataTrackingSupport::isNUMAStealingEnabled()) {
+			for (uint8_t i = 0; i < _numQueues; i++) {
+				if (i != NUMAid) {
+					if (!_readyDeques[i].empty()) {
+						Task *result = _readyDeques[i].front();
+						assert(result != nullptr);
+
+						_readyDeques[i].pop_front();
+
+						--_numReadyTasks;
+
+						return result;
+					}
+				}
+			}
+		}
+
+		FatalErrorHandler::failIf(DataTrackingSupport::isNUMAStealingEnabled(), "There must be a ready task.");
+		return nullptr;
 	}
 
 	inline size_t getNumReadyTasks() const
 	{
-		return _readyDeque.size();
+		return _numReadyTasks;
 	}
 
 };

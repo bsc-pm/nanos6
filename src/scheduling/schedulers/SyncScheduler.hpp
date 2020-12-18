@@ -129,6 +129,8 @@ public:
 			// Set temporary info that is used when processing ready tasks
 			tasks[t]->setComputePlace(computePlace);
 			tasks[t]->setSchedulingHint(hint);
+			tasks[t]->computeTaskAffinity();
+			tasks[t]->computeNUMAAffinity();
 		}
 
 		size_t count = 0;

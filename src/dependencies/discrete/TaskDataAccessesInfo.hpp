@@ -10,6 +10,7 @@
 #include <cstdlib>
 
 #include "DataAccess.hpp"
+#include "DataAccessTracking.hpp"
 #include "lowlevel/Padding.hpp"
 
 #define ACCESS_LINEAR_CUTOFF 256
@@ -28,7 +29,9 @@ public:
 		_numDeps(numDeps), _seqsSize(0), _addrSize(0), _allocationAddress(nullptr)
 	{
 		if (numDeps <= ACCESS_LINEAR_CUTOFF) {
-			_seqsSize = sizeof(DataAccess) * numDeps;
+			size_t dataAccessSize = DataTrackingSupport::isTrackingEnabled() ?
+				sizeof(DataAccessTracking) : sizeof(DataAccess);
+			_seqsSize = dataAccessSize * numDeps;
 			_addrSize = sizeof(void *) * numDeps;
 		}
 	}
@@ -70,6 +73,16 @@ public:
 
 			return reinterpret_cast<DataAccess *>(addrLocation);
 		}
+
+		return nullptr;
+	}
+
+	inline DataAccessTracking *getAccessTrackingArrayLocation()
+	{
+		assert(_allocationAddress != nullptr || _numDeps == 0);
+
+		if (_seqsSize != 0)
+			return reinterpret_cast<DataAccessTracking *>(static_cast<char *>(_allocationAddress) + _addrSize);
 
 		return nullptr;
 	}

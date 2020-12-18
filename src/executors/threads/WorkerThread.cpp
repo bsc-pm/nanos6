@@ -78,7 +78,14 @@ void WorkerThread::body()
 		// There should not be any pre-assigned task
 		assert(_task == nullptr);
 
-		_task = Scheduler::getReadyTask(cpu);
+		// Try to get successor task
+		_task = cpu->getSuccessor();
+		cpu->setSuccessor(nullptr);
+
+		// If there is no successor, ask scheduler for work
+		if (_task == nullptr)
+			_task = Scheduler::getReadyTask(cpu);
+
 		if (_task != nullptr) {
 			WorkerThread *assignedThread = _task->getThread();
 

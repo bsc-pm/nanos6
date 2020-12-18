@@ -8,6 +8,10 @@
 #define HOST_INFO_HPP
 
 #include "DeviceInfo.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
+
+class L2Cache;
+class L3Cache;
 
 class HostInfo : public DeviceInfo {
 private:
@@ -17,6 +21,12 @@ private:
 
 	//! List of NUMA nodes on the system
 	std::vector<MemoryPlace *> _memoryPlaces;
+
+	//!< List of L2 caches on the system
+	std::vector<L2Cache*> _L2Caches;
+
+	//!< List of L3 caches on the system
+	std::vector<L3Cache*> _L3Caches;
 
 	//! L1 Cache line size
 	size_t _cacheLineSize;
@@ -92,6 +102,25 @@ public:
 	inline size_t getNumPhysicalPackages() const override
 	{
 		return _numPhysicalPackages;
+	}
+	inline size_t getNumL2Cache() const
+	{
+		return _L2Caches.size();
+	}
+
+	inline size_t getNumL3Cache() const
+	{
+		return _L3Caches.size();
+	}
+
+	inline L2Cache *getL2Cache(DataTrackingSupport::location_t loc) const
+	{
+		return _L2Caches[loc];
+	}
+
+	inline L3Cache *getL3Cache(DataTrackingSupport::location_t loc) const
+	{
+		return _L3Caches[loc];
 	}
 };
 

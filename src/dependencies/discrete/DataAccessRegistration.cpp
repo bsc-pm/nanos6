@@ -11,6 +11,7 @@
 #include <cassert>
 #include <deque>
 #include <mutex>
+#include <numaif.h>
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
@@ -120,7 +121,11 @@ namespace DataAccessRegistration {
 			if (accessStruct._commutativeMask.any() && !CommutativeSemaphore::registerTask(task))
 				return;
 
-			hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
+			if (task->getL2hint() != (unsigned int) -1 && !task->isTaskfor() && computePlace->getSuccessor() == nullptr) {
+				computePlace->setSuccessor(task);
+			} else {
+				hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
+			}
 
 			if (hpDependencyData.full())
 				processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
@@ -168,10 +173,13 @@ namespace DataAccessRegistration {
 		bool alreadyExisting;
 		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, length, weak, alreadyExisting);
 
+		if (!weak) {
+			accessStruct.incrementTotalDataSize(length);
+		}
+
 		if (!alreadyExisting) {
 			if (accessType == REDUCTION_ACCESS_TYPE) {
 				access->setReductionOperator(reductionTypeAndOperatorIndex);
-				access->setReductionLength(length);
 				access->setReductionIndex(reductionIndex);
 			}
 		} else {
@@ -185,11 +193,11 @@ namespace DataAccessRegistration {
 	}
 
 	void propagateMessages(
-		CPUDependencyData &hpDependencyData,
-		mailbox_t &mailBox,
-		ReductionInfo *originalReductionInfo,
-		ComputePlace *computePlace,
-		bool fromBusyThread)
+			CPUDependencyData &hpDependencyData,
+			mailbox_t &mailBox,
+			ReductionInfo *originalReductionInfo,
+			ComputePlace *computePlace,
+			bool fromBusyThread)
 	{
 		DataAccessMessage next;
 
@@ -198,6 +206,20 @@ namespace DataAccessRegistration {
 			mailBox.pop();
 
 			assert(next.from != nullptr);
+
+			if (next.location) {
+				if (next.to != nullptr) {
+					DataTrackingSupport::DataTrackingInfo *trackingInfo = next.from->getTrackingInfo();
+					DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
+					if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
+						DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
+						DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
+						next.to->updateTrackingInfo(location, timeL2, timeL3);
+					}
+
+					next.to->setHomeNode(next.from->getHomeNode());
+				}
+			}
 
 			if (next.to != nullptr && next.flagsForNext) {
 				if (next.to->apply(next, mailBox)) {
@@ -214,6 +236,19 @@ namespace DataAccessRegistration {
 				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
 				Task *task = next.from->getOriginator();
 				assert(!task->getDataAccesses().hasBeenDeleted());
+				// If this access represents a big share of the total data size, we can
+				// directly set the L2 hint. We do not do the same for L3 because there
+				// may be L2 locality with other L2, but if we set an L3 hint, it won't
+				// be computed.
+				if (DataTrackingSupport::isTrackingEnabled()) {
+					double score = (double) next.from->getAccessRegion().getSize() / task->getDataAccesses().getTotalDataSize();
+					if (score >= DataTrackingSupport::L2_THRESHOLD) {
+						unsigned int &L2hint = task->getL2hint();
+						unsigned int &L3hint = task->getL3hint();
+						L2hint = ((CPU *)computePlace)->getL2CacheId();
+						L3hint = ((CPU *)computePlace)->getL3CacheId();
+					}
+				}
 				satisfyTask(task, hpDependencyData, computePlace, fromBusyThread);
 			}
 
@@ -490,8 +525,31 @@ namespace DataAccessRegistration {
 		// Default deletableCount of 1.
 		accessStruct.increaseDeletableCount();
 
+		// Stuff to get the home node of the data accesses
+		// move_pages is a system call. Do it only in case any access has no homeNode.
+		bool performMovePages = true;
+		// PID 0 is current process
+		int pid = 0;
+		unsigned long count = accessStruct.getRealAccessNumber();
+		void **pages = accessStruct.getAddressArray();
+		bool isUsingMap = false;
+		// It is using map instead of array
+		if (pages ==  nullptr) {
+			pages = (void **) alloca(count * sizeof(void *));
+			isUsingMap = true;
+		}
+		// This is important. nullptr here means we want to know where the pages reside, instead of moving them.
+		const int *nodes = nullptr;
+		int *status = (int *) alloca(count * sizeof(int));
+		// This is ignored in the case of not moving pages (our case).
+		int flags = 0;
+		unsigned long index = 0;
+
 		// Get all seqs
 		accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
+			if (isUsingMap) {
+				pages[index++] = address;
+			}
 			DataAccessType accessType = access->getType();
 			ReductionInfo *reductionInfo = nullptr;
 			DataAccess *predecessor = nullptr;
@@ -548,7 +606,7 @@ namespace DataAccessRegistration {
 				// if our parent has one (for weak reductions)
 				ReductionInfo *currentReductionInfo = itMap->second._reductionInfo;
 				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
-				size_t length = access->getReductionLength();
+				size_t length = access->getLength();
 
 				if (currentReductionInfo == nullptr) {
 					currentReductionInfo = reductionInfo;
@@ -587,6 +645,17 @@ namespace DataAccessRegistration {
 
 					dispose = parentAccess->applyPropagated(message);
 					assert(!dispose);
+
+					DataTrackingSupport::DataTrackingInfo *trackingInfo = parentAccess->getTrackingInfo();
+					DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
+					if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
+						DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
+						DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
+						access->updateTrackingInfo(location, timeL2, timeL3);
+					}
+
+					access->setHomeNode(parentAccess->getHomeNode());
+					performMovePages = false;
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
@@ -601,6 +670,16 @@ namespace DataAccessRegistration {
 				fromCurrent = access->applySingle(message.flagsForNext, mailBox);
 				schedule = fromCurrent.schedule;
 				assert(!(fromCurrent.flagsForNext));
+
+				DataTrackingSupport::DataTrackingInfo *trackingInfo = predecessor->getTrackingInfo();
+				DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
+				if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
+					DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
+					DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
+					access->updateTrackingInfo(location, timeL2, timeL3);
+				}
+				access->setHomeNode(predecessor->getHomeNode());
+				performMovePages = false;
 
 				dispose = predecessor->applyPropagated(message);
 				if (dispose)
@@ -641,6 +720,19 @@ namespace DataAccessRegistration {
 
 			return true; // Continue iteration
 		});
+
+		if (performMovePages) {
+			__attribute__((unused)) long ret = move_pages(pid, count, pages, nodes, status, flags);
+			assert(ret == 0);
+
+			index = 0;
+			accessStruct.forAll([&](void *, DataAccess *access) -> bool {
+				if (status[index] >= 0) {
+					access->setHomeNode(status[index++]);
+				}
+				return true; // Continue iteration
+			});
+		}
 	}
 
 	static inline void releaseReductionInfo(ReductionInfo *info)

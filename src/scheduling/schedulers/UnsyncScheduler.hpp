@@ -11,7 +11,6 @@
 
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "scheduling/ReadyQueue.hpp"
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
@@ -30,6 +29,9 @@ protected:
 	bool _enablePriority;
 
 public:
+	UnsyncScheduler()
+	{}
+
 	UnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
 
 	virtual ~UnsyncScheduler();

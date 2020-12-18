@@ -46,6 +46,7 @@ std::vector<MemoryPlace *> ComputePlace::getMemoryPlaces()
 }
 
 ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
+	_successor(nullptr),
 	_owned(owned),
 	_index(index),
 	_type(type)

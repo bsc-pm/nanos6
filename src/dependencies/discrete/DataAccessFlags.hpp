@@ -58,6 +58,7 @@ struct DataAccessMessage {
 	DataAccess *to;							// Destination access
 	bool schedule;							// Schedule this access
 	bool combine;							// Combine reduction
+	bool location;							// Propagate location
 
 	DataAccessMessage() :
 		flagsForNext(ACCESS_NONE),
@@ -65,7 +66,8 @@ struct DataAccessMessage {
 		from(nullptr),
 		to(nullptr),
 		schedule(false),
-		combine(false)
+		combine(false),
+		location(false)
 	{
 	}
 };

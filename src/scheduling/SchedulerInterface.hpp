@@ -23,11 +23,14 @@ class SchedulerInterface {
 	static ConfigVariable<std::string> _schedulingPolicy;
 	static ConfigVariable<bool> _enableImmediateSuccessor;
 	static ConfigVariable<bool> _enablePriority;
+	static EnvironmentVariable<bool> _enableLocality;
 
 #ifdef EXTRAE_ENABLED
 	std::atomic<Task *> _mainTask;
 	bool _mainFirstRunCompleted = false;
 #endif
+
+	std::atomic<size_t> _expiredTasks;
 
 public:
 	SchedulerInterface();
@@ -93,7 +96,24 @@ public:
 				}
 			}
 #endif
-			return _hostScheduler->getReadyTask(computePlace);
+			if (_enableLocality) {
+				bool expired;
+				Task *task = nullptr;
+				do {
+					expired = false;
+					task = _hostScheduler->getReadyTask(computePlace);
+					if (task != nullptr) {
+						expired = task->checkExpiration();
+						if (expired) {
+							_expiredTasks++;
+							_hostScheduler->addReadyTask(task, computePlace, NO_HINT);
+						}
+					}
+				} while (expired);
+				return task;
+			} else {
+				return _hostScheduler->getReadyTask(computePlace);
+			}
 		} else {
 			assert(computePlaceType != nanos6_cluster_device);
 			return _deviceSchedulers[computePlaceType]->getReadyTask(computePlace);
@@ -111,6 +131,12 @@ public:
 	static inline bool isPriorityEnabled()
 	{
 		return _enablePriority;
+	}
+
+	//! \brief Check whether task locality is considered
+	static inline bool isLocalityEnabled()
+	{
+		return _enableLocality;
 	}
 };
 
