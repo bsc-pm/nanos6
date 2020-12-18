@@ -4,6 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <unistd.h>
+
 #include <nanos6/debug.h>
 
 #include "TestAnyProtocolProducer.hpp"
@@ -34,8 +36,9 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	void *ptr = nanos6_numa_alloc_block_interleave(32768, &bitmask, 4096);
-	void *ptr_sentinel = nanos6_numa_alloc_sentinels(32768, &bitmask, 4096);
+	int pagesize = getpagesize();
+	void *ptr = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
+	void *ptr_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
 	enabled = nanos6_is_numa_tracking_enabled();
 	tap.evaluate(
 		enabled,
@@ -43,12 +46,12 @@ int main(int argc, char **argv) {
 	);
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL_ACTIVE);
-	void *ptr2 = nanos6_numa_alloc_block_interleave(32768, &bitmask, 4096);
-	void *ptr2_sentinel = nanos6_numa_alloc_sentinels(32768, &bitmask, 4096);
+	void *ptr2 = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
+	void *ptr2_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
-	void *ptr3 = nanos6_numa_alloc_block_interleave(32768, &bitmask, 4096);
-	void *ptr3_sentinel = nanos6_numa_alloc_sentinels(32768, &bitmask, 4096);
+	void *ptr3 = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
+	void *ptr3_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
 
 	tap.bailOutAndExitIfAnyFailed();
 

@@ -4,6 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <unistd.h>
+
 #include <nanos6/debug.h>
 
 #include "TestAnyProtocolProducer.hpp"
@@ -34,7 +36,8 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	void *ptr = nanos6_numa_alloc_block_interleave(4096, &bitmask, 4096);
+	int pagesize = getpagesize();
+	void *ptr = nanos6_numa_alloc_block_interleave(pagesize, &bitmask, pagesize);
 	enabled = nanos6_is_numa_tracking_enabled();
 	tap.evaluate(
 		enabled,

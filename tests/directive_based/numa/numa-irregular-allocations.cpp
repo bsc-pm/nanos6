@@ -4,6 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <unistd.h>
+
 #include <nanos6/debug.h>
 
 #include "TestAnyProtocolProducer.hpp"
@@ -34,7 +36,8 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	void *ptr = nanos6_numa_alloc_block_interleave(31496, &bitmask, 4684);
+	int pagesize = getpagesize();
+	void *ptr = nanos6_numa_alloc_block_interleave(pagesize*8+31496, &bitmask, pagesize+4684);
 	enabled = nanos6_is_numa_tracking_enabled();
 	tap.evaluate(
 		enabled,
@@ -42,10 +45,10 @@ int main(int argc, char **argv) {
 	);
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL_ACTIVE);
-	void *ptr2 = nanos6_numa_alloc_block_interleave(816349, &bitmask, 8234);
+	void *ptr2 = nanos6_numa_alloc_block_interleave(pagesize+816349, &bitmask, pagesize+8234);
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
-	void *ptr3 = nanos6_numa_alloc_sentinels(9816234, &bitmask, 91824);
+	void *ptr3 = nanos6_numa_alloc_sentinels(pagesize+9816234, &bitmask, pagesize+91824);
 
 	tap.bailOutAndExitIfAnyFailed();
 
