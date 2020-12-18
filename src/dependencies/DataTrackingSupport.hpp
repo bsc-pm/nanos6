@@ -44,9 +44,9 @@ public:
 
 	static bool shouldEnableIS(Task *task);
 
-	static inline void setShouldEnableIS(bool value)
+	static inline void setShouldEnableIS(uint64_t ISThreshold)
 	{
-		_shouldEnableIS = value;
+		_shouldEnableIS = ISThreshold;
 	}
 };
 
