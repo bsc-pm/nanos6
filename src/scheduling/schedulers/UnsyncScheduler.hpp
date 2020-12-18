@@ -11,6 +11,7 @@
 
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "scheduling/ReadyQueue.hpp"
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
@@ -107,11 +108,6 @@ protected:
 	//!
 	//! \returns a ready task or nullptr
 	Task *regularGetReadyTask(ComputePlace *computePlace);
-
-	virtual bool enableNUMA()
-	{
-		return true;
-	}
 };
 
 

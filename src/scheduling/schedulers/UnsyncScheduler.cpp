@@ -7,48 +7,20 @@
 #include "UnsyncScheduler.hpp"
 #include "dependencies/DataTrackingSupport.hpp"
 #include "executors/threads/CPUManager.hpp"
-#include "scheduling/ready-queues/ReadyQueueDeque.hpp"
-#include "scheduling/ready-queues/ReadyQueueMap.hpp"
+
 
 UnsyncScheduler::UnsyncScheduler(
-	SchedulingPolicy policy,
+	SchedulingPolicy,
 	bool enablePriority,
 	bool enableImmediateSuccessor
 ) :
-	_numQueues(1),
-	_deadlineTasks(nullptr),
+	_queues(nullptr),
+	_numQueues(0),
 	_roundRobinQueues(0),
+	_deadlineTasks(nullptr),
 	_enableImmediateSuccessor(enableImmediateSuccessor),
 	_enablePriority(enablePriority)
 {
-	if (enableNUMA()) {
-		_numQueues = NUMAManager::getTrackingNodes();
-	}
-	assert(_numQueues > 0);
-
-	_queues = (ReadyQueue **) MemoryAllocator::alloc(_numQueues * sizeof(ReadyQueue *));
-	assert(_queues != nullptr);
-
-	if (_numQueues > 0) {
-		for (uint64_t i = 0; i < _numQueues; i++) {
-			if (NUMAManager::isValidNUMA(i)) {
-				if (enablePriority) {
-					_queues[i] = new ReadyQueueMap(policy);
-				} else {
-					_queues[i] = new ReadyQueueDeque(policy);
-				}
-			} else {
-				_queues[i] = nullptr;
-			}
-		}
-	} else {
-		if (enablePriority) {
-			_queues[0] = new ReadyQueueMap(policy);
-		} else {
-			_queues[0] = new ReadyQueueDeque(policy);
-		}
-	}
-
 	if (enableImmediateSuccessor) {
 		_immediateSuccessorTasks = immediate_successor_tasks_t(CPUManager::getTotalCPUs(), nullptr);
 	}
@@ -56,6 +28,8 @@ UnsyncScheduler::UnsyncScheduler(
 
 UnsyncScheduler::~UnsyncScheduler()
 {
+	assert(_numQueues > 0);
+
 	for (uint64_t i = 0; i < _numQueues; i++) {
 		if (_queues[i] != nullptr) {
 			delete _queues[i];

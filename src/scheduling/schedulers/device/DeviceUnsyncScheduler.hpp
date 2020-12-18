@@ -7,16 +7,29 @@
 #ifndef DEVICE_UNSYNC_SCHEDULER_HPP
 #define DEVICE_UNSYNC_SCHEDULER_HPP
 
+#include "scheduling/ready-queues/ReadyQueueDeque.hpp"
+#include "scheduling/ready-queues/ReadyQueueMap.hpp"
 #include "scheduling/schedulers/UnsyncScheduler.hpp"
 
 class DeviceUnsyncScheduler : public UnsyncScheduler {
 public:
 	DeviceUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
 		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
-	{}
+	{
+		_numQueues = 1;
+		_queues = (ReadyQueue **) MemoryAllocator::alloc(sizeof(ReadyQueue *));
+
+		// Create a single queue at the first position
+		if (enablePriority) {
+			_queues[0] = new ReadyQueueMap(policy);
+		} else {
+			_queues[0] = new ReadyQueueDeque(policy);
+		}
+	}
 
 	virtual ~DeviceUnsyncScheduler()
-	{}
+	{
+	}
 
 	//! \brief Get a ready task for execution
 	//!
@@ -24,11 +37,6 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
-
-	virtual bool enableNUMA()
-	{
-		return false;
-	}
 };
 
 
