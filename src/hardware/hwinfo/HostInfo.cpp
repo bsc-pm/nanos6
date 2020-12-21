@@ -137,7 +137,7 @@ HostInfo::HostInfo() :
 			tmpCache = tmpCache->parent;
 
 			// Topmost obj, no L2 found.
-			if (tmpCache->type == HWLOC_OBJ_MACHINE)
+			if (tmpCache == nullptr || tmpCache->type == HWLOC_OBJ_MACHINE)
 				break;
 		}
 
@@ -154,7 +154,7 @@ HostInfo::HostInfo() :
 				tmpCache = tmpCache->parent;
 
 				// Topmost obj, no L3 found.
-				if (tmpCache->type == HWLOC_OBJ_MACHINE)
+				if (tmpCache == nullptr || tmpCache->type == HWLOC_OBJ_MACHINE)
 					break;
 			}
 			L3CacheObj = tmpCache;
