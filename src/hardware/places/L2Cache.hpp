@@ -9,6 +9,10 @@
 
 #include "HardwareCache.hpp"
 
+#ifndef L2_DEFAULT_CACHE_SIZE
+#define L2_DEFAULT_CACHE_SIZE 1*1024*1024
+#endif // L2_DEFAULT_CACHE_SIZE
+
 class L3Cache;
 
 class L2Cache : public HardwareCache {

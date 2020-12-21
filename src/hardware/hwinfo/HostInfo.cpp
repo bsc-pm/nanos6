@@ -118,86 +118,96 @@ HostInfo::HostInfo() :
 		assert(nodeNUMA != nullptr);
 		assert(hwloc_obj_type_is_memory(nodeNUMA->type));
 
-		// Retrieve cache objects. L2 is mandatory as we never saw a system with no L2.
+		// Some machines, particularly ARM-based, do not always provide cache info.
 		// However, L3 may not exist, as in KNL in flat mode.
 		hwloc_obj_t L3CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
 		hwloc_obj_t L2CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L2CACHE, obj);
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
 
-		// Retrieve cache objects. L2 is mandatory as we never saw a system with no L2.
-		// However, L3 may not exist, as in KNL in flat mode.
+		// Some machines, particularly ARM-based, do not always provide cache info.
 		// The first unified cache object found going up from the tmp should be its cache.
 		hwloc_obj_t tmpCache = obj->parent;
-		assert(tmpCache != nullptr && tmpCache->attr != nullptr);
-		while (!(tmpCache->type == HWLOC_OBJ_CACHE &&
+		// Some machines, particularly ARM-based, do not always provide cache info.
+		while (tmpCache != nullptr && tmpCache->attr != nullptr &&
+				!(tmpCache->type == HWLOC_OBJ_CACHE &&
 					tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
 					tmpCache->attr->cache.depth == 2))
 		{
 			tmpCache = tmpCache->parent;
-			assert(tmpCache != nullptr && tmpCache->attr != nullptr);
-		}
 
-		hwloc_obj_t L2CacheObj = tmpCache;
-		while (!(tmpCache->type == HWLOC_OBJ_CACHE &&
-					tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
-					tmpCache->attr->cache.depth == 3))
-		{
-			tmpCache = tmpCache->parent;
-
-			// Topmost obj, no L3 found.
+			// Topmost obj, no L2 found.
 			if (tmpCache->type == HWLOC_OBJ_MACHINE)
 				break;
-			assert(tmpCache != nullptr && tmpCache->attr != nullptr);
 		}
-		hwloc_obj_t L3CacheObj = tmpCache;
-#endif
-		assert(L2CacheObj != nullptr && L2CacheObj->attr != nullptr);
-		assert(L3CacheObj != nullptr && L3CacheObj->attr != nullptr);
 
-		L3Cache *l3Cache = nullptr;
+		hwloc_obj_t L2CacheObj = nullptr;
+		hwloc_obj_t L3CacheObj = nullptr;
+		if (tmpCache != nullptr) {
+			L2CacheObj = tmpCache;
+			// Some machines, particularly ARM-based, do not always provide cache info.
+			while (tmpCache != nullptr && tmpCache->attr != nullptr &&
+					!(tmpCache->type == HWLOC_OBJ_CACHE &&
+						tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
+						tmpCache->attr->cache.depth == 3))
+			{
+				tmpCache = tmpCache->parent;
 
-		// Check that L3 cache object is actually an L3. If there is no L3, it will be another obj type.
-#if HWLOC_API_VERSION >= 0x00020000
-		if (L3CacheObj->type == HWLOC_OBJ_L3CACHE
-#else
-		if (L3CacheObj->type == HWLOC_OBJ_CACHE
-#endif
-			&& L3CacheObj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED
-			&& L3CacheObj->attr->cache.depth == 3)
-		{
-			//! Check if L3 cache object is already created.
-			if (_l3Caches.size() > L3CacheObj->logical_index) {
-				l3Cache = _l3Caches[L3CacheObj->logical_index];
-			} else {
-				const char * inclusiveness = hwloc_obj_get_info_by_name(L3CacheObj, "Inclusive");
-				bool isInclusive = ((inclusiveness != nullptr) && strcmp(inclusiveness, "1") == 0);
-				l3Cache = new L3Cache(L3CacheObj->logical_index,
-						L3CacheObj->attr->cache.size,
-						L3CacheObj->attr->cache.linesize,
-						isInclusive);
-				assert(_l3Caches.size() == (size_t) L3CacheObj->logical_index);
-				_l3Caches.push_back(l3Cache);
+				// Topmost obj, no L3 found.
+				if (tmpCache->type == HWLOC_OBJ_MACHINE)
+					break;
 			}
-			assert(l3Cache != nullptr);
+			L3CacheObj = tmpCache;
+		}
+#endif
+		L3Cache *l3Cache = nullptr;
+		if (L3CacheObj != nullptr) {
+
+			// Check that L3 cache object is actually an L3. If there is no L3, it will be another obj type.
+#if HWLOC_API_VERSION >= 0x00020000
+			if (L3CacheObj->type == HWLOC_OBJ_L3CACHE
+#else
+			if (L3CacheObj->type == HWLOC_OBJ_CACHE
+#endif
+				&& L3CacheObj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED
+				&& L3CacheObj->attr->cache.depth == 3)
+			{
+				//! Check if L3 cache object is already created.
+				if (_l3Caches.size() > L3CacheObj->logical_index) {
+					l3Cache = _l3Caches[L3CacheObj->logical_index];
+				} else {
+					const char * inclusiveness = hwloc_obj_get_info_by_name(L3CacheObj, "Inclusive");
+					bool isInclusive = ((inclusiveness != nullptr) && strcmp(inclusiveness, "1") == 0);
+					l3Cache = new L3Cache(L3CacheObj->logical_index,
+							L3CacheObj->attr->cache.size,
+							L3CacheObj->attr->cache.linesize,
+							isInclusive);
+					assert(_l3Caches.size() == (size_t) L3CacheObj->logical_index);
+					_l3Caches.push_back(l3Cache);
+				}
+				assert(l3Cache != nullptr);
+			}
 		}
 
 		L2Cache *l2Cache = nullptr;
-		if (_l2Caches.size() > L2CacheObj->logical_index) {
-			l2Cache = _l2Caches[L2CacheObj->logical_index];
-		} else {
-			l2Cache = new L2Cache(L2CacheObj->logical_index,
-					l3Cache,
-					L2CacheObj->attr->cache.size,
-					L2CacheObj->attr->cache.linesize);
-			assert(_l2Caches.size() == (size_t) L2CacheObj->logical_index);
-			_l2Caches.push_back(l2Cache);
+		if (L2CacheObj != nullptr) {
+			if (_l2Caches.size() > L2CacheObj->logical_index) {
+				l2Cache = _l2Caches[L2CacheObj->logical_index];
+			} else {
+				l2Cache = new L2Cache(L2CacheObj->logical_index,
+						l3Cache,
+						L2CacheObj->attr->cache.size,
+						L2CacheObj->attr->cache.linesize);
+				assert(_l2Caches.size() == (size_t) L2CacheObj->logical_index);
+				_l2Caches.push_back(l2Cache);
+			}
+			assert(l2Cache != nullptr);
+			assert(l2Cache->getId() == (int) L2CacheObj->logical_index);
 		}
-		assert(l2Cache != nullptr);
-		assert(l2Cache->getId() == (int) L2CacheObj->logical_index);
 
 		// Set shouldEnableIS to L2 cache size
-		DataTrackingSupport::setShouldEnableIS(l2Cache->getCacheSize());
+		size_t l2CacheSize = (l2Cache != nullptr) ? l2Cache->getCacheSize() : L2_DEFAULT_CACHE_SIZE;
+		DataTrackingSupport::setShouldEnableIS(l2CacheSize);
 
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
