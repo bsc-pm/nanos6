@@ -17,6 +17,7 @@
 #include "ReductionInfo.hpp"
 #include "ReductionSpecific.hpp"
 #include "dependencies/DataAccessType.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
 
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
@@ -44,15 +45,8 @@ private:
 	//! A bitmap of the "symbols" this access is related to
 	symbols_t _symbols;
 
-	//! C++ allows anonymous unions to save space when two fields of a struct are not used at once.
-	//! We can do this here, as assigning the reductionInfo will be done always when the length is not
-	//! needed anymore.
-	//! Warning: Take care to correctly initialize this union when copying or constructing this class.
-	union {
-		//! Reduction-specific information of current access
-		ReductionInfo *_reductionInfo;
-		size_t _reductionLength;
-	};
+	//! Reduction-specific information of current access
+	ReductionInfo *_reductionInfo;
 
 	//! Next task with an access matching this one
 	std::atomic<DataAccess *> _successor;
@@ -69,6 +63,8 @@ private:
 	//! 1-byte fields
 	//! The type of the access
 	DataAccessType _type;
+	//! Id of the NUMA node where the access was allocated
+	uint8_t _homeNode;
 
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
@@ -89,7 +85,8 @@ public:
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
-		_type(type)
+		_type(type),
+		_homeNode((uint8_t) -1)
 	{
 		assert(originator != nullptr);
 
@@ -104,7 +101,8 @@ public:
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags()),
-		_type(other.getType())
+		_type(other.getType()),
+		_homeNode(other.getHomeNode())
 	{
 	}
 
@@ -182,14 +180,9 @@ public:
 		return _instrumentDataAccessId;
 	}
 
-	inline size_t getReductionLength() const
+	inline size_t getLength() const
 	{
-		return _reductionLength;
-	}
-
-	inline void setReductionLength(size_t reductionLength)
-	{
-		_reductionLength = reductionLength;
+		return _region.getSize();
 	}
 
 	inline reduction_type_and_operator_index_t getReductionOperator() const
@@ -242,11 +235,6 @@ public:
 		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
 	}
 
-	inline size_t getLength() const
-	{
-		return _region.getSize();
-	}
-
 	bool isInSymbol(int symbol) const
 	{
 		return _symbols[symbol];
@@ -260,6 +248,16 @@ public:
 	symbols_t getSymbols() const
 	{
 		return _symbols;
+	}
+
+	inline uint8_t getHomeNode() const
+	{
+		return _homeNode;
+	}
+
+	inline void setHomeNode(uint8_t id)
+	{
+		_homeNode = id;
 	}
 };
 

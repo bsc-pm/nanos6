@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "HostInfo.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
 #include "executors/threads/CPU.hpp"
 #include "hardware/places/NUMAPlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -116,9 +117,98 @@ HostInfo::HostInfo() :
 		nodeNUMA = ancestor->memory_first_child;
 		assert(nodeNUMA != nullptr);
 		assert(hwloc_obj_type_is_memory(nodeNUMA->type));
+
+		// Some machines, particularly ARM-based, do not always provide cache info.
+		// However, L3 may not exist, as in KNL in flat mode.
+		hwloc_obj_t L3CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
+		hwloc_obj_t L2CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L2CACHE, obj);
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
+
+		// Some machines, particularly ARM-based, do not always provide cache info.
+		// The first unified cache object found going up from the tmp should be its cache.
+		hwloc_obj_t tmpCache = obj->parent;
+		// Some machines, particularly ARM-based, do not always provide cache info.
+		while (tmpCache != nullptr && tmpCache->attr != nullptr &&
+				!(tmpCache->type == HWLOC_OBJ_CACHE &&
+					tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
+					tmpCache->attr->cache.depth == 2))
+		{
+			tmpCache = tmpCache->parent;
+
+			// Topmost obj, no L2 found.
+			if (tmpCache == nullptr || tmpCache->type == HWLOC_OBJ_MACHINE)
+				break;
+		}
+
+		hwloc_obj_t L2CacheObj = nullptr;
+		hwloc_obj_t L3CacheObj = nullptr;
+		if (tmpCache != nullptr) {
+			L2CacheObj = tmpCache;
+			// Some machines, particularly ARM-based, do not always provide cache info.
+			while (tmpCache != nullptr && tmpCache->attr != nullptr &&
+					!(tmpCache->type == HWLOC_OBJ_CACHE &&
+						tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
+						tmpCache->attr->cache.depth == 3))
+			{
+				tmpCache = tmpCache->parent;
+
+				// Topmost obj, no L3 found.
+				if (tmpCache == nullptr || tmpCache->type == HWLOC_OBJ_MACHINE)
+					break;
+			}
+			L3CacheObj = tmpCache;
+		}
 #endif
+		L3Cache *l3Cache = nullptr;
+		if (L3CacheObj != nullptr) {
+
+			// Check that L3 cache object is actually an L3. If there is no L3, it will be another obj type.
+#if HWLOC_API_VERSION >= 0x00020000
+			if (L3CacheObj->type == HWLOC_OBJ_L3CACHE
+#else
+			if (L3CacheObj->type == HWLOC_OBJ_CACHE
+#endif
+				&& L3CacheObj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED
+				&& L3CacheObj->attr->cache.depth == 3)
+			{
+				//! Check if L3 cache object is already created.
+				if (_l3Caches.size() > L3CacheObj->logical_index) {
+					l3Cache = _l3Caches[L3CacheObj->logical_index];
+				} else {
+					const char * inclusiveness = hwloc_obj_get_info_by_name(L3CacheObj, "Inclusive");
+					bool isInclusive = ((inclusiveness != nullptr) && strcmp(inclusiveness, "1") == 0);
+					l3Cache = new L3Cache(L3CacheObj->logical_index,
+							L3CacheObj->attr->cache.size,
+							L3CacheObj->attr->cache.linesize,
+							isInclusive);
+					assert(_l3Caches.size() == (size_t) L3CacheObj->logical_index);
+					_l3Caches.push_back(l3Cache);
+				}
+				assert(l3Cache != nullptr);
+			}
+		}
+
+		L2Cache *l2Cache = nullptr;
+		if (L2CacheObj != nullptr) {
+			if (_l2Caches.size() > L2CacheObj->logical_index) {
+				l2Cache = _l2Caches[L2CacheObj->logical_index];
+			} else {
+				l2Cache = new L2Cache(L2CacheObj->logical_index,
+						l3Cache,
+						L2CacheObj->attr->cache.size,
+						L2CacheObj->attr->cache.linesize);
+				assert(_l2Caches.size() == (size_t) L2CacheObj->logical_index);
+				_l2Caches.push_back(l2Cache);
+			}
+			assert(l2Cache != nullptr);
+			assert(l2Cache->getId() == (int) L2CacheObj->logical_index);
+		}
+
+		// Set shouldEnableIS to L2 cache size
+		size_t l2CacheSize = (l2Cache != nullptr) ? l2Cache->getCacheSize() : L2_DEFAULT_CACHE_SIZE;
+		DataTrackingSupport::setShouldEnableIS(l2CacheSize);
+
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
 		if (_memoryPlaces[NUMANodeId] == nullptr) {
@@ -142,8 +232,11 @@ HostInfo::HostInfo() :
 		CPU *cpu = new CPU(
 			/* systemCPUID */ obj->os_index,
 			/* virtualCPUID */ cpuLogicalIndex,
-			NUMANodeId
+			NUMANodeId,
+			l2Cache,
+			l3Cache
 		);
+		((NUMAPlace *)_memoryPlaces[NUMANodeId])->increaseNumLocalCores();
 
 		_computePlaces[cpuLogicalIndex] = cpu;
 	}
@@ -207,7 +300,53 @@ HostInfo::HostInfo() :
 			NUMAPlace *numaNode = (NUMAPlace *) memoryPlace;
 			numaNode->addComputePlace(computePlace);
 			computePlace->addMemoryPlace(numaNode);
+			computePlace->getDependencyData().initBytesInNUMA(memNodesCount);
 		}
+	}
+
+	_NUMADistances.resize(memNodesCount * memNodesCount, 0);
+
+	if (memNodesCount > 1) {
+#if HWLOC_API_VERSION >= 0x00020000
+		//! Get matrix of NUMA distances
+		hwloc_distances_s *distances;
+		//! nr points to the number of distance matrices that may be stored in distances
+		unsigned nr = 1;
+		//! These distances were obtained from the operating system or hardware.
+		unsigned long kind = HWLOC_DISTANCES_KIND_FROM_OS;
+		//! flags is currently unused, should be 0.
+		unsigned long flags = 0;
+		hwloc_distances_get(topology, &nr, &distances, kind, flags);
+		unsigned nbobjs = distances->nbobjs;
+		assert(nbobjs == memNodesCount);
+		for (unsigned i = 0; i < nbobjs; i++) {
+			hwloc_obj_t obj = distances->objs[i];
+			assert(obj->type == HWLOC_NUMA_ALIAS);
+			for (unsigned j = i; j < nbobjs; j++) {
+				hwloc_obj_t obj2 = distances->objs[j];
+				assert(obj2->type == HWLOC_NUMA_ALIAS);
+				hwloc_uint64_t distance1to2, distance2to1;
+				hwloc_distances_obj_pair_values(distances, obj, obj2, &distance1to2, &distance2to1);
+				_NUMADistances[i*nbobjs+j] = distance1to2;
+				_NUMADistances[j*nbobjs+i] = distance2to1;
+			}
+		}
+		hwloc_distances_release(topology, distances);
+#else
+		unsigned nbobjs = memNodesCount;
+		for (unsigned i = 0; i < nbobjs; i++) {
+			hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, i);
+			assert(obj != nullptr && obj->type == HWLOC_NUMA_ALIAS);
+			for (unsigned j = i; j < nbobjs; j++) {
+				hwloc_obj_t obj2 = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, j);
+				assert(obj2->type == HWLOC_NUMA_ALIAS);
+				float distance1to2, distance2to1;
+				hwloc_get_latency(topology, obj, obj2, &distance1to2, &distance2to1);
+				_NUMADistances[i*nbobjs+j] = distance1to2 * 10;
+				_NUMADistances[j*nbobjs+i] = distance2to1 * 10;
+			}
+		}
+#endif
 	}
 
 	// Other work

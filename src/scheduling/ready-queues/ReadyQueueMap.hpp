@@ -7,6 +7,7 @@
 #ifndef READY_QUEUE_MAP_HPP
 #define READY_QUEUE_MAP_HPP
 
+#include "memory/numa/NUMAManager.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
@@ -29,17 +30,19 @@ public:
 
 	~ReadyQueueMap()
 	{
+		assert(_numReadyTasks == 0);
+
 		for (ready_map_t::iterator it = _readyMap.begin(); it != _readyMap.end(); it++) {
 			assert(it->second.empty());
 		}
 		_readyMap.clear();
 	}
 
-	void addReadyTask(Task *task, bool unblocked)
+	inline void addReadyTask(Task *task, bool unblocked)
 	{
 		Task::priority_t priority = task->getPriority();
 
-		// Get ready queue for the given priority, if exists. If not, create it, and return it
+		// Get ready queue for the given priority if exists, otherwise create it
 		ready_map_t::iterator it = (_readyMap.emplace(priority, ready_queue_t())).first;
 		assert(it != _readyMap.end());
 
@@ -52,9 +55,9 @@ public:
 		++_numReadyTasks;
 	}
 
-	Task *getReadyTask(ComputePlace *)
+	inline Task *getReadyTask(ComputePlace *)
 	{
-		if (_readyMap.empty()) {
+		if (_numReadyTasks == 0) {
 			return nullptr;
 		}
 
@@ -67,10 +70,15 @@ public:
 				assert(result != nullptr);
 
 				it->second.pop_front();
+
 				--_numReadyTasks;
+
 				return result;
 			}
 		}
+
+		// There must be a ready task
+		assert(false);
 
 		return nullptr;
 	}

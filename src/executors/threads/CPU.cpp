@@ -13,8 +13,8 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
-	: CPUPlace(virtualCPUId),
+CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId, L2Cache *l2Cache, L3Cache *l3Cache) :
+	CPUPlace(virtualCPUId, l2Cache, l3Cache),
 	_activationStatus(uninitialized_status),
 	_systemCPUId(systemCPUId),
 	_NUMANodeId(NUMANodeId),
@@ -28,5 +28,15 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
 
 	rc = pthread_attr_setstacksize(&_pthreadAttr, CPUThreadingModelData::getDefaultStackSize());
 	FatalErrorHandler::handle(rc, " in call to pthread_attr_init");
+
+	// Some machines, particularly ARM-based, do not always provide cache info.
+	if (l2Cache != nullptr) {
+		l2Cache->addCPU(this);
+	}
+
+	// L3Cache is not mandatory (e.g. KNL in flat mode has no L3)
+	if (l3Cache != nullptr) {
+		l3Cache->addCPU(this);
+	}
 }
 

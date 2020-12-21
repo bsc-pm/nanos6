@@ -16,7 +16,6 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 {
 	assert(computePlace != nullptr);
 	assert(_deadlineTasks != nullptr);
-	assert(_readyTasks != nullptr);
 
 	Task *result = nullptr;
 	Taskfor *groupTaskfor = nullptr;
@@ -74,7 +73,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 
 	// 5. Check if there is work remaining in the ready queue
 	if (result == nullptr) {
-		result = _readyTasks->getReadyTask(computePlace);
+		result = regularGetReadyTask(computePlace);
 	}
 
 	// 6. Try to get work from other immediateSuccessorTasks

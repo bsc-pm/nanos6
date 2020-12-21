@@ -11,6 +11,7 @@
 #include <cassert>
 #include <deque>
 #include <mutex>
+#include <numaif.h>
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
@@ -22,6 +23,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinWait.hpp"
+#include "memory/numa/NUMAManager.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
@@ -169,9 +171,12 @@ namespace DataAccessRegistration {
 		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, length, weak, alreadyExisting);
 
 		if (!alreadyExisting) {
+			if (!weak) {
+				accessStruct.incrementTotalDataSize(length);
+			}
+
 			if (accessType == REDUCTION_ACCESS_TYPE) {
 				access->setReductionOperator(reductionTypeAndOperatorIndex);
-				access->setReductionLength(length);
 				access->setReductionIndex(reductionIndex);
 			}
 		} else {
@@ -469,8 +474,19 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void handleExitTaskwait(Task *, ComputePlace *, CPUDependencyData &)
+	void handleExitTaskwait(Task *task, ComputePlace *, CPUDependencyData &)
 	{
+		assert(task != nullptr);
+
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(!accessStruct.hasBeenDeleted());
+
+		bottom_map_t &bottomMap = accessStruct._subaccessBottomMap;
+
+		for (bottom_map_t::iterator itMap = bottomMap.begin(); itMap != bottomMap.end(); itMap++) {
+			//! Clear home node
+			itMap->second._access->setHomeNode((uint8_t) -1);
+		}
 	}
 
 	static inline void insertAccesses(Task *task, CPUDependencyData &hpDependencyData)
@@ -497,6 +513,7 @@ namespace DataAccessRegistration {
 			DataAccess *predecessor = nullptr;
 			bottom_map_t::iterator itMap;
 			bool weak = access->isWeak();
+			bool setHomeNode = true;
 
 			// Instrumentation needs a region.
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
@@ -548,7 +565,7 @@ namespace DataAccessRegistration {
 				// if our parent has one (for weak reductions)
 				ReductionInfo *currentReductionInfo = itMap->second._reductionInfo;
 				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
-				size_t length = access->getReductionLength();
+				size_t length = access->getLength();
 
 				if (currentReductionInfo == nullptr) {
 					currentReductionInfo = reductionInfo;
@@ -580,6 +597,13 @@ namespace DataAccessRegistration {
 			if (predecessor == nullptr) {
 				if (parentAccess != nullptr) {
 					parentAccess->setChild(access);
+
+					uint8_t parentHomeNode = parentAccess->getHomeNode();
+					if (parentHomeNode != (uint8_t) -1) {
+						access->setHomeNode(parentHomeNode);
+						setHomeNode = false;
+					}
+
 					DataAccessMessage message = parentAccess->applySingle(ACCESS_HASCHILD, mailBox);
 					fromCurrent = access->applySingle(message.flagsForNext, mailBox);
 					schedule = fromCurrent.schedule;
@@ -587,6 +611,7 @@ namespace DataAccessRegistration {
 
 					dispose = parentAccess->applyPropagated(message);
 					assert(!dispose);
+
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
@@ -597,6 +622,13 @@ namespace DataAccessRegistration {
 				}
 			} else {
 				predecessor->setSuccessor(access);
+
+				uint8_t predecessorHomeNode = predecessor->getHomeNode();
+				if (predecessorHomeNode != (uint8_t) -1) {
+					access->setHomeNode(predecessorHomeNode);
+					setHomeNode = false;
+				}
+
 				DataAccessMessage message = predecessor->applySingle(ACCESS_HASNEXT, mailBox);
 				fromCurrent = access->applySingle(message.flagsForNext, mailBox);
 				schedule = fromCurrent.schedule;
@@ -605,6 +637,13 @@ namespace DataAccessRegistration {
 				dispose = predecessor->applyPropagated(message);
 				if (dispose)
 					decreaseDeletableCountOrDelete(predecessor->getOriginator(), hpDependencyData._deletableOriginators);
+			}
+
+			// The homeNode couldn't be propagated, check it in the directory
+			if (!weak && setHomeNode) {
+				size_t length = access->getLength();
+				uint8_t homeNode = NUMAManager::getHomeNode(address, length);
+				access->setHomeNode(homeNode);
 			}
 
 			if (fromCurrent.combine) {
@@ -806,6 +845,11 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) CPUDependencyData &hpDependencyData)
 	{
 		assert(false);
+	}
+
+	bool supportsDataTracking()
+	{
+		return true;
 	}
 } // namespace DataAccessRegistration
 

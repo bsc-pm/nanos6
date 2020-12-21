@@ -17,6 +17,11 @@ public:
 	{
 		return (x + (y - 1)) / y;
 	}
+
+	static inline size_t closestMultiple(size_t n, size_t multipleOf)
+	{
+		return ((n + multipleOf - 1) / multipleOf) * multipleOf;
+	}
 };
 
 

@@ -21,3 +21,4 @@ RESOLVE_API_FUNCTION(nanos6_wait_for_full_initialization, "debugging", NULL);
 RESOLVE_API_FUNCTION(nanos6_get_num_cpus, "debugging", NULL);
 RESOLVE_API_FUNCTION(nanos6_get_total_num_cpus, "debugging", NULL);
 RESOLVE_API_FUNCTION(nanos6_is_dlb_enabled, "debugging", NULL);
+RESOLVE_API_FUNCTION(nanos6_is_numa_tracking_enabled, "debugging", NULL);

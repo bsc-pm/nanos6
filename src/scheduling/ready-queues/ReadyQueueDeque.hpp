@@ -7,6 +7,7 @@
 #ifndef READY_QUEUE_DEQUE_HPP
 #define READY_QUEUE_DEQUE_HPP
 
+#include "memory/numa/NUMAManager.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "support/Containers.hpp"
 
@@ -14,29 +15,36 @@ class ReadyQueueDeque : public ReadyQueue {
 	typedef Container::deque<Task *> ready_queue_t;
 
 	ready_queue_t _readyDeque;
+
+	size_t _numReadyTasks;
+
 public:
 	ReadyQueueDeque(SchedulingPolicy policy) :
-		ReadyQueue(policy)
+		ReadyQueue(policy),
+		_numReadyTasks(0)
 	{
 	}
 
 	~ReadyQueueDeque()
 	{
+		assert(_numReadyTasks == 0);
 		assert(_readyDeque.empty());
 	}
 
-	void addReadyTask(Task *task, bool unblocked)
+	inline void addReadyTask(Task *task, bool unblocked)
 	{
 		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
 			_readyDeque.push_front(task);
 		} else {
 			_readyDeque.push_back(task);
 		}
+
+		++_numReadyTasks;
 	}
 
-	Task *getReadyTask(ComputePlace *)
+	inline Task *getReadyTask(ComputePlace *)
 	{
-		if (_readyDeque.empty()) {
+		if (_numReadyTasks == 0) {
 			return nullptr;
 		}
 
@@ -44,14 +52,16 @@ public:
 		assert(result != nullptr);
 
 		_readyDeque.pop_front();
+
+		--_numReadyTasks;
+
 		return result;
 	}
 
 	inline size_t getNumReadyTasks() const
 	{
-		return _readyDeque.size();
+		return _numReadyTasks;
 	}
-
 };
 
 

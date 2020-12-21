@@ -473,3 +473,11 @@ Although the throttle feature is disabled by default, it can be enabled and tunn
 * `throttle.tasks`: Maximum absolute number of alive childs that any task can have. It is divided by 10 at each nesting level. By default is 5.000.000.
 * `throttle.pressure`: Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure. By default is 70.
 * `throttle.max_memory`: Maximum used memory or memory budget. Note that this variable can be set in terms of bytes or in memory units. For example: ``throttle.max_memory = "50GB"``. The default is the half of the available physical memory.
+
+## NUMA support
+
+Nanos6 includes NUMA support based on three main components: an allocation/deallocation API, a data tracking system and a locality-aware scheduler.
+When allocating memory using the nanos6 NUMA API, we annotate in our directory the location of the data. Then, when a task becomes ready, we check where is each of the data dependences of the task, and schedule the task to be run in the NUMA node with a greater share of its data. The NUMA support can be handled through the `numa.tracking` configuration varible: 
+* `numa.tracking = "on"`: Enables the NUMA support.
+* `numa.tracking = "off"`: Disables the NUMA support.
+* `numa.tracking = "auto"`: The NUMA support is enabled in the first allocation done using the Nanos6 NUMA API. If no allocation is done, the support is never enabled.

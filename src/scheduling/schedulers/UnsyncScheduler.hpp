@@ -16,6 +16,7 @@
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
 
+
 class UnsyncScheduler {
 protected:
 	typedef Container::vector<Task *> immediate_successor_tasks_t;
@@ -23,7 +24,12 @@ protected:
 	immediate_successor_tasks_t _immediateSuccessorTasks;
 	immediate_successor_tasks_t _immediateSuccessorTaskfors;
 
-	ReadyQueue *_readyTasks;
+	ReadyQueue **_queues;
+	size_t _numQueues;
+
+	// When tasks do not have a NUMA hints we assign them in a round robin basis
+	uint64_t _roundRobinQueues;
+
 	DeadlineQueue *_deadlineTasks;
 
 	bool _enableImmediateSuccessor;
@@ -58,7 +64,7 @@ public:
 					Task *currentIS = _immediateSuccessorTasks[immediateSuccessorId];
 					if (currentIS != nullptr) {
 						assert(!currentIS->isTaskfor());
-						_readyTasks->addReadyTask(currentIS, false);
+						regularAddReadyTask(currentIS, false);
 					}
 					_immediateSuccessorTasks[immediateSuccessorId] = task;
 				} else {
@@ -71,7 +77,7 @@ public:
 					} else if (currentIS2 == nullptr) {
 						_immediateSuccessorTaskfors[immediateSuccessorId+1] = task;
 					} else {
-						_readyTasks->addReadyTask(currentIS1, false);
+						regularAddReadyTask(currentIS1, false);
 						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
 					}
 				}
@@ -79,7 +85,7 @@ public:
 			}
 		}
 
-		_readyTasks->addReadyTask(task, hint == UNBLOCKED_TASK_HINT);
+		regularAddReadyTask(task, hint == UNBLOCKED_TASK_HINT);
 	}
 
 	//! \brief Get a ready task for execution
@@ -88,6 +94,20 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+
+protected:
+	//! \brief Add ready task considering NUMA queues
+	//!
+	//! \param[in] task the ready task to add
+	//! \param[in] unblocked whether it is an unblocked task or not
+	void regularAddReadyTask(Task *task, bool unblocked);
+
+	//! \brief Get a ready task considering NUMA queues
+	//!
+	//! \param[in] computePlace the hardware place asking for scheduling orders
+	//!
+	//! \returns a ready task or nullptr
+	Task *regularGetReadyTask(ComputePlace *computePlace);
 };
 
 

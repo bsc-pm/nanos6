@@ -9,6 +9,7 @@
 
 #include <cmath>
 
+#include "support/BitManipulation.hpp"
 #include "support/MathSupport.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -189,7 +190,7 @@ public:
 				// We use a right rotation to get the first enabled bit starting from cpuId.
 				uint64_t aux = rotateRight(pendingChunks, (cpuId % totalChunks));
 				// Find first set, -1 means no enabled bits at all.
-				int ffs = indexFirstEnabledBit(aux);
+				int ffs = BitManipulation::indexFirstEnabledBit(aux);
 				if (ffs == -1) {
 					break;
 				}
@@ -348,13 +349,6 @@ private:
 	{
 		y &= 63;
 		return (x >> y) | (x << (-y & 63));
-	}
-
-	// ffs returns the least signficant enabled bit, starting from 1
-	// 0 means x has no enabled bits
-	static inline int indexFirstEnabledBit(uint64_t x)
-	{
-		return __builtin_ffsll(x) - 1;
 	}
 };
 

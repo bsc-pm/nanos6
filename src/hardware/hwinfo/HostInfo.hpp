@@ -9,6 +9,9 @@
 
 #include "DeviceInfo.hpp"
 
+class L2Cache;
+class L3Cache;
+
 class HostInfo : public DeviceInfo {
 private:
 
@@ -17,6 +20,12 @@ private:
 
 	//! List of NUMA nodes on the system
 	std::vector<MemoryPlace *> _memoryPlaces;
+
+	//! List of L2 caches on the system
+	std::vector<L2Cache *> _l2Caches;
+
+	//! List of L3 caches on the system
+	std::vector<L3Cache *> _l3Caches;
 
 	//! L1 Cache line size
 	size_t _cacheLineSize;
@@ -27,11 +36,14 @@ private:
 	//! Total amount of physical memory on the system
 	size_t _physicalMemorySize;
 
-	//! Total amount of valid memory places in the system
+	//! Total amount of valid (contains any CPU) memory places in the system
 	size_t _validMemoryPlaces;
 
 	//! Total amount of physical packages in the system
 	size_t _numPhysicalPackages;
+
+	//! Matrix of NUMA distances
+	std::vector<uint64_t> _NUMADistances;
 
 public:
 
@@ -92,6 +104,33 @@ public:
 	inline size_t getNumPhysicalPackages() const override
 	{
 		return _numPhysicalPackages;
+	}
+
+	inline size_t getNumL2Caches() const
+	{
+		return _l2Caches.size();
+	}
+
+	inline size_t getNumL3Caches() const
+	{
+		return _l3Caches.size();
+	}
+
+	inline L2Cache *getL2Cache(int id) const
+	{
+		assert(id < (int) _l2Caches.size());
+		return _l2Caches[id];
+	}
+
+	inline L3Cache *getL3Cache(int id) const
+	{
+		assert(id < (int) _l3Caches.size());
+		return _l3Caches[id];
+	}
+
+	inline const std::vector<uint64_t> &getNUMADistances() const
+	{
+		return _NUMADistances;
 	}
 };
 

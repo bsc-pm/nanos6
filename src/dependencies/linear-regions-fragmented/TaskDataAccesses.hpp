@@ -11,6 +11,7 @@
 #include <bitset>
 #include <cassert>
 #include <mutex>
+#include <random>
 
 #include "BottomMapEntry.hpp"
 #include "IntrusiveLinearRegionMap.hpp"
@@ -97,6 +98,16 @@ struct TaskDataAccesses {
 	inline size_t getAdditionalMemorySize() const
 	{
 		return 0;
+	}
+
+	inline size_t getTotalDataSize() const
+	{
+		return 0;
+	}
+
+	uint64_t computeNUMAAffinity(ComputePlace *)
+	{
+		return (uint64_t) -1;
 	}
 };
 

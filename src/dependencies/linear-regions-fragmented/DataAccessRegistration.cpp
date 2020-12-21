@@ -3194,6 +3194,11 @@ namespace DataAccessRegistration {
 
 		accessStruct._lock.unlock();
 	}
+
+	bool supportsDataTracking()
+	{
+		return false;
+	}
 }; // namespace DataAccessRegistration
 
 #pragma GCC visibility pop

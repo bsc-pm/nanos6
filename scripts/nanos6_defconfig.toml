@@ -60,6 +60,15 @@
 	# Maximum memory that can be used by the runtime. Default is "0", which equals half of system memory
 	max_memory = "0"
 
+[numa]
+	# Enable NUMA tracking of task data. NUMA tracking consists of annotating the NUMA location
+	# of data to be later scheduled based on this information. When using "auto" this feature is
+	# enabled in the first allocation done using the Nanos6 NUMA API. Default is "auto"
+	# Possible values: "auto", "on", "off"
+	tracking = "auto"
+	# Indicate whether should print the NUMA bitmask of each NUMA wildcards
+	report = false
+
 __require_DLB
 [dlb]
 	# Enable DLB support. Default is false

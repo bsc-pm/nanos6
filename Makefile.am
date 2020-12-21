@@ -61,6 +61,7 @@ nanos6include_HEADERS = \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
 	api/nanos6/monitoring.h \
+	api/nanos6/numa.h \
 	api/nanos6/openacc_device.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
@@ -187,6 +188,7 @@ symbol_resolution += \
 	loader/symbol-resolver/final.c \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
+	loader/symbol-resolver/numa.c \
 	loader/symbol-resolver/polling.c \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
@@ -222,6 +224,7 @@ symbol_resolution += \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
+	loader/indirect-symbols/numa.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
@@ -370,6 +373,7 @@ nodist_common_sources = \
 	$(nanos6_generated_headers)
 
 common_sources = \
+	src/dependencies/DataTrackingSupport.cpp \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPUManager.cpp \
 	src/executors/threads/CPUManagerInterface.cpp \
@@ -391,6 +395,7 @@ common_sources = \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/HomeNodeMap.cpp \
+	src/memory/numa/NUMAManager.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
 	src/monitoring/TasktypeStatistics.cpp \
@@ -416,6 +421,7 @@ common_sources = \
 	src/system/LeaderThread.cpp \
 	src/system/LintAPI.cpp \
 	src/system/MonitoringAPI.cpp \
+	src/system/NumaAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/TaskInfoAPI.cpp \
@@ -535,7 +541,8 @@ discrete_dependency_sources = \
 	src/dependencies/discrete/devices/HostReductionStorage.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
-	src/dependencies/discrete/ReleaseDirective.cpp
+	src/dependencies/discrete/ReleaseDirective.cpp \
+	src/dependencies/discrete/TaskDataAccesses.cpp
 
 if USE_CUDA
 discrete_dependency_sources += src/dependencies/discrete/devices/CUDAReductionStorage.cpp
@@ -801,6 +808,7 @@ noinst_HEADERS = \
 	src/cluster/polling-services/MessageHandler.hpp \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
+	src/dependencies/DataTrackingSupport.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
 	src/dependencies/SymbolTranslation.hpp \
 	src/dependencies/discrete/BottomMapEntry.hpp \
@@ -890,8 +898,11 @@ noinst_HEADERS = \
 	src/hardware/device/openacc/OpenAccQueuePool.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
-	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
+	src/hardware/places/CPUPlace.hpp \
+	src/hardware/places/HardwareCache.hpp \
+	src/hardware/places/L2Cache.hpp \
+	src/hardware/places/L3Cache.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
 	src/hardware-counters/CPUHardwareCounters.hpp \
@@ -1250,6 +1261,7 @@ noinst_HEADERS = \
 	src/memory/directory/HomeMapEntry.hpp \
 	src/memory/directory/HomeNodeMap.hpp \
 	src/memory/directory/cluster/DistributionPolicy.hpp \
+	src/memory/numa/NUMAManager.hpp \
 	src/memory/vmm/VirtualMemoryAllocation.hpp \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
@@ -1279,6 +1291,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
+	src/support/BitManipulation.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/Containers.hpp \
 	src/support/GenericFactory.hpp \

@@ -78,6 +78,8 @@ namespace DataAccessRegistration {
 		DataAccessRegion region,
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData);
+
+	bool supportsDataTracking();
 } // namespace DataAccessRegistration
 
 #endif // DATA_ACCESS_REGISTRATION_HPP

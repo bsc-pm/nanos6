@@ -12,6 +12,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "memory/numa/NUMAManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -224,4 +225,9 @@ long nanos6_cpus_get_numa(void *cpuIterator)
 int nanos6_is_dlb_enabled(void)
 {
 	return CPUManager::isDLBEnabled();
+}
+
+int nanos6_is_numa_tracking_enabled(void)
+{
+	return NUMAManager::isTrackingEnabled();
 }
