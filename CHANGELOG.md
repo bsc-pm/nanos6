@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## Version 2.5.1, Fri Dec 18, 2020
+## Version 2.5.1, Tue Dec 22, 2020
 The 2.5.1 release corresponds to the OmpSs-2 2020.11.1 release. It introduces bug fixes and code improvements.
 
 ### General
