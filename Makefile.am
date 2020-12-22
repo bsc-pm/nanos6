@@ -2161,7 +2161,7 @@ nobase_dist_paraverconfig_DATA = \
 
 
 configfiledir = ${docdir}
-nobase_dist_configfile_DATA = \
+nobase_nodist_configfile_DATA = \
 	scripts/nanos6.toml
 
 ctfdir = ${docdir}
