@@ -11,7 +11,11 @@ AC_DEFUN([AC_CHECK_PAPI],
 			[ ac_cv_use_papi_prefix="" ]
 		)
 
-		if test x"${ac_cv_use_papi_prefix}" != x"" ; then
+		if test x"${ac_cv_use_papi_prefix}" = x"no"; then
+			AC_MSG_CHECKING([the PAPI installation prefix])
+			AC_MSG_RESULT([${ac_cv_use_papi_prefix}])
+			ac_use_papi=no
+		elif test x"${ac_cv_use_papi_prefix}" != x"" ; then
 			AC_MSG_CHECKING([the PAPI installation prefix])
 			AC_MSG_RESULT([${ac_cv_use_papi_prefix}])
 			papi_LIBS="-L${ac_cv_use_papi_prefix}/lib -lpapi -Wl,-rpath,${ac_cv_use_papi_prefix}/lib"
@@ -29,11 +33,12 @@ AC_DEFUN([AC_CHECK_PAPI],
 				], [
 					AC_MSG_CHECKING([the PAPI installation prefix])
 					AC_MSG_RESULT([not available])
+					ac_use_papi=no
 				]
 			)
 		fi
 
-		if test x"${ac_use_papi}" != x"" ; then
+		if test x"${ac_use_papi}" = x"yes" ; then
 			ac_save_CPPFLAGS="${CPPFLAGS}"
 			ac_save_LIBS="${LIBS}"
 
@@ -61,7 +66,7 @@ AC_DEFUN([AC_CHECK_PAPI],
 			LIBS="${ac_save_LIBS}"
 		fi
 
-		if test x"${ac_use_papi}" != x"" ; then
+		if test x"${ac_use_papi}" = x"yes" ; then
 			if test x"${ac_cv_use_papi_prefix}" != x"" ; then
 				papiBinary=${ac_cv_use_papi_prefix}/bin/papi_version
 			else
