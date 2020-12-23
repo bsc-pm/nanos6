@@ -1954,73 +1954,51 @@ src/version/CompilerVersionInfo.cpp: Makefile
 	echo '#endif' >> src/version/CompilerVersionInfo.cpp ; \
 	echo >> src/version/CompilerVersionInfo.cpp
 
-# Generate config_vars to pass to the configuration generator based on the AM_CONDITIONALs
-# There is kind of no other way to do this
 
+# Generate config_vars to pass to the configuration generator based on the AM_CONDITIONALs
 config_vars=
 
 if USE_CUDA
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "CUDA"
 endif
 
 if USE_OPENACC
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "OPENACC"
 endif
 
 if USE_CLUSTER
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "CLUSTER"
 endif
 
 if HAVE_DLB
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "DLB"
 endif
 
 if BUILD_CTF_INSTRUMENTATION
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "CTF"
 endif
 
 if BUILD_GRAPH_INSTRUMENTATION
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "GRAPH"
 endif
 
 if BUILD_VERBOSE_INSTRUMENTATION
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "VERBOSE"
 endif
 
 if BUILD_EXTRAE_INSTRUMENTATION
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "EXTRAE"
 endif
 
 if HAVE_PAPI
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "PAPI"
 endif
 
 if HAVE_PQOS
-config_vars += "1"
-else
-config_vars += "0"
+config_vars += "PQOS"
 endif
 
 # Generate processed config file according to user chosen installation
-
 scripts/nanos6.toml: $(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml
 	$(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml $(config_vars) > scripts/nanos6.toml
 
