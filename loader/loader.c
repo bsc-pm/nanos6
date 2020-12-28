@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #if HAVE_CONFIG_H
@@ -140,14 +140,8 @@ static int _nanos6_loader_impl(void)
 	if (_nanos6_loader_parse_config())
 		return -1;
 
-	// Enable discrete dependencies by default for SMP
-	// installations and enable regions dependencies
-	// for OmpSs-2@Cluster installations
-#if USE_CLUSTER
-	char const *default_dependencies = "regions";
-#else
+	// Enable discrete dependencies by default
 	char const *default_dependencies = "discrete";
-#endif
 
 	_Bool debug = _config.debug;
 	_Bool verbose = _config.verbose;

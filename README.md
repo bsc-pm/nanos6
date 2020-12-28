@@ -391,20 +391,14 @@ Next we showcase a simplified version of the hardware counter section of the con
 
 For information about using device tasks (e.g., CUDA tasks), refer to the [devices](docs/devices/Devices.md) documentation.
 
-## Cluster support
-
-In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
-Nanos6 needs to be configured with the `--enable-cluster` flag.
-For more information on how to write and run cluster applications see [Cluster.md](docs/cluster/Cluster.md).
-
 ## Choosing a dependency implementation
 
-The Nanos6 runtime has support for different dependency implementations. The `discrete` dependencies are the default dependency implementation. This is the most optimized implementation but it does not fully support the OmpSs-2 dependency model since it does not support region dependencies. In the case the user program requires region dependencies (e.g., to detect dependencies among partial overlapping dependency regions), Nanos6 privides the `regions` implementation, which is completely spec-compliant. This latter is also the only implementation that supports OmpSs-2@Cluster.
+The Nanos6 runtime has support for different dependency implementations. The `discrete` dependencies are the default dependency implementation. This is the most optimized implementation but it does not fully support the OmpSs-2 dependency model since it does not support region dependencies. In the case the user program requires region dependencies (e.g., to detect dependencies among partial overlapping dependency regions), Nanos6 privides the `regions` implementation, which is completely spec-compliant.
 
 The dependency implementation can be selected at run-time through the `version.dependencies` configuration variable. The available implementations are:
 
 * `version.dependencies = "discrete"`: Optimized implementation not supporting region dependencies. Region syntax is supported but will behave as a discrete dependency to the first address. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model. **Default** implementation.
-* `version.dependencies = "regions"`: Supporting all dependency features. Default implementation in OmpSs-2@Cluster installations.
+* `version.dependencies = "regions"`: Supporting all dependency features.
 
 In case an OmpSs-2 program requires region dependency support, it is recommended to add the declarative directive below in any of the program source files. Then, before the program is started, the runtime will check whether the loaded dependency implementation is `regions` and will abort the execution if it is not true.
 
@@ -481,3 +475,8 @@ When allocating memory using the nanos6 NUMA API, we annotate in our directory t
 * `numa.tracking = "on"`: Enables the NUMA support.
 * `numa.tracking = "off"`: Disables the NUMA support.
 * `numa.tracking = "auto"`: The NUMA support is enabled in the first allocation done using the Nanos6 NUMA API. If no allocation is done, the support is never enabled.
+
+## Cluster support
+
+This reference implementation of the Nanos6 runtime system does no longer support the OmpSs-2@Cluster programming model.
+Please check the [Nanos6 Cluster repository](https://github.com/bsc-pm/nanos6-cluster) for a stable variant supporting OmpSs-2@Cluster.

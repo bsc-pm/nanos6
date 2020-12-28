@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "SchedulerGenerator.hpp"
@@ -43,16 +43,16 @@ DeviceScheduler *SchedulerGenerator::createDeviceScheduler(
 				deviceType,
 				"OpenAccDeviceScheduler");
 		case nanos6_opencl_device:
-			FatalErrorHandler::failIf(1, "OpenCL is not supported yet.");
+			FatalErrorHandler::fail("OpenCL is not supported yet.");
 			break;
 		case nanos6_fpga_device:
-			FatalErrorHandler::failIf(1, "FPGA is not supported yet.");
+			FatalErrorHandler::fail("FPGA is not supported yet.");
 			break;
 		case nanos6_cluster_device:
-			FatalErrorHandler::failIf(1, "Cluster is not actually a device.");
+			FatalErrorHandler::fail("Cluster is not actually a device.");
 			break;
 		default:
-			FatalErrorHandler::failIf(1, "Unknown or unsupported device.");
+			FatalErrorHandler::fail("Unknown or unsupported device.");
 	}
 	return nullptr;
 }

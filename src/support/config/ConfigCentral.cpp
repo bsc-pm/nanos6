@@ -143,13 +143,8 @@ ConfigCentral::ConfigCentral() :
 
 	// Version details
 	registerOption<bool_t>("version.debug", false);
-	registerOption<string_t>("version.instrument", "none");
-
-#ifdef USE_CLUSTER
-	registerOption<string_t>("version.dependencies", "regions");
-#else
 	registerOption<string_t>("version.dependencies", "discrete");
-#endif
+	registerOption<string_t>("version.instrument", "none");
 }
 
 void ConfigCentral::initializeMemoryDependentOptions()
