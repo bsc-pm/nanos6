@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 
@@ -11,7 +11,10 @@
 #include "hardware/HardwareInfo.hpp"
 
 
-void ConfigCentral::initialize()
+ConfigCentral::ConfigCentral() :
+	_descriptors(),
+	_defaults(),
+	_listDefaults()
 {
 	// Cluster
 	registerOption<string_t>("cluster.communication", "disabled");
@@ -152,5 +155,6 @@ void ConfigCentral::initializeMemoryDependentOptions()
 	size_t totalMemory = HardwareInfo::getPhysicalMemorySize();
 	size_t localSize = std::min(2UL << 30, totalMemory / 20);
 
-	updateOption<memory_t>("cluster.local_memory", localSize);
+	ConfigCentral &central = getCentral();
+	central.updateOption<memory_t>("cluster.local_memory", localSize);
 }
