@@ -41,8 +41,7 @@ private:
 
 	void initialize();
 	void handleTask(CPU *cpu);
-
-	static void executeTask(Task *task, ComputePlace *targetComputePlace, MemoryPlace *targetMemoryPlace);
+	void executeTask(CPU *cpu);
 
 	friend class ThreadManager;
 	friend class WorkerThreadRunner;
