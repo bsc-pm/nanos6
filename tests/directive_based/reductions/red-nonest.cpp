@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -101,14 +101,8 @@ public:
 		assert(_status == NOT_STARTED);
 
 		// Check if we are running with DLB
-		bool runningWithDLB = false;
-#ifdef HAVE_DLB
-		char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
-		bool dlbEnvvarPresent = (dlbEnabled != 0);
-		if (dlbEnvvarPresent) {
-			runningWithDLB = (strcmp(dlbEnabled, "1") == 0);
-		}
-#endif
+		bool runningWithDLB = nanos6_is_dlb_enabled();
+
 		tap.emitDiagnostic("Task ", _id, " (", type2String(), ") starts");
 		_status = STARTED;
 
@@ -528,14 +522,8 @@ struct VerifierConstraintCalculator {
 	void selfcheck() const
 	{
 		// Check if we are running with DLB
-		bool runningWithDLB = false;
-#ifdef HAVE_DLB
-		char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
-		bool dlbEnvvarPresent = (dlbEnabled != 0);
-		if (dlbEnvvarPresent) {
-			runningWithDLB = (strcmp(dlbEnabled, "1") == 0);
-		}
-#endif
+		bool runningWithDLB = nanos6_is_dlb_enabled();
+
 #ifdef FINE_SELF_CHECK
 #else
 		bool globallyValid = true;
