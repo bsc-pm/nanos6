@@ -95,9 +95,9 @@ void nanos6_preinit(void)
 	HardwareCounters::initialize();
 	Monitoring::initialize();
 	MemoryAllocator::initialize();
-	Throttle::initialize();
 	NUMAManager::initialize();
 	Scheduler::initialize();
+	Throttle::initialize();
 	ExternalThreadGroup::initialize();
 
 	// Initialize device services after initializing scheduler
@@ -155,6 +155,9 @@ void nanos6_shutdown(void)
 	// Shutdown device services before CPU and thread managers
 	HardwareInfo::shutdownDeviceServices();
 
+	// Shutdown throttle service before CPUs are stopped
+	Throttle::shutdown();
+
 	// Signal the shutdown to all CPUs and finalize threads
 	CPUManager::shutdownPhase1();
 	ThreadManager::shutdownPhase1();
@@ -175,7 +178,6 @@ void nanos6_shutdown(void)
 
 	Monitoring::shutdown();
 	HardwareCounters::shutdown();
-	Throttle::shutdown();
 
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();

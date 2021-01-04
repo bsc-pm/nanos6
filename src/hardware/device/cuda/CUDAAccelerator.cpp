@@ -14,8 +14,8 @@
 #include <DataAccessRegistrationImplementation.hpp>
 
 
-ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned", true);
-ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us", 1000);
+ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned");
+ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us");
 
 thread_local Task* CUDAAccelerator::_currentTask;
 
@@ -51,7 +51,7 @@ void CUDAAccelerator::acceleratorServiceLoop()
 			// Iterate while there are running tasks and pinned polling is enabled
 		} while (_pinnedPolling && !_activeEvents.empty());
 
-		// Sleep for 500 microseconds
+		// Sleep for a configured amount of microseconds
 		BlockingAPI::waitForUs(sleepTime);
 	}
 }

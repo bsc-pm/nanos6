@@ -12,8 +12,8 @@
 #include "system/BlockingAPI.hpp"
 
 
-ConfigVariable<bool> OpenAccAccelerator::_pinnedPolling("devices.openacc.polling.pinned", true);
-ConfigVariable<size_t> OpenAccAccelerator::_usPollingPeriod("devices.openacc.polling.period_us", 1000);
+ConfigVariable<bool> OpenAccAccelerator::_pinnedPolling("devices.openacc.polling.pinned");
+ConfigVariable<size_t> OpenAccAccelerator::_usPollingPeriod("devices.openacc.polling.period_us");
 
 
 void OpenAccAccelerator::acceleratorServiceLoop()

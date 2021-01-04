@@ -59,6 +59,11 @@
 	pressure = 70 # %
 	# Maximum memory that can be used by the runtime. Default is "0", which equals half of system memory
 	max_memory = "0"
+	# Evaluation interval (us). Each time this amount of time is elapsed, the throttle will query the
+	# memory allocator statistics and evaluate the current memory pressure. A higher interval will result
+	# in less accurate pressure estimation but a lower interval will introduce noticeable overhead, as
+	# reading memory statistics requires a global lock on the allocator to aggregate per-thread statistics.
+	polling_period_us = 1000
 
 [numa]
 	# Enable NUMA tracking of task data. NUMA tracking consists of annotating the NUMA location

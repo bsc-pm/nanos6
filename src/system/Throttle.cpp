@@ -20,6 +20,10 @@ ConfigVariable<bool> Throttle::_enabled("throttle.enabled");
 ConfigVariable<int> Throttle::_throttleTasks("throttle.tasks");
 ConfigVariable<int> Throttle::_throttlePressure("throttle.pressure");
 ConfigVariable<StringifiedMemorySize> Throttle::_throttleMem("throttle.max_memory");
+ConfigVariable<size_t> Throttle::_throttlePollingPeriod("throttle.polling_period_us");
+
+std::atomic<bool> Throttle::_stopService;
+std::atomic<bool> Throttle::_finishedService;
 
 void Throttle::initialize()
 {
@@ -35,37 +39,51 @@ void Throttle::initialize()
 		_throttleMem.setValue(HardwareInfo::getPhysicalMemorySize() / 2);
 
 	_pressure = 0;
+	_stopService = false;
+	_finishedService = false;
 
 	// Sanity check for the histeresis values
 	FatalErrorHandler::failIf((_throttleTasks < 0), "Throttle tasks must be > 0");
 	FatalErrorHandler::failIf((_throttlePressure > 100 || _throttlePressure < 0), "Throttle pressure trigger has to be between 0 and 100%");
 
-	nanos6_register_polling_service(
-		"Throttle Evaluation",
-		evaluate,
-		nullptr
+	// Spawn service function
+	SpawnFunction::spawnFunction(
+		evaluate, nullptr,
+		complete, nullptr,
+		"Throttle evaluate", false
 	);
 }
 
 void Throttle::shutdown()
 {
 	if (_enabled.getValue()) {
-		nanos6_unregister_polling_service(
-			"Throttle Evaluation",
-			evaluate,
-			nullptr
-		);
+		_stopService = true;
+
+		// Wait until service is finished
+		while (!_finishedService.load(std::memory_order_relaxed));
 	}
 }
 
-int Throttle::evaluate(void *)
+void Throttle::evaluate(void *)
 {
+	const size_t sleepTime = _throttlePollingPeriod.getValue();
+	assert(_enabled);
 	assert(_throttleMem.getValue() != 0);
 
-	size_t memoryUsage = MemoryAllocator::getMemoryUsage();
-	_pressure = std::min((memoryUsage * 100) / _throttleMem.getValue(), (size_t)100);
+	while (!_stopService.load(std::memory_order_relaxed)) {
+		size_t memoryUsage = MemoryAllocator::getMemoryUsage();
+		_pressure = std::min((memoryUsage * 100) / _throttleMem.getValue(), (size_t)100);
 
-	return 0;
+		// Sleep for a configured amount of microseconds
+		BlockingAPI::waitForUs(sleepTime);
+	}
+}
+
+void Throttle::complete(void *)
+{
+	assert(_stopService);
+
+	_finishedService = true;
 }
 
 // Each task has a maximum number of child tasks, which decreases at a 10x rate per nesting level
