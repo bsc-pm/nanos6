@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
@@ -30,6 +30,7 @@ reductions_tests =
 runtime_handled_reductions_tests =
 discrete_tests =
 dlb_tests =
+numa_tests =
 
 
 if HAVE_NANOS6_CLANG
@@ -114,6 +115,15 @@ discrete_tests += \
 	discrete-taskloop-for-nqueens.clang.test \
 	discrete-taskloop-for-reduction.clang.test
 
+numa_tests += \
+	numa-allocations.clang.test \
+	numa-auto.clang.test \
+	numa-bitmask-manip.clang.test \
+	numa-irregular-allocations.clang.test \
+	numa-off.clang.test \
+	numa-on.clang.test \
+	numa-wildcards.clang.test
+
 base_tests +=  \
 	blocking.clang.debug.test \
 	events.clang.debug.test \
@@ -191,6 +201,15 @@ discrete_tests += \
 	discrete-taskloop-for-nonpod.clang.debug.test \
 	discrete-taskloop-for-nqueens.clang.debug.test \
 	discrete-taskloop-for-reduction.clang.debug.test
+
+numa_tests += \
+	numa-allocations.clang.debug.test \
+	numa-auto.clang.debug.test \
+	numa-bitmask-manip.clang.debug.test \
+	numa-irregular-allocations.clang.debug.test \
+	numa-off.clang.debug.test \
+	numa-on.clang.debug.test \
+	numa-wildcards.clang.debug.test
 
 endif
 
@@ -816,6 +835,69 @@ dlb_cpu_sharing_passive_process_clang_test_LDFLAGS = $(test_common_ldflags)
 dlb_cpu_sharing_passive_process_clang_debug_test_SOURCES = ../dlb/dlb-cpu-sharing-passive-process.cpp
 dlb_cpu_sharing_passive_process_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_sharing_passive_process_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_allocations_clang_test_SOURCES = ../numa/numa-allocations.cpp
+numa_allocations_clang_test_CPPFLAGS = -DNDEBUG
+numa_allocations_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_allocations_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_allocations_clang_debug_test_SOURCES = ../numa/numa-allocations.cpp
+numa_allocations_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_allocations_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_auto_clang_test_SOURCES = ../numa/numa-auto.cpp
+numa_auto_clang_test_CPPFLAGS = -DNDEBUG
+numa_auto_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_auto_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_auto_clang_debug_test_SOURCES = ../numa/numa-auto.cpp
+numa_auto_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_auto_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_bitmask_manip_clang_test_SOURCES = ../numa/numa-bitmask-manip.cpp
+numa_bitmask_manip_clang_test_CPPFLAGS = -DNDEBUG
+numa_bitmask_manip_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_bitmask_manip_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_bitmask_manip_clang_debug_test_SOURCES = ../numa/numa-bitmask-manip.cpp
+numa_bitmask_manip_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_bitmask_manip_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_irregular_allocations_clang_test_SOURCES = ../numa/numa-irregular-allocations.cpp
+numa_irregular_allocations_clang_test_CPPFLAGS = -DNDEBUG
+numa_irregular_allocations_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_irregular_allocations_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_irregular_allocations_clang_debug_test_SOURCES = ../numa/numa-irregular-allocations.cpp
+numa_irregular_allocations_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_irregular_allocations_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_off_clang_test_SOURCES = ../numa/numa-off.cpp
+numa_off_clang_test_CPPFLAGS = -DNDEBUG
+numa_off_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_off_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_off_clang_debug_test_SOURCES = ../numa/numa-off.cpp
+numa_off_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_off_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_on_clang_test_SOURCES = ../numa/numa-on.cpp
+numa_on_clang_test_CPPFLAGS = -DNDEBUG
+numa_on_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_on_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_on_clang_debug_test_SOURCES = ../numa/numa-on.cpp
+numa_on_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_on_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+numa_wildcards_clang_test_SOURCES = ../numa/numa-wildcards.cpp
+numa_wildcards_clang_test_CPPFLAGS = -DNDEBUG
+numa_wildcards_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_wildcards_clang_test_LDFLAGS = $(test_common_ldflags)
+
+numa_wildcards_clang_debug_test_SOURCES = ../numa/numa-wildcards.cpp
+numa_wildcards_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+numa_wildcards_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(top_builddir) $(SHELL) $(top_srcdir)/tests/tap-driver.sh
