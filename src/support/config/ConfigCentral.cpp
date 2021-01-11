@@ -134,9 +134,9 @@ ConfigCentral::ConfigCentral() :
 	// Throttle
 	registerOption<bool_t>("throttle.enabled", false);
 	registerOption<memory_t>("throttle.max_memory", 0);
+	registerOption<integer_t>("throttle.polling_period_us", 1000);
 	registerOption<integer_t>("throttle.pressure", 70);
 	registerOption<integer_t>("throttle.tasks", 5000000);
-	registerOption<integer_t>("throttle.polling_period_us", 1000);
 
 	// Turbo
 	registerOption<bool_t>("turbo.enabled", false);
