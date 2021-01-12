@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_ACCELERATOR_HPP
@@ -14,6 +14,7 @@
 #include "CUDAFunctions.hpp"
 #include "CUDAStreamPool.hpp"
 #include "hardware/device/Accelerator.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "tasks/Task.hpp"
 
 class CUDAAccelerator : public Accelerator {
@@ -27,6 +28,12 @@ private:
 	std::list<CUDAEvent> _activeEvents, _preallocatedEvents;
 	cudaDeviceProp _deviceProperties;
 	CUDAStreamPool _streamPool;
+
+	// Whether the device service should run while there are running tasks
+	static ConfigVariable<bool> _pinnedPolling;
+
+	// The time period in microseconds between device service runs
+	static ConfigVariable<size_t> _usPollingPeriod;
 
 	// To be used in order to obtain the current task in nanos6_get_current_cuda_stream() call
 	thread_local static Task* _currentTask;
@@ -46,16 +53,6 @@ private:
 		_streamPool.releaseCUDAStream(env.stream);
 	}
 
-	inline void registerPolling() override
-	{
-		nanos6_register_polling_service("CUDA polling service", pollingService, (void *)this);
-	}
-
-	inline void unregisterPolling() override
-	{
-		nanos6_unregister_polling_service("CUDA polling service", pollingService, (void *)this);
-	}
-
 	void acceleratorServiceLoop() override;
 
 	void processCUDAEvents();
@@ -65,14 +62,16 @@ private:
 	void postRunTask(Task *task) override;
 
 public:
-	CUDAAccelerator(int cudaDeviceIndex);
+	CUDAAccelerator(int cudaDeviceIndex) :
+		Accelerator(cudaDeviceIndex, nanos6_cuda_device),
+		_streamPool(cudaDeviceIndex)
+	{
+		CUDAFunctions::getDeviceProperties(_deviceProperties, _deviceHandler);
+	}
 
 	~CUDAAccelerator()
 	{
-		unregisterPolling();
 	}
-
-	static int pollingService(void *data);
 
 	// Set current device as the active in the runtime
 	inline void setActiveDevice() override

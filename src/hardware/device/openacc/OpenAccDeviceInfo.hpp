@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef OPENACC_DEVICE_INFO_HPP
@@ -43,22 +43,38 @@ public:
 		}
 	}
 
-	inline size_t getComputePlaceCount() const
+	inline void initializeDeviceServices() override
+	{
+		for (OpenAccAccelerator *accelerator : _accelerators) {
+			assert(accelerator != nullptr);
+			accelerator->initializeService();
+		}
+	}
+
+	inline void shutdownDeviceServices() override
+	{
+		for (OpenAccAccelerator *accelerator : _accelerators) {
+			assert(accelerator != nullptr);
+			accelerator->shutdownService();
+		}
+	}
+
+	inline size_t getComputePlaceCount() const override
 	{
 		return _deviceCount;
 	}
 
-	inline ComputePlace *getComputePlace(int handler) const
+	inline ComputePlace *getComputePlace(int handler) const override
 	{
 		return _accelerators[handler]->getComputePlace();
 	}
 
-	inline size_t getMemoryPlaceCount() const
+	inline size_t getMemoryPlaceCount() const override
 	{
 		return _deviceCount;
 	}
 
-	inline MemoryPlace *getMemoryPlace(int handler) const
+	inline MemoryPlace *getMemoryPlace(int handler) const override
 	{
 		return _accelerators[handler]->getMemoryPlace();
 	}

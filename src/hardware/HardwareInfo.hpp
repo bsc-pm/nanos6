@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HARDWARE_INFO_HPP
@@ -22,7 +22,11 @@ public:
 
 	static void initialize();
 
+	static void initializeDeviceServices();
+
 	static void shutdown();
+
+	static void shutdownDeviceServices();
 
 	static inline bool canDeviceRunTasks(nanos6_device_t type)
 	{

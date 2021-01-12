@@ -1,15 +1,15 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DEADLINE_QUEUE_HPP
 #define DEADLINE_QUEUE_HPP
 
 #include "scheduling/ReadyQueue.hpp"
+#include "support/Chrono.hpp"
 #include "support/Containers.hpp"
-#include "support/chronometers/std/Chrono.hpp"
 #include "tasks/Task.hpp"
 
 //! This kind of ready queue supports deadlines

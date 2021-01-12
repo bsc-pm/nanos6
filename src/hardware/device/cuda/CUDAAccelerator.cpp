@@ -1,68 +1,58 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
-
-#include <nanos6/polling.h>
 
 #include "CUDAAccelerator.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/BlockingAPI.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <DataAccessRegistrationImplementation.hpp>
 
+
+ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned");
+ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us");
+
 thread_local Task* CUDAAccelerator::_currentTask;
 
-CUDAAccelerator::CUDAAccelerator(int cudaDeviceIndex) :
-	Accelerator(cudaDeviceIndex, nanos6_cuda_device),
-	_streamPool(cudaDeviceIndex)
-{
-	CUDAFunctions::getDeviceProperties(_deviceProperties, _deviceHandler);
-	registerPolling();
-}
-
-int CUDAAccelerator::pollingService(void *data)
-{
-	CUDAAccelerator *accel = (CUDAAccelerator *)data;
-	assert(accel != nullptr);
-
-	accel->acceleratorServiceLoop();
-	return 0;
-}
-
-// Now the private functions
 
 void CUDAAccelerator::acceleratorServiceLoop()
 {
-	// Check if the thread running the service is a WorkerThread. nullptr means LeaderThread
-	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
+	const size_t sleepTime = _usPollingPeriod.getValue();
 
-	Task *task = nullptr;
-	// Workaround to avoid the overhead of repetitive/redundant setActiveDevice() calls
-	bool activeDevice = false;
+	while (!shouldStopService()) {
+		bool activeDevice = false;
+		do {
+			// Launch as many ready device tasks as possible
+			while (_streamPool.streamAvailable()) {
+				Task *task = Scheduler::getReadyTask(_computePlace);
+				if (task == nullptr)
+					break;
 
-	do {
-		if (_streamPool.streamAvailable()) {
-			task = Scheduler::getReadyTask(_computePlace);
-			if (task != nullptr) {
 				runTask(task);
 			}
-		}
-		// Only do the setActiveDevice if there have been tasks launched
-		// Having setActiveDevice calls during e.g. bootstrap caused issues
-		if (!activeDevice && !_activeEvents.empty()) {
-			setActiveDevice();
-			activeDevice = true;
-		}
-		processCUDAEvents();
-	} while (!_activeEvents.empty() && worker);
 
-	// If process was run by LeaderThread, request a WorkerThread to continue.
-	if (!worker && (task != nullptr || !_activeEvents.empty())) {
-		CPUManager::executeCPUManagerPolicy(nullptr, REQUEST_CPUS, 1);
+			// Only set the active device if there have been tasks launched
+			// Setting the device during e.g. bootstrap caused issues
+			if (!_activeEvents.empty()) {
+				if (!activeDevice) {
+					activeDevice = true;
+					setActiveDevice();
+				}
+
+				// Process the active events
+				processCUDAEvents();
+			}
+
+			// Iterate while there are running tasks and pinned polling is enabled
+		} while (_pinnedPolling && !_activeEvents.empty());
+
+		// Sleep for a configured amount of microseconds
+		BlockingAPI::waitForUs(sleepTime);
 	}
 }
 
@@ -105,16 +95,14 @@ void CUDAAccelerator::preRunTask(Task *task)
 // Query the events issued to detect task completion
 void CUDAAccelerator::processCUDAEvents()
 {
-	if (!_activeEvents.empty()) {
-		_preallocatedEvents.clear();
-		std::swap(_preallocatedEvents, _activeEvents);
+	_preallocatedEvents.clear();
+	std::swap(_preallocatedEvents, _activeEvents);
 
-		for (CUDAEvent &ev : _preallocatedEvents) {
-			if (CUDAFunctions::cudaEventFinished(ev.event)) {
-				finishTask(ev.task);
-			} else {
-				_activeEvents.push_back(ev);
-			}
+	for (CUDAEvent &ev : _preallocatedEvents) {
+		if (CUDAFunctions::cudaEventFinished(ev.event)) {
+			finishTask(ev.task);
+		} else {
+			_activeEvents.push_back(ev);
 		}
 	}
 }

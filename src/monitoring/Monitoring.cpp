@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <config.h>
@@ -36,20 +36,11 @@ size_t Monitoring::_predictedCPUUsage(0);
 void Monitoring::preinitialize()
 {
 	if (_enabled) {
-#if CHRONO_ARCH
-		// Start measuring time to compute the tick conversion rate
-		TickConversionUpdater::initialize();
-#endif
 		// Create the task monitor before the CPUManager is initialized.
 		// This is due to per-CPU preallocated taskfors needing task monitoring
 		// to be enabled before they are constructed
 		_taskMonitor = new TaskMonitor();
 		assert(_taskMonitor != nullptr);
-
-#if CHRONO_ARCH
-		// Stop measuring time and compute the tick conversion rate
-		TickConversionUpdater::finishUpdate();
-#endif
 
 		if (_wisdomEnabled) {
 			// Try to load data from previous executions
@@ -81,11 +72,6 @@ void Monitoring::shutdown()
 		if (_verbose) {
 			displayStatistics();
 		}
-
-#if CHRONO_ARCH
-		// Destroy the tick conversion updater service
-		TickConversionUpdater::shutdown();
-#endif
 
 		// Delete all predictors and monitors
 		assert(_cpuMonitor != nullptr);

@@ -1,11 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef THROTTLE_HPP
 #define THROTTLE_HPP
+
+#include <atomic>
 
 #include "support/config/ConfigVariable.hpp"
 
@@ -19,6 +21,10 @@ private:
 	static ConfigVariable<int> _throttleTasks;
 	static ConfigVariable<int> _throttlePressure;
 	static ConfigVariable<StringifiedMemorySize> _throttleMem;
+	static ConfigVariable<size_t> _throttlePollingPeriod;
+
+	static std::atomic<bool> _stopService;
+	static std::atomic<bool> _finishedService;
 
 	static int getAllowedTasks(int nestingLevel);
 
@@ -32,9 +38,10 @@ public:
 	}
 
 	//! \brief Evaluates current system status and sets throttle activation
-	//!
-	//! \returns 0
-	static int evaluate(void *);
+	static void evaluate(void *);
+
+	//! \brief Executed when the service is completed
+	static void complete(void *);
 
 	//! \brief Initializes the Throttle status and registers polling services.
 	//!

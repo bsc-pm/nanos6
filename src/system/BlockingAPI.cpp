@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -15,7 +15,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "support/chronometers/std/Chrono.hpp"
+#include "support/Chrono.hpp"
 
 
 void BlockingAPI::blockCurrentTask(bool fromUserCode)
@@ -62,31 +62,9 @@ void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
 	TrackingPoints::exitUnblockTask(task, currentTask, fromUserCode);
 }
 
-extern "C" void *nanos6_get_current_blocking_context(void)
+uint64_t BlockingAPI::waitForUs(uint64_t timeUs)
 {
-	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentThread != nullptr);
-
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-
-	return currentTask;
-}
-
-extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking_context)
-{
-	BlockingAPI::blockCurrentTask(true);
-}
-
-extern "C" void nanos6_unblock_task(void *blocking_context)
-{
-	Task *task = static_cast<Task *>(blocking_context);
-	BlockingAPI::unblockTask(task, true);
-}
-
-extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
-{
-	if (time_us == 0)
+	if (timeUs == 0)
 		return 0;
 
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
@@ -100,7 +78,7 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	// Runtime Tracking Point - The current task is gonna be readded to the scheduler
 	TrackingPoints::enterWaitFor(currentTask);
 
-	Task::deadline_t timeout = (Task::deadline_t) time_us;
+	Task::deadline_t timeout = (Task::deadline_t) timeUs;
 
 	// Substract a fixed delta to the timeout
 	const Task::deadline_t minimumCost = 30;
@@ -128,4 +106,31 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	TrackingPoints::exitWaitFor(currentTask);
 
 	return (uint64_t) (Chrono::now<Task::deadline_t>() - start);
+}
+
+extern "C" void *nanos6_get_current_blocking_context(void)
+{
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+
+	Task *currentTask = currentThread->getTask();
+	assert(currentTask != nullptr);
+
+	return currentTask;
+}
+
+extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking_context)
+{
+	BlockingAPI::blockCurrentTask(true);
+}
+
+extern "C" void nanos6_unblock_task(void *blocking_context)
+{
+	Task *task = static_cast<Task *>(blocking_context);
+	BlockingAPI::unblockTask(task, true);
+}
+
+extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
+{
+	return BlockingAPI::waitForUs(time_us);
 }

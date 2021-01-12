@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef ACCELERATOR_HPP
@@ -19,8 +19,11 @@
 // With GPUs, each physical GPU gets its Accelerator instance.
 
 class Accelerator {
-protected:
+private:
+	std::atomic<bool> _stopService;
+	std::atomic<bool> _finishedService;
 
+protected:
 	// Used also to denote the device number
 	int _deviceHandler;
 	nanos6_device_t _deviceType;
@@ -28,6 +31,8 @@ protected:
 	ComputePlace *_computePlace;
 
 	Accelerator(int handler, nanos6_device_t type) :
+		_stopService(false),
+		_finishedService(false),
 		_deviceHandler(handler),
 		_deviceType(type)
 	{
@@ -36,25 +41,22 @@ protected:
 		_computePlace->addMemoryPlace(_memoryPlace);
 	}
 
+	inline bool shouldStopService() const
+	{
+		return _stopService.load(std::memory_order_relaxed);
+	}
+
 	// Set the current instance as the selected/active device for subsequent operations
 	virtual void setActiveDevice() = 0;
-
-	// Each Accelerator needs to implement a pollingService(), to be registered and handle task launch/completion.
-	// The polling service needs to be declared as a *public* method:
-	// static int pollingService(void *data);
-
-	virtual void registerPolling() = 0;
-
-	virtual void unregisterPolling() = 0;
 
 	virtual void acceleratorServiceLoop() = 0;
 
 	// Each device may use these methods to prepare or conclude task launch if needed
-	virtual void preRunTask(Task *)
+	virtual inline void preRunTask(Task *)
 	{
 	}
 
-	virtual void postRunTask(Task *)
+	virtual inline void postRunTask(Task *)
 	{
 	}
 
@@ -62,12 +64,12 @@ protected:
 	virtual void runTask(Task *task);
 
 	// Device specific operations after task completion may go here (e.g. free environment)
-	virtual void finishTaskCleanup(Task *)
+	virtual inline void finishTaskCleanup(Task *)
 	{
 	}
 
 	// Generate the appropriate device_env pointer Mercurium uses for device tasks
-	virtual void generateDeviceEvironment(Task *)
+	virtual inline void generateDeviceEvironment(Task *)
 	{
 	}
 
@@ -80,22 +82,26 @@ public:
 		delete _memoryPlace;
 	}
 
-	MemoryPlace *getMemoryPlace()
+	void initializeService();
+
+	void shutdownService();
+
+	inline MemoryPlace *getMemoryPlace()
 	{
 		return _memoryPlace;
 	}
 
-	ComputePlace *getComputePlace()
+	inline ComputePlace *getComputePlace()
 	{
 		return _computePlace;
 	}
 
-	nanos6_device_t getDeviceType() const
+	inline nanos6_device_t getDeviceType() const
 	{
 		return _deviceType;
 	}
 
-	int getDeviceHandler() const
+	inline int getDeviceHandler() const
 	{
 		return _deviceHandler;
 	}
@@ -112,6 +118,10 @@ public:
 	// Return the FIFO for re-use after task has finished.
 	virtual void releaseAsyncHandle(void *asyncHandle) = 0;
 
+private:
+	static void serviceFunction(void *data);
+
+	static void serviceCompleted(void *data);
 };
 
 #endif // ACCELERATOR_HPP

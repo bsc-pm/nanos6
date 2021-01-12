@@ -29,10 +29,14 @@ ConfigCentral::ConfigCentral() :
 	// CUDA devices
 	registerOption<integer_t>("devices.cuda.page_size", 0x8000);
 	registerOption<integer_t>("devices.cuda.streams", 16);
+	registerOption<bool_t>("devices.cuda.polling.pinned", true);
+	registerOption<integer_t>("devices.cuda.polling.period_us", 1000);
 
 	// OpenACC devices
 	registerOption<integer_t>("devices.openacc.default_queues", 64);
 	registerOption<integer_t>("devices.openacc.max_queues", 128);
+	registerOption<bool_t>("devices.openacc.polling.pinned", true);
+	registerOption<integer_t>("devices.openacc.polling.period_us", 1000);
 
 	// DLB
 	registerOption<bool_t>("dlb.enabled", false);
@@ -130,6 +134,7 @@ ConfigCentral::ConfigCentral() :
 	// Throttle
 	registerOption<bool_t>("throttle.enabled", false);
 	registerOption<memory_t>("throttle.max_memory", 0);
+	registerOption<integer_t>("throttle.polling_period_us", 1000);
 	registerOption<integer_t>("throttle.pressure", 70);
 	registerOption<integer_t>("throttle.tasks", 5000000);
 

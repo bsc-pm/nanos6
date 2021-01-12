@@ -1,6 +1,6 @@
 # This file is part of Nanos6 and is licensed under the terms contained in the COPYING file
 #
-# Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+# Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 
 # The Nanos6 default configuration file. More details about the configuration options and the possible
 # values are available on the OmpSs-2 User Guide (https://pm.bsc.es/ftp/ompss-2/doc/user-guide/) or on
@@ -59,6 +59,12 @@
 	pressure = 70 # %
 	# Maximum memory that can be used by the runtime. Default is "0", which equals half of system memory
 	max_memory = "0"
+	# Evaluation interval (us). Each time this amount of time is elapsed, the throttle system queries
+	# the memory allocator statistics and evaluates the current memory pressure. A higher interval
+	# results in less accurate pressure estimation, but a lower interval introduces noticeable overhead,
+	# as reading memory statistics requires a global lock on the allocator to aggregate per-thread
+	# statistics. Default is 1000
+	polling_period_us = 1000
 
 [numa]
 	# Enable NUMA tracking of task data. NUMA tracking consists of annotating the NUMA location
@@ -137,6 +143,18 @@ __require_CUDA
 		page_size = 0x8000
 		# Maximum CUDA streams per GPU. Default is 16
 		streams = 16
+		# CUDA device polling services options. There is a service for each GPU device. They run
+		# periodically and manage the launching and finalization of ready CUDA tasks on the GPU
+		# devices. While running, each service occupies an available CPU from the system
+		[devices.cuda.polling]
+			# Indicate whether the CUDA services should constantly run while there are CUDA tasks
+			# running on their GPU. Enabling this option may reduce the latency of processing CUDA
+			# tasks at the expenses of occupiying a CPU from the system. Default is true
+			pinned = true
+			# The time period in microseconds between CUDA service runs. During that time, the CPUs
+			# occupied by the services are available to execute ready tasks. Setting this option to 0
+			# makes the services to constantly run. Default is 1000
+			period_us = 1000
 __!require_CUDA
 __require_OPENACC
 	# OmpSs-2 @ OpenACC
@@ -146,6 +164,18 @@ __require_OPENACC
 		# The maximum number of async queues per device. This option also indicates the maximum
 		# number of tasks that can be run concurrently per device. Default is 128
 		max_queues = 128
+		# OpenACC device polling services options. There is a service for each GPU device. They run
+		# periodically and manage the launching and finalization of ready OpenACC tasks on the GPU
+		# devices. While running, each service occupies an available CPU from the system
+		[devices.openacc.polling]
+			# Indicate whether the OpenACC services should constantly run while there are OpenACC
+			# tasks running on their GPU. Enabling this option may reduce the latency of processing
+			# OpenACC tasks at the expenses of occupying a CPU from the system. Default is true
+			pinned = true
+			# The time period in microseconds between OpenACC service runs. During that time, the
+			# CPUs occupied by the services are available to execute ready tasks. Setting this option
+			# to 0 makes the services to constantly run. Default is 1000
+			period_us = 1000
 __!require_OPENACC
 
 [instrument]

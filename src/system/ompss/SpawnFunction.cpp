@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -65,8 +65,11 @@ void SpawnFunction::spawnFunction(
 	// Runtime Tracking Point - Entering the creation of a task
 	TrackingPoints::enterSpawnFunction(creator, fromUserCode);
 
-	// Increase the number of spawned functions
-	_pendingSpawnedFunctions++;
+	// Increase the number of spawned functions in case it is
+	// spawned from outside the runtime system
+	if (fromUserCode) {
+		_pendingSpawnedFunctions++;
+	}
 
 	nanos6_task_info_t *taskInfo = nullptr;
 	{

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "OpenAccAccelerator.hpp"
@@ -9,46 +9,46 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/BlockingAPI.hpp"
 
-int OpenAccAccelerator::pollingService(void *data)
-{
-	OpenAccAccelerator *accel = (OpenAccAccelerator *)data;
-	assert(accel != nullptr);
 
-	accel->acceleratorServiceLoop();
-	return 0;
-}
+ConfigVariable<bool> OpenAccAccelerator::_pinnedPolling("devices.openacc.polling.pinned");
+ConfigVariable<size_t> OpenAccAccelerator::_usPollingPeriod("devices.openacc.polling.period_us");
+
 
 void OpenAccAccelerator::acceleratorServiceLoop()
 {
-	// Check if the thread running the service is a WorkerThread. nullptr means LeaderThread
-	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
+	const size_t sleepTime = _usPollingPeriod.getValue();
 
-	Task *task = nullptr;
-	// Workaround to avoid the overhead of repetitive/redundant setActiveDevice() calls
-	bool activeDevice = false;
+	while (!shouldStopService()) {
+		bool activeDevice = false;
+		do {
+			// Launch as many ready device tasks as possible
+			while (isQueueAvailable()) {
+				Task *task = Scheduler::getReadyTask(_computePlace);
+				if (task == nullptr)
+					break;
 
-	do {
-		if (isQueueAvailable()) {
-			task = Scheduler::getReadyTask(_computePlace);
-			if (task != nullptr) {
 				runTask(task);
 			}
-		}
-		// Check if there is merit in setting the device;
-		// Only do the setActiveDevice if there have been tasks launched
-		// If we set it before any OpenACC work has run (e.g. during bootstrap) it causes
-		// erroneous behavior. If we don't set it here, the completion checks may not occur correctly
-		if (!activeDevice && !_activeQueues.empty()) {
-			setActiveDevice();
-			activeDevice = true;
-		}
-		processQueues();
-	} while (!_activeQueues.empty() && worker);
 
-	// If process was run by LeaderThread, request a WorkerThread to continue
-	if (!worker && (task != nullptr || !_activeQueues.empty())) {
-		CPUManager::executeCPUManagerPolicy(nullptr, REQUEST_CPUS, 1);
+			// Only set the active device if there have been tasks launched
+			// Setting the device during e.g. bootstrap caused issues
+			if (!_activeQueues.empty()) {
+				if (!activeDevice) {
+					activeDevice = true;
+					setActiveDevice();
+				}
+
+				// Process the active events
+				processQueues();
+			}
+
+			// Iterate while there are running tasks and pinned polling is enabled
+		} while (_pinnedPolling && !_activeQueues.empty());
+
+		// Sleep for 500 microseconds
+		BlockingAPI::waitForUs(sleepTime);
 	}
 }
 

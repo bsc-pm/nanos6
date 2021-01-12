@@ -1,13 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_STATISTICS_HPP
 #define CPU_STATISTICS_HPP
 
-#include <Chrono.hpp>
+#include "support/Chrono.hpp"
 
 
 class CPUStatistics {
