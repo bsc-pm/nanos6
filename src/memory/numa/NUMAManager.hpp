@@ -74,6 +74,11 @@ private:
 	//! Whether should report NUMA information
 	static ConfigVariable<bool> _reportEnabled;
 
+	//! The discoverPageSize mode "on", "off" or "auto"
+	static ConfigVariable<std::string> _discoverPageSize;
+	//! Real pagesize (especially important in case of THP)
+	static size_t _realPageSize;
+
 public:
 	static void initialize()
 	{
@@ -160,7 +165,24 @@ public:
 
 	static void *alloc(size_t size, const bitmask_t *bitmask, size_t blockSize)
 	{
-		size_t pageSize = HardwareInfo::getPageSize();
+		if (!enableTrackingIfAuto()) {
+			void *res = malloc(size);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+			return res;
+		}
+
+		if (_realPageSize == 0) {
+			std::string discoverPageSize = _discoverPageSize.getValue();
+			if (discoverPageSize == "auto") {
+				discoverRealPageSize();
+			} else {
+				_realPageSize = std::atoi(discoverPageSize.c_str());
+			}
+		}
+		assert(_realPageSize != 0);
+
+		size_t pageSize = _realPageSize;
+		assert(pageSize > 0);
 		if (size < pageSize) {
 			FatalErrorHandler::fail("Allocation size cannot be smaller than pagesize ", pageSize);
 		}
@@ -168,12 +190,6 @@ public:
 		assert(bitmask != nullptr);
 		assert(*bitmask != 0);
 		assert(blockSize > 0);
-
-		if (!enableTrackingIfAuto()) {
-			void *res = malloc(size);
-			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
-			return res;
-		}
 
 		bitmask_t bitmaskCopy = *bitmask;
 
@@ -198,7 +214,6 @@ public:
 		_allocationsLock.unlock();
 
 		struct bitmask *tmpBitmask = numa_bitmask_alloc(HardwareInfo::getMemoryPlaceCount(nanos6_host_device));
-
 		for (size_t i = 0; i < size; i += blockSize) {
 			uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
@@ -206,12 +221,13 @@ public:
 				bitmaskCopy = *bitmask;
 			}
 
-			// Place pages where they must be
 			void *tmp = (void *) ((uintptr_t) res + i);
+			size_t tmpSize = std::min(blockSize, size-i);
+
+			// Set all the pages of a block in the same node.
 			numa_bitmask_clearall(tmpBitmask);
 			numa_bitmask_setbit(tmpBitmask, currentNodeIndex);
 			assert(numa_bitmask_isbitset(tmpBitmask, currentNodeIndex));
-			size_t tmpSize = std::min(blockSize, size-i);
 			numa_interleave_memory(tmp, tmpSize, tmpBitmask);
 
 			// Insert into directory
@@ -220,7 +236,6 @@ public:
 			_directory.emplace(tmp, info);
 			_lock.writeUnlock();
 		}
-
 		numa_bitmask_free(tmpBitmask);
 
 #ifndef NDEBUG
@@ -246,7 +261,7 @@ public:
 		bitmask_t bitmaskCopy = *bitmask;
 
 		void *res = nullptr;
-		size_t pageSize = HardwareInfo::getPageSize();
+		size_t pageSize = _realPageSize;
 
 		if (size < pageSize) {
 			// Use malloc for small allocations
@@ -297,7 +312,7 @@ public:
 			return;
 		}
 
-		size_t pageSize = HardwareInfo::getPageSize();
+		size_t pageSize = _realPageSize;
 
 		_allocationsLock.lock();
 		// Find the allocation size and remove (one single map search)
@@ -501,6 +516,8 @@ private:
 			return BitManipulation::countEnabledBits(&_bitmaskNumaAnyActive);
 		}
 	}
+
+	static void discoverRealPageSize();
 
 #ifndef NDEBUG
 	static void checkAllocationCorrectness(
