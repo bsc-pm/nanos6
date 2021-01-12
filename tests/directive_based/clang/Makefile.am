@@ -240,6 +240,8 @@ endif
 if DISCRETE_DEPENDENCIES
 check_PROGRAMS += $(discrete_tests)
 TESTS += $(discrete_tests)
+check_PROGRAMS += $(numa_tests)
+TESTS += $(numa_tests)
 endif
 
 if HAVE_DLB
