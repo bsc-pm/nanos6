@@ -134,28 +134,6 @@ private:
 		}
 	}
 
-	//! \brief Update regular option of an accepted type
-	//!
-	//! This function should be called only when initializing the default
-	//! values that depend on other runtime modules, e.g. after the hardware
-	//! info initialization. This function is not thread safe
-	//!
-	//! \param option The option name
-	//! \param defaultValue The new default value of the option
-	template <typename T>
-	inline void updateOption(const std::string &option, const T &defaultValue)
-	{
-		assert(_descriptors.find(option) != _descriptors.end());
-
-		// Check that the updated kind is the same as the registered
-		OptionKind kind = ConfigOptionType::getOptionKind<T>();
-		if (kind != _descriptors[option]._kind)
-			FatalErrorHandler::fail("Invalid option kind for the config option ", option);
-
-		// Update the option default
-		_defaults[option] = defaultValue;
-	}
-
 public:
 	//! \brief Initialize options and their defaults if needed
 	static inline void initializeOptionsIfNeeded()
@@ -163,12 +141,6 @@ public:
 		// Might trigger the initialization of config central
 		getCentral();
 	}
-
-	//! \brief Reinitialize the memory-dependent options
-	//!
-	//! This function reinitializes the default values of the options
-	//! that have dynamic defaults based on the system memory size
-	static void initializeMemoryDependentOptions();
 
 	//! \brief Get the configured value of a regular option
 	//!
