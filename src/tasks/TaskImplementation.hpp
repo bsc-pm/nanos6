@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -53,11 +53,8 @@ inline Task::Task(
 	_computePlace(nullptr),
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
-	_workflow(nullptr),
-	_executionStep(nullptr),
 	_taskStatistics((TaskStatistics *) taskStatistics),
 	_hwCounters(taskCountersAddress),
-	_clusterContext(nullptr),
 	_parentSpawnCallback(nullptr),
 	_nestingLevel(0)
 {
@@ -69,10 +66,6 @@ inline Task::Task(
 
 inline Task::~Task()
 {
-	if (_clusterContext != nullptr) {
-		delete _clusterContext;
-	}
-
 	// Destroy hardware counters
 	_hwCounters.shutdown();
 }
@@ -103,9 +96,6 @@ inline void Task::reinitialize(
 	_computePlace = nullptr;
 	_memoryPlace = nullptr;
 	_countdownToRelease = 1;
-	_workflow = nullptr;
-	_executionStep = nullptr;
-	_clusterContext = nullptr;
 	_parentSpawnCallback = nullptr;
 	_nestingLevel = 0;
 

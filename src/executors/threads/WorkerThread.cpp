@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -19,6 +19,7 @@
 #include "TaskFinalizationImplementation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
+#include "dependencies/SymbolTranslation.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
@@ -29,7 +30,6 @@
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <ExecutionWorkflow.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentWorkerThread.hpp>
@@ -134,36 +134,104 @@ void WorkerThread::body()
 	ThreadManager::addShutdownThread(this);
 }
 
-
 void WorkerThread::handleTask(CPU *cpu)
 {
-	size_t NUMAId = cpu->getNumaNodeId();
-	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
-	assert(targetMemoryPlace != nullptr);
+	assert(_task != nullptr);
+	assert(cpu != nullptr);
 
-	// This if is only for source taskfors.
+	// Only for source taskfors
 	if (_task->isTaskforSource()) {
-		assert(!_task->isRunnable());
+		Taskfor *source = (Taskfor *) _task;
 
-		// We have already set the chunk of the preallocatedTaskfor in the scheduler.
+		// The scheduler set the chunk on the CPU preallocated taskfor
 		if (cpu->getPreallocatedTaskfor()->getMyChunk() >= 0) {
-			Taskfor *collaborator = LoopGenerator::createCollaborator((Taskfor *)_task, cpu);
+			Taskfor *collaborator = LoopGenerator::createCollaborator(source, cpu);
 			assert(collaborator->isRunnable());
 			assert(collaborator->getMyChunk() >= 0);
 
 			_task = collaborator;
-			ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
 		} else {
-			bool finished = ((Taskfor *)_task)->notifyCollaboratorHasFinished();
+			// The taskfor source has no chunks available
+			bool finished = source->notifyCollaboratorHasFinished();
 			if (finished) {
 				TaskFinalization::disposeTask(_task);
 			}
+			_task = nullptr;
 		}
-	} else {
-		ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
 	}
 
-	_task = nullptr;
+	// Execute the task
+	if (_task != nullptr) {
+		executeTask(cpu);
+		_task = nullptr;
+	}
 }
 
+void WorkerThread::executeTask(CPU *cpu)
+{
+	assert(_task != nullptr);
+	assert(cpu != nullptr);
 
+	nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+
+	const size_t NUMAId = cpu->getNumaNodeId();
+	MemoryPlace *memoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
+	assert(memoryPlace != nullptr);
+
+	_task->setThread(this);
+	_task->setMemoryPlace(memoryPlace);
+
+	Instrument::task_id_t taskId;
+	if (_task->isTaskforCollaborator()) {
+		taskId = _task->getParent()->getInstrumentationTaskId();
+	} else {
+		taskId = _task->getInstrumentationTaskId();
+	}
+	Instrument::ThreadInstrumentationContext instrumentationContext(
+		taskId, cpu->getInstrumentationId(), _instrumentationId
+	);
+
+	if (_task->hasCode()) {
+		size_t tableSize = 0;
+		nanos6_address_translation_entry_t *translationTable =
+			SymbolTranslation::generateTranslationTable(
+				_task, cpu, stackTranslationTable, tableSize
+			);
+
+		// Runtime Tracking Point - A task starts its execution
+		TrackingPoints::taskIsExecuting(_task);
+
+		// Run the task
+		std::atomic_thread_fence(std::memory_order_acquire);
+		_task->body(translationTable);
+		std::atomic_thread_fence(std::memory_order_release);
+
+		// Update the CPU since the thread may have migrated
+		cpu = getComputePlace();
+		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
+
+		// Runtime Tracking Point - A task has completed its execution (user code)
+		TrackingPoints::taskCompletedUserCode(_task);
+
+		// Free up all symbol translation
+		if (tableSize > 0) {
+			MemoryAllocator::free(translationTable, tableSize);
+		}
+	} else {
+		// Runtime Tracking Point - A task has completed its execution (user code)
+		TrackingPoints::taskCompletedUserCode(_task);
+	}
+
+	DataAccessRegistration::combineTaskReductions(_task, cpu);
+
+	if (_task->markAsFinished(cpu)) {
+		DataAccessRegistration::unregisterTaskDataAccesses(
+			_task, cpu, cpu->getDependencyData()
+		);
+
+		TaskFinalization::taskFinished(_task, cpu);
+		if (_task->markAsReleased()) {
+			TaskFinalization::disposeTask(_task);
+		}
+	}
+}

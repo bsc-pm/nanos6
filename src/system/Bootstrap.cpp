@@ -36,7 +36,6 @@
 #include "system/ompss/SpawnFunction.hpp"
 #include "tasks/StreamManager.hpp"
 
-#include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
@@ -47,17 +46,11 @@ void nanos6_shutdown(void);
 
 int nanos6_can_run_main(void)
 {
-	if (ClusterManager::isMasterNode()) {
-		return true;
-	} else {
-		return false;
-	}
+	return true;
 }
 
-void nanos6_register_completion_callback(void (*shutdown_callback)(void *), void *callback_args)
+void nanos6_register_completion_callback(void (*)(void *), void *)
 {
-	assert(shutdown_callback != nullptr);
-	ClusterManager::setShutdownCallback(shutdown_callback, callback_args);
 }
 
 void nanos6_preinit(void)
@@ -86,9 +79,7 @@ void nanos6_preinit(void)
 	HardwareCounters::preinitialize();
 	Monitoring::preinitialize();
 	HardwareInfo::initialize();
-	ConfigCentral::initializeMemoryDependentOptions();
 
-	ClusterManager::initialize();
 	CPUManager::preinitialize();
 
 	// Finish Hardware counters and Monitoring initialization after CPUManager
@@ -161,7 +152,6 @@ void nanos6_shutdown(void)
 	// Signal the shutdown to all CPUs and finalize threads
 	CPUManager::shutdownPhase1();
 	ThreadManager::shutdownPhase1();
-	ClusterManager::notifyShutdown(); // TODO: Rename this to shutdownPhase1()
 
 	Instrument::shutdown();
 
@@ -181,8 +171,6 @@ void nanos6_shutdown(void)
 
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();
-
-	ClusterManager::shutdown();   // TODO: Rename this to shutdownPhase2
 
 	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();

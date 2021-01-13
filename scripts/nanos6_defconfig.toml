@@ -294,6 +294,7 @@ __require_CLUSTER
 __!require_CLUSTER
 
 [memory]
+__require_CLUSTER
 	[memory.pool]
 		# Indicate the global allocation size for the global memory pool. Considered only in
 		# Cluster installations. Default is 8MB
@@ -301,6 +302,7 @@ __!require_CLUSTER
 		# Indicate the chunk size for the global memory pool. Considered only in Cluster
 		# installations. Default is 128KB
 		chunk_size = "128K"
+__!require_CLUSTER
 
 [misc]
 	# Stack size of threads created by the runtime. Default is 8M

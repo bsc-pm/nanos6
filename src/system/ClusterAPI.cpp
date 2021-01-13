@@ -1,64 +1,46 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/cluster.h>
 
-#include <ClusterManager.hpp>
-#include <ClusterMemoryManagement.hpp>
-#include <ClusterNode.hpp>
-
 
 extern "C" int nanos6_in_cluster_mode(void)
 {
-	return ClusterManager::inClusterMode();
+	return false;
 }
 
 extern "C" int nanos6_is_master_node(void)
 {
-	return ClusterManager::isMasterNode();
+	return true;
 }
 
 extern "C" int nanos6_get_cluster_node_id(void)
 {
-	return ClusterManager::getCurrentClusterNode()->getIndex();
+	return 0;
 }
 
 extern "C" int nanos6_get_num_cluster_nodes(void)
 {
-	return ClusterManager::clusterSize();
+	return 1;
 }
 
-extern "C" void *nanos6_dmalloc(
-	size_t size,
-	nanos6_data_distribution_t policy,
-	size_t num_dimensions,
-	size_t *dimensions
-) {
-	if (size == 0) {
-		return nullptr;
-	}
-	
-	return ClusterMemoryManagement::dmalloc(size, policy, num_dimensions, dimensions);
-}
-
-extern "C" void nanos6_dfree(void *ptr, size_t size)
+extern "C" void *nanos6_dmalloc(size_t, nanos6_data_distribution_t, size_t, size_t *)
 {
-	ClusterMemoryManagement::dfree(ptr, size);
+	return nullptr;
 }
 
-extern "C" void *nanos6_lmalloc(size_t size)
+extern "C" void nanos6_dfree(void *, size_t)
 {
-	if (size == 0) {
-		return nullptr;
-	}
-	
-	return ClusterMemoryManagement::lmalloc(size);
 }
 
-extern "C" void nanos6_lfree(void *ptr, size_t size)
+extern "C" void *nanos6_lmalloc(size_t)
 {
-	ClusterMemoryManagement::lfree(ptr, size);
+	return nullptr;
+}
+
+extern "C" void nanos6_lfree(void *, size_t)
+{
 }

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_HPP
@@ -20,8 +20,6 @@
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/ReadyQueue.hpp"
 
-#include <ClusterTaskContext.hpp>
-#include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
 #include <TaskDataAccessesInfo.hpp>
@@ -38,7 +36,6 @@ class WorkerThread;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
 
-using namespace ExecutionWorkflow;
 
 class Task {
 public:
@@ -131,22 +128,11 @@ private:
 	//! Number of internal and external events that prevent the release of dependencies
 	std::atomic<int> _countdownToRelease;
 
-	//! Execution workflow to execute this Task
-	Workflow<TaskExecutionWorkflowData> *_workflow;
-
-	//! At the moment we will store the Execution step of the task
-	//! here in order to invoke it after previous asynchronous
-	//! steps have been completed.
-	Step *_executionStep;
-
 	//! Monitoring-related statistics about the task
 	TaskStatistics *_taskStatistics;
 
 	//! Hardware counter structures of the task
 	TaskHardwareCounters _hwCounters;
-
-	//! Cluster-related data for remote tasks
-	TaskOffloading::ClusterTaskContext *_clusterContext;
 
 	//! A pointer to the callback of the spawned function that created the
 	//! task, used to trigger a callback from the appropriate stream function
@@ -711,27 +697,6 @@ public:
 		return _deviceEnvironment;
 	}
 
-	//! \brief Set the Execution Workflow for this Task
-	inline void setWorkflow(Workflow<TaskExecutionWorkflowData> *workflow)
-	{
-		assert(workflow != nullptr);
-		_workflow = workflow;
-	}
-	//! \brief Get the Execution Workflow of the Task
-	inline Workflow<TaskExecutionWorkflowData> *getWorkflow() const
-	{
-		return _workflow;
-	}
-
-	inline void setExecutionStep(ExecutionWorkflow::Step *step)
-	{
-		_executionStep = step;
-	}
-	inline ExecutionWorkflow::Step *getExecutionStep() const
-	{
-		return _executionStep;
-	}
-
 	//! \brief Get a label that identifies the tasktype
 	inline const std::string getLabel() const
 	{
@@ -797,17 +762,6 @@ public:
 	inline bool isRemote() const
 	{
 		return _flags[remote_flag];
-	}
-
-	inline void setClusterContext(
-		TaskOffloading::ClusterTaskContext *clusterContext)
-	{
-		_clusterContext = clusterContext;
-	}
-
-	inline TaskOffloading::ClusterTaskContext *getClusterContext() const
-	{
-		return _clusterContext;
 	}
 
 	inline void markAsStreamExecutor()

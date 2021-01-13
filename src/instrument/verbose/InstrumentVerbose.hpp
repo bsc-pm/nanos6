@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_VERBOSE_HPP
@@ -30,7 +30,6 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "support/config/ConfigVariable.hpp"
 
-#include <ClusterManager.hpp>
 #include <support/ConcurrentUnorderedList.hpp>
 
 
@@ -78,12 +77,6 @@ namespace Instrument {
 
 			void appendLocation(InstrumentationContext const &context)
 			{
-				if (ClusterManager::inClusterMode()) {
-					ClusterNode *clusterNode = ClusterManager::getCurrentClusterNode();
-					assert(clusterNode != nullptr);
-					_contents << "Node:" << clusterNode->getIndex() << " ";
-				}
-
 				if (context._externalThreadName != nullptr) {
 					_contents << "ExternalThread:" << *context._externalThreadName;
 				} else {
