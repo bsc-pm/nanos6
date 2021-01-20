@@ -79,6 +79,9 @@ private:
 	//! Real pagesize (especially important in case of THP)
 	static size_t _realPageSize;
 
+	//! Array to get the corresponding OS index of a logical index
+	static std::vector<int> _logicalToOsIndex;
+
 public:
 	static void initialize()
 	{
@@ -104,6 +107,7 @@ public:
 		size_t numNumaAnyActive = 0;
 
 		numNumaAll = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
+		_logicalToOsIndex.resize(numNumaAll);
 
 		// Currently, we are using uint64_t as type for the bitmasks. In case we have
 		// more than 64 nodes, the bitmask cannot represent all the NUMA nodes
@@ -125,20 +129,25 @@ public:
 
 		// Enable corresponding bits in the bitmasks
 		for (size_t numaNode = 0; numaNode < cpusPerNumaNode.size(); numaNode++) {
-			// NUMA_ALL enables a bit per NUMA node available in the system
-			BitManipulation::enableBit(&_bitmaskNumaAll, numaNode);
+			NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
+			assert(numaPlace != nullptr);
+			// As we will interact with libnuma, we need to use the OS index in the bitmask
+			int osIndex = numaPlace->getOsIndex();
+			_logicalToOsIndex[numaNode] = osIndex;
+			if (osIndex != -1) {
+				// NUMA_ALL enables a bit per NUMA node available in the system
+				BitManipulation::enableBit(&_bitmaskNumaAll, numaNode);
 
-			// NUMA_ANY_ACTIVE enables a bit per NUMA node containing at least one CPU assigned to this process
-			if (cpusPerNumaNode[numaNode] > 0) {
-				BitManipulation::enableBit(&_bitmaskNumaAnyActive, numaNode);
-				numNumaAnyActive++;
+				// NUMA_ANY_ACTIVE enables a bit per NUMA node containing at least one CPU assigned to this process
+				if (cpusPerNumaNode[numaNode] > 0) {
+					BitManipulation::enableBit(&_bitmaskNumaAnyActive, numaNode);
+					numNumaAnyActive++;
 
-				// NUMA_ALL_ACTIVE enables a bit per NUMA node containing all the CPUs assigned to this process
-				NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
-				assert(numaPlace != nullptr);
-				if (cpusPerNumaNode[numaNode] == numaPlace->getNumLocalCores()) {
-					BitManipulation::enableBit(&_bitmaskNumaAllActive, numaNode);
-					numNumaAllActive++;
+					// NUMA_ALL_ACTIVE enables a bit per NUMA node containing all the CPUs assigned to this process
+					if (cpusPerNumaNode[numaNode] == numaPlace->getNumLocalCores()) {
+						BitManipulation::enableBit(&_bitmaskNumaAllActive, numaNode);
+						numNumaAllActive++;
+					}
 				}
 			}
 		}
@@ -226,8 +235,9 @@ public:
 
 			// Set all the pages of a block in the same node.
 			numa_bitmask_clearall(tmpBitmask);
-			numa_bitmask_setbit(tmpBitmask, currentNodeIndex);
-			assert(numa_bitmask_isbitset(tmpBitmask, currentNodeIndex));
+			assert(_logicalToOsIndex[currentNodeIndex] != -1);
+			numa_bitmask_setbit(tmpBitmask, _logicalToOsIndex[currentNodeIndex]);
+			assert(numa_bitmask_isbitset(tmpBitmask, _logicalToOsIndex[currentNodeIndex]));
 			numa_interleave_memory(tmp, tmpSize, tmpBitmask);
 
 			// Insert into directory
@@ -318,6 +328,7 @@ public:
 		// Find the allocation size and remove (one single map search)
 		auto allocIt = _allocations.find(ptr);
 		assert(allocIt != _allocations.end());
+
 		size_t size = allocIt->second;
 		_allocations.erase(allocIt);
 		_allocationsLock.unlock();

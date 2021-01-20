@@ -75,7 +75,7 @@ HostInfo::HostInfo() :
 		//! Create a MemoryPlace.
 		//! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
 		//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
-		NUMAPlace *node = new NUMAPlace(/* Index */ 0, NUMAAddressSpace);
+		NUMAPlace *node = new NUMAPlace(/* Index */ 0, /* osIndex */ -1, NUMAAddressSpace);
 
 		//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
 		_memoryPlaces[node->getIndex()] = node;
@@ -96,27 +96,31 @@ HostInfo::HostInfo() :
 		hwloc_obj_t ancestor = nullptr;
 		hwloc_obj_t nodeNUMA = nullptr;
 
-		//! NUMA node can be found in different depths of ancestors (ordered from deeper to narrower):
-		//! 1. A L3CACHE object / A GROUP object.
-		//! 2. The most common is a PACKAGE object.
-		//! 3. The MACHINE object.
-		//! ref: https://www.open-mpi.org/projects/hwloc/doc/v2.0.0/a00327.php
-		ancestor = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
-		if (ancestor == nullptr || ancestor->memory_arity != 1) {
-			ancestor = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_GROUP, obj);
-			if (ancestor == nullptr || ancestor->memory_arity != 1) {
-				ancestor = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_PACKAGE, obj);
-				if (ancestor == nullptr || ancestor->memory_arity != 1) {
-					ancestor = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_MACHINE, obj);
-				}
+		ancestor = obj->parent;
+		while (ancestor != nullptr && ancestor->memory_arity == 0) {
+			ancestor = ancestor->parent;
+		}
+
+		assert(ancestor != nullptr);
+		bool found = false;
+		for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++) {
+			if (memChild == 0) {
+				nodeNUMA = ancestor->memory_first_child;
+			} else {
+				assert(nodeNUMA != nullptr);
+				nodeNUMA = nodeNUMA->next_sibling;
+			}
+
+			// Check that the object is actually a NUMA node
+			// Check that the NUMA node is local to the PU
+			if (hwloc_obj_type_is_memory(nodeNUMA->type) &&
+					hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
+			{
+				found = true;
+				break;
 			}
 		}
-		assert(ancestor != nullptr);
-		assert(ancestor->memory_arity == 1);
-
-		nodeNUMA = ancestor->memory_first_child;
-		assert(nodeNUMA != nullptr);
-		assert(hwloc_obj_type_is_memory(nodeNUMA->type));
+		FatalErrorHandler::warnIf(!found, "Cannot find NUMA node of PU with OS index ", obj->os_index);
 
 		// Some machines, particularly ARM-based, do not always provide cache info.
 		// However, L3 may not exist, as in KNL in flat mode.
@@ -205,7 +209,7 @@ HostInfo::HostInfo() :
 			assert(l2Cache->getId() == (int) L2CacheObj->logical_index);
 		}
 
-		// Set shouldEnableIS to L2 cache size
+		// Set shouldEnableIS to a factor of L3 cache size
 		size_t l2CacheSize = (l2Cache != nullptr) ? l2Cache->getCacheSize() : L2_DEFAULT_CACHE_SIZE;
 		DataTrackingSupport::setShouldEnableIS(l2CacheSize);
 
@@ -213,7 +217,8 @@ HostInfo::HostInfo() :
 		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
 		if (_memoryPlaces[NUMANodeId] == nullptr) {
 			//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace
-			NUMAPlace *node = new NUMAPlace(NUMANodeId, NUMAAddressSpace);
+			int NUMANodeOsId = nodeNUMA == NULL ? -1 : nodeNUMA->os_index;
+			NUMAPlace *node = new NUMAPlace(NUMANodeId, NUMANodeOsId, NUMAAddressSpace);
 
 			//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo
 			_memoryPlaces[node->getIndex()] = node;
@@ -251,7 +256,7 @@ HostInfo::HostInfo() :
 		//! Create the MemoryPlaces representing the NUMA nodes containing no CPUs.
 		for (size_t i = 0; i < memNodesCount; i++) {
 			if (_memoryPlaces[i] == nullptr) {
-				NUMAPlace *node = new NUMAPlace(i, NUMAAddressSpace);
+				NUMAPlace *node = new NUMAPlace(i, /* osIndex */ -1, NUMAAddressSpace);
 				_memoryPlaces[node->getIndex()] = node;
 			}
 		}

@@ -18,10 +18,13 @@ class NUMAPlace : public MemoryPlace {
 	//! Cores that belong to this NUMA node
 	size_t _numLocalCores;
 
+	//! OS index of this NUMA node, required to interact with libnuma in NUMAManager
+	int _osIndex;
+
 public:
-	NUMAPlace(int index, AddressSpace *addressSpace = nullptr) :
+	NUMAPlace(int index, int osIndex, AddressSpace *addressSpace = nullptr) :
 		MemoryPlace(index, nanos6_device_t::nanos6_host_device, addressSpace),
-		_numLocalCores(0)
+		_numLocalCores(0), _osIndex(osIndex)
 	{
 	}
 
@@ -47,6 +50,11 @@ public:
 	inline void increaseNumLocalCores()
 	{
 		_numLocalCores++;
+	}
+
+	inline int getOsIndex() const
+	{
+		return _osIndex;
 	}
 
 	void addComputePlace(ComputePlace *computePlace);

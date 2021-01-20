@@ -20,6 +20,7 @@ ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
 ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
 ConfigVariable<std::string> NUMAManager::_discoverPageSize("numa.discover");
 size_t NUMAManager::_realPageSize;
+std::vector<int> NUMAManager::_logicalToOsIndex;
 
 #ifndef NDEBUG
 void NUMAManager::checkAllocationCorrectness(
@@ -59,6 +60,8 @@ void NUMAManager::checkAllocationCorrectness(
 		}
 
 		char *tmp = (char *) res+i;
+		// Fault the page, otherwise move_pages do not work. Writing 1 byte is enough.
+		memset(tmp, 0, 1);
 		pages[page] = tmp;
 
 		blockBytes += pageSize;
@@ -94,7 +97,7 @@ void NUMAManager::checkAllocationCorrectness(
 		}
 
 		assert(status[i] >= 0);
-		FatalErrorHandler::warnIf(status[i] != currentNodeIndex, "Page is not where it should.");
+		FatalErrorHandler::warnIf(status[i] != _logicalToOsIndex[currentNodeIndex], "Page is not where it should.");
 
 		blockBytes += pageSize;
 	}
@@ -142,19 +145,19 @@ void NUMAManager::discoverRealPageSize()
 	int err = posix_memalign(&tmp, 4*1024*1024, sizeAlloc);
 	FatalErrorHandler::failIf(err != 0);
 
+	bitmask_t bitmaskCopy = _bitmaskNumaAnyActive;
+	assert(BitManipulation::countEnabledBits(&bitmaskCopy) > 1);
 	struct bitmask *tmpBitmask = numa_bitmask_alloc(HardwareInfo::getMemoryPlaceCount(nanos6_host_device));
 	for (size_t i = 0; i < sizeAlloc; i += pageSize) {
 		// Touch first page using current CPU, and then the rest using the other.
 		// Thus, the first page that has a different NUMA id indicates us the
 		// real page size.
 		numa_bitmask_clearall(tmpBitmask);
+		uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 		if (i == 0) {
-			// Set first page in NUMA 0
-			numa_bitmask_setbit(tmpBitmask, 0);
-		} else {
-			// Set the rest of pages in NUMA 1
-			numa_bitmask_setbit(tmpBitmask, 1);
+			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
 		}
+		numa_bitmask_setbit(tmpBitmask, _logicalToOsIndex[currentNodeIndex]);
 		numa_bind(tmpBitmask);
 
 		void *pageStart = (void *) ((uintptr_t) tmp + i);
