@@ -9,6 +9,10 @@
 
 #include "HardwareCache.hpp"
 
+#ifndef L3_DEFAULT_CACHE_SIZE
+#define L3_DEFAULT_CACHE_SIZE 32*1024*1024
+#endif // L3_DEFAULT_CACHE_SIZE
+
 class L3Cache : public HardwareCache {
 private:
 	bool _inclusive;

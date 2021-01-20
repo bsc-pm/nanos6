@@ -210,8 +210,9 @@ HostInfo::HostInfo() :
 		}
 
 		// Set shouldEnableIS to a factor of L3 cache size
-		size_t l2CacheSize = (l2Cache != nullptr) ? l2Cache->getCacheSize() : L2_DEFAULT_CACHE_SIZE;
-		DataTrackingSupport::setShouldEnableIS(l2CacheSize);
+		size_t l3CacheSize = (l3Cache != nullptr) ? l3Cache->getCacheSize() : L3_DEFAULT_CACHE_SIZE;
+		double factor = 0.1;
+		DataTrackingSupport::setShouldEnableIS(l3CacheSize * factor);
 
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
