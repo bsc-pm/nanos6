@@ -193,7 +193,9 @@ public:
 		size_t pageSize = _realPageSize;
 		assert(pageSize > 0);
 		if (size < pageSize) {
-			FatalErrorHandler::fail("Allocation size cannot be smaller than pagesize ", pageSize);
+			void *res = malloc(size);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+			return res;
 		}
 
 		assert(bitmask != nullptr);
@@ -327,7 +329,15 @@ public:
 		_allocationsLock.lock();
 		// Find the allocation size and remove (one single map search)
 		auto allocIt = _allocations.find(ptr);
-		assert(allocIt != _allocations.end());
+
+		// In some cases, in the alloc methods, we simply use the standard
+		// malloc and we do not annotate that in the map. Thus, simply
+		// release the lock and use standard free.
+		if (allocIt == _allocations.end()) {
+			_allocationsLock.unlock();
+			std::free(ptr);
+			return;
+		}
 
 		size_t size = allocIt->second;
 		_allocations.erase(allocIt);
