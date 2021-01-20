@@ -5,6 +5,7 @@
 */
 
 #include "NUMAManager.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -119,7 +120,10 @@ uint64_t NUMAManager::getTrackingNodes()
 	// This method is called from UnsyncScheduler::UnsyncScheduler()
 	// before calling NUMAManager::initialize().
 	std::string trackingMode = _trackingMode.getValue();
-	if (trackingMode == "off" || !DataAccessRegistration::supportsDataTracking()) {
+	if (trackingMode == "off" ||
+			!DataAccessRegistration::supportsDataTracking() ||
+			!DataTrackingSupport::isNUMASchedulingEnabled())
+	{
 		return 1;
 	} else {
 		return HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
