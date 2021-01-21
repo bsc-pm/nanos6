@@ -128,6 +128,9 @@ private:
 		// Add the option descriptor
 		_descriptors[option] = { kind, true };
 
+		// Initialize empty entry in default values
+		_listDefaults[option] = {};
+
 		// Set the option defaults
 		for (const T &value : defaultValues) {
 			_listDefaults[option].push_back(value);
