@@ -174,8 +174,15 @@ public:
 
 	static void *alloc(size_t size, const bitmask_t *bitmask, size_t blockSize)
 	{
+		size_t pageSize = HardwareInfo::getPageSize();
 		if (!enableTrackingIfAuto()) {
-			void *res = malloc(size);
+			void *res = nullptr;
+			if (size < pageSize) {
+				res = malloc(size);
+			} else {
+				int err = posix_memalign(&res, pageSize, size);
+				FatalErrorHandler::failIf(err != 0);
+			}
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 			return res;
 		}
@@ -190,7 +197,7 @@ public:
 		}
 		assert(_realPageSize != 0);
 
-		size_t pageSize = _realPageSize;
+		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
 		assert(pageSize > 0);
 		if (size < pageSize) {
 			void *res = malloc(size);
@@ -324,8 +331,6 @@ public:
 			return;
 		}
 
-		size_t pageSize = _realPageSize;
-
 		_allocationsLock.lock();
 		// Find the allocation size and remove (one single map search)
 		auto allocIt = _allocations.find(ptr);
@@ -356,6 +361,8 @@ public:
 		_lock.writeUnlock();
 
 		// Release memory
+		size_t pageSize = HardwareInfo::getPageSize();
+		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
 		if (size < pageSize) {
 			std::free(ptr);
 		} else {
