@@ -502,6 +502,12 @@ public:
 		return BitManipulation::checkBit(&_bitmaskNumaAnyActive, bitIndex);
 	}
 
+	static inline size_t getOSIndex(size_t logicalId)
+	{
+		assert(logicalId < _logicalToOsIndex.size());
+		return _logicalToOsIndex[logicalId];
+	}
+
 	static uint64_t getTrackingNodes();
 
 private:
