@@ -75,7 +75,7 @@ HostInfo::HostInfo() :
 		//! Create a MemoryPlace.
 		//! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
 		//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
-		NUMAPlace *node = new NUMAPlace(/* Index */ 0, /* osIndex */ -1, NUMAAddressSpace);
+		NUMAPlace *node = new NUMAPlace(/* Index */ 0, /* osIndex */ 0, NUMAAddressSpace);
 
 		//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
 		_memoryPlaces[node->getIndex()] = node;
