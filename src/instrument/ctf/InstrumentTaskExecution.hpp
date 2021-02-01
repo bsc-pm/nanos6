@@ -37,12 +37,12 @@ namespace Instrument {
 	}
 
 	inline void startTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		task_id_t collaboratorId,
+		task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) bool first,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_start(collaboratorId._taskId);
+		tp_task_start(taskforId._taskId);
 	}
 
 	inline void endTaskforCollaborator(
