@@ -89,6 +89,8 @@ class ctf2prv(bt2._UserSinkComponent):
 		ts = self.__last.default_clock_snapshot.value
 		ParaverTrace.addEndTime(ts)
 		ParaverTrace.finalizeTraceFiles()
+		if self.__verbose:
+			print("Conversion finished")
 
 	def _user_graph_is_configured(self):
 		self._it = self._create_message_iterator(self.__port)
