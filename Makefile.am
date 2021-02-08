@@ -1711,6 +1711,7 @@ uninstall-hook:
 install-data-hook:
 	chmod +x $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
 	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_nord3.sh \
+	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_cte-amd.sh \
 	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_cte-power.sh
 
 
@@ -1995,6 +1996,7 @@ nobase_dist_ctf_DATA = \
 	scripts/ctf/plugins/runtimemodel.py \
 	scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
 	scripts/ctf/wrappers/ctf2prv_nord3.sh \
+	scripts/ctf/wrappers/ctf2prv_cte-amd.sh \
 	scripts/ctf/wrappers/ctf2prv_cte-power.sh
 
 dist_bin_SCRIPTS = \
