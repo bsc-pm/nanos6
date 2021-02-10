@@ -2,7 +2,7 @@
 #
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
 #
 
 if [[ "$CTF2PRV_VERBOSE" == "1" ]]; then
