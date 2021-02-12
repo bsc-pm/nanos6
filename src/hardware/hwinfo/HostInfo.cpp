@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -220,12 +220,16 @@ HostInfo::HostInfo() :
 			_validMemoryPlaces++;
 		}
 
+		assert(obj->parent != NULL);
+
+		if (obj->parent->type != HWLOC_OBJ_CORE) {
+			FatalErrorHandler::fail("The parent HWLOC object of a PU should be a CORE.\n"
+				"This issue could be related to a missing system directory (e.g. /sys)");
+		}
+
 		// Intertwine CPU IDs so that threads from different physical cores are
 		// registered one after another (T0 from CPU0 to ID0, T1 from CPU0 to
-		// ID"coreCount", etc.
-
-		assert(obj->parent != NULL);
-		assert(obj->parent->type == HWLOC_OBJ_CORE);
+		// ID"coreCount", etc
 		size_t cpuLogicalIndex = (coreCount * obj->sibling_rank) + obj->parent->logical_index;
 		assert(cpuLogicalIndex < cpuCount);
 
