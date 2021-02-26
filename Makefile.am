@@ -57,6 +57,7 @@ nanos6include_HEADERS = \
 	api/nanos6/devices.h \
 	api/nanos6/events.h \
 	api/nanos6/final.h \
+	api/nanos6/instrument.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
@@ -186,6 +187,7 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
+	loader/symbol-resolver/instrument.c \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/numa.c \
@@ -222,6 +224,7 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
+	loader/indirect-symbols/instrument.c \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/numa.c \
@@ -417,6 +420,7 @@ common_sources = \
 	src/system/ClusterAPI.cpp \
 	src/system/ConfigAPI.cpp \
 	src/system/EventsAPI.cpp \
+	src/system/InstrumentAPI.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LintAPI.cpp \
 	src/system/MonitoringAPI.cpp \

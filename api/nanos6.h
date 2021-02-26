@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_H
@@ -21,6 +21,7 @@
 #include "nanos6/devices.h"
 #include "nanos6/events.h"
 #include "nanos6/final.h"
+#include "nanos6/instrument.h"
 #include "nanos6/lint.h"
 #include "nanos6/lint-multidimensional-accesses.h"
 #include "nanos6/loop.h"
