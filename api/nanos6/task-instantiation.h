@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_TASK_INSTANTIATION_H
@@ -92,7 +92,7 @@ typedef struct
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_task_info_contents
 //! \brief This needs to be incremented every time that there is a change in nanos6_task_info
-enum nanos6_task_info_contents_t { nanos6_task_info_contents = 2 };
+enum nanos6_task_info_contents_t { nanos6_task_info_contents = 3 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct __attribute__((aligned(64)))
@@ -109,6 +109,15 @@ typedef struct __attribute__((aligned(64)))
 	//! \param[in] taskloop_bounds a pointer to the bounds of a taskloop, if the task is taskloop
 	//! \param[in] handler a handler to be passed on to the registration functions
 	void (*register_depinfo)(void *args_block, void *taskloop_bounds, void *handler);
+
+	//! \brief Function that the runtime calls to run the onready action
+	//!
+	//! This function should be called by the runtime after the dependencies of the task have been satisfied. This function
+	//! may register external events to delay the execution of the task, but cannot block the current thread in any blocking
+	//! operation (e.g., taskwait or explicit blocking)
+	//!
+	//! \param[in] args_block a pointer to a block of data for the parameters partially initialized
+	void (*onready_action)(void *args_block);
 
 	//! \brief Function that the runtime calls to obtain a user-specified priority for the task instance
 	//!
