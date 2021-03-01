@@ -144,7 +144,7 @@ bool Throttle::engage(Task *creator, WorkerThread *workerThread)
 	Task *replacement = nullptr;
 
 	if (allowedChildTasks != 1)
-		replacement = Scheduler::getReadyTask(currentCPU);
+		replacement = Scheduler::getReadyTask(currentCPU, workerThread);
 
 	if (replacement != nullptr && workerThread->isTaskReplaceable()) {
 		workerThread->replaceTask(replacement);

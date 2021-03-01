@@ -20,12 +20,15 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 {
 	const size_t sleepTime = _usPollingPeriod.getValue();
 
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+
 	while (!shouldStopService()) {
 		bool activeDevice = false;
 		do {
 			// Launch as many ready device tasks as possible
 			while (isQueueAvailable()) {
-				Task *task = Scheduler::getReadyTask(_computePlace);
+				Task *task = Scheduler::getReadyTask(_computePlace, currentThread);
 				if (task == nullptr)
 					break;
 
