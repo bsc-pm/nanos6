@@ -177,6 +177,7 @@ static std::string getFullBinaryName()
 }
 
 CTFAPI::CTFTrace::CTFTrace()
+	: _rank(0), _numberOfRanks(0), _timeCorrection(0)
 {
 	// get process PID
 	_pid = (uint64_t) getpid();

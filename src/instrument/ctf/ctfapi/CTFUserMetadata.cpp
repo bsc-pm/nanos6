@@ -157,7 +157,7 @@ void CTFAPI::CTFUserMetadata::writeMetadataFile()
 	fputs(meta_trace, f);
 	fputs(meta_env, f);
 	printCommonMetaEnv(f);
-	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
+	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp() - trace.getTimeCorrection());
 
 	// print context additional structures
 	for (auto it = contexes.begin(); it != contexes.end(); ++it) {

@@ -39,11 +39,15 @@ namespace CTFAPI {
 		std::string _kernelPath;
 		std::string _binaryName;
 		uint64_t _pid;
+		uint32_t _rank;
+		uint32_t _numberOfRanks;
+
 		CTFUserMetadata *_userMetadata;
 		CTFKernelMetadata *_kernelMetadata;
 
 		uint64_t _absoluteStartTime;
 		uint64_t _absoluteEndTime;
+		int32_t  _timeCorrection;
 		uint16_t _totalCPUs;
 
 		CTFTrace();
@@ -100,12 +104,36 @@ namespace CTFAPI {
 			return _binaryName.c_str();
 		}
 
+		inline void setDistributedMemory(
+			int64_t  timeCorrection,
+			uint32_t rank,
+			uint32_t nranks
+		) {
+			_timeCorrection = timeCorrection;
+			_rank = rank;
+			_numberOfRanks = nranks;
+		}
+
+		inline uint32_t getRank() const
+		{
+			return _rank;
+		}
+
+		inline uint32_t getNumberOfRanks() const
+		{
+			return _numberOfRanks;
+		}
+
 		inline uint64_t getAbsoluteStartTimestamp() const {
 			return _absoluteStartTime;
 		}
 
 		inline uint64_t getAbsoluteEndTimestamp() const {
 			return _absoluteEndTime;
+		}
+
+		inline int64_t getTimeCorrection() const {
+			return _timeCorrection;
 		}
 
 		inline std::string getTemporalTracePath() const {

@@ -20,9 +20,12 @@ const char *CTFAPI::CTFMetadata::_meta_commonEnv =
 	"	cpu_list = \"%s\";\n"
 	"	external_thread_count = %" PRIu32 "; // LT + ETs\n"
 	"	binary_name = \"%s\";\n"
+	"	rank = \"%" PRIu32 "\";\n"
+	"	nranks = \"%" PRIu32 "\";\n"
 	"	pid = %" PRIu64 ";\n"
-	"	start_ts = %" PRIu64 "; // (ns)\n"
-	"	end_ts = %" PRIu64 "; // (ns)\n"
+	"	start_ts = %" PRIu64 "; // (ns w/o correction)\n"
+	"	end_ts = %" PRIu64 "; // (ns w/o correction)\n"
+	"	time_correction = %" PRId64 "; // (ns)\n"
 	"};\n\n";
 
 
@@ -52,8 +55,11 @@ void CTFAPI::CTFMetadata::printCommonMetaEnv(FILE *f)
 		_cpuList.c_str(),
 		_externalThreadsCount,
 		trace.getBinaryName(),
+		trace.getRank(),
+		trace.getNumberOfRanks(),
 		trace.getPid(),
 		trace.getAbsoluteStartTimestamp(),
-		trace.getAbsoluteEndTimestamp()
+		trace.getAbsoluteEndTimestamp(),
+		trace.getTimeCorrection()
 	);
 }

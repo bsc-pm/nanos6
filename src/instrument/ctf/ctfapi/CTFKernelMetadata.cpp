@@ -339,7 +339,7 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile()
 		_kernelVersion.c_str()
 	);
 	printCommonMetaEnv(f);
-	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
+	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp() - trace.getTimeCorrection());
 	fprintf(f, meta_stream, CTFKernelStreamId);
 
 	for (std::string event : _enabledEventNames) {
