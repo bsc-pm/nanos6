@@ -33,6 +33,7 @@ namespace CTFAPI {
 		static ConfigVariable<bool> _ctf2prvEnabled;
 		static EnvironmentVariable<std::string> _systemPATH;
 
+		std::string _finalTracePath;
 		std::string _finalTraceBasePath;
 		std::string _tmpTracePath;
 		std::string _userPath;
@@ -61,6 +62,7 @@ namespace CTFAPI {
 		void finalizeTraceTimer();
 		std::string searchPythonCommand(const char *command);
 		void convertToParaver();
+		std::string makeFinalTraceDirectory();
 		void moveTemporalTraceToFinalDirectory();
 		void clean();
 

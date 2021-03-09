@@ -27,6 +27,9 @@ namespace Instrument {
 		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 		trace.setDistributedMemory(info->clock_offset.mean_sec,
 					   info->rank, info->num_ranks);
+		if (info->rank == 0) {
+			trace.makeFinalTraceDirectory();
+		}
 	}
 }
 

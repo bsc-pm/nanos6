@@ -53,7 +53,9 @@ Usage
 
 To generate a CTF trace, run the application with the `version.instrument` config set to `ctf`.
 
-This will create a `trace-<app_name>-<app_pid>` folder in the current directory, hereinafter refered to as `$TRACE` for convenience.
+This will create a `trace_<app_name>` folder in the current directory.
+If MPI support is enabled, the rank id will be appended to the trace directory name (see [MPI Tracing](#mpi-tracing) below).
+Hereinafter, the trace directory will be refered as `$TRACE` for convenience.
 The subdirectory `$TRACE/ctf` contains the ctf trace as recorded by Nanos6.
 
 By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.converter.enabled = false`.
@@ -69,6 +71,10 @@ $ ctf2prv $TRACE
 
 which will generate the directory `$TRACE/prv` with the Paraver trace.
 
+MPI Tracing
+===========
+
+TODO
 
 Linux Kernel Tracing
 ==============

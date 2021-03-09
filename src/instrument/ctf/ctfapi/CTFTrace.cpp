@@ -9,14 +9,14 @@
 #endif
 
 
+#include <cstdlib>
+#include <cstring>
 #include <dirent.h>
 #include <errno.h>
 #include <fstream>
 #include <ftw.h>
 #include <iostream>
 #include <libgen.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -118,25 +118,116 @@ static bool removeDir(std::string &path)
 	return (rv == 0);
 }
 
-static std::string mkTraceDirectoryName(std::string finalTracePath,
-					std::string &binaryName, uint64_t pid)
-{
+static std::string mkTraceDirectoryName(
+	std::string finalTracePath,
+	std::string &binaryName
+) {
+	finalTracePath += "/trace_" + binaryName;
+	return finalTracePath;
+}
+
+// Builds trace directory name. If a directory with the same name exist, append
+// and index to the path name and try again. When a valid unused path is found,
+// rename the conflicting directory to the unused path. Then return the now
+// unused initial path. This mechanism is used to ensure that all processes in a
+// distributed memory execution can compute a valif trace path without
+// explicitly negotiating it.
+static std::string prepareTraceDirectoryPath(
+	std::string finalTracePath,
+	std::string &binaryName
+) {
 	int cnt;
 	struct stat st;
-	std::string traceDir, tmp;
 
-	// build a name the trace directory name for the specified tracePath,
-	// ensuring that no other directory with this name exist
-	traceDir = finalTracePath;
-	traceDir += "/trace_" + binaryName + "_" + std::to_string(pid);
-	tmp = traceDir;
+	std::string traceDir = mkTraceDirectoryName(finalTracePath, binaryName);
+	std::string candidateDir = traceDir;
+
 	cnt = 1;
-	while (stat(tmp.c_str(), &st) == 0) {
-		tmp = traceDir + "_" + std::to_string(cnt);
+	while (stat(candidateDir.c_str(), &st) == 0) {
+		candidateDir = traceDir + "_" + std::to_string(cnt);
 		cnt++;
 	}
 
-	return tmp;
+	if (cnt > 1) {
+		if (rename(traceDir.c_str(), candidateDir.c_str())) {
+			FatalErrorHandler::fail(
+				"ctf: Cannot move old trace directory: ",
+				std::strerror(errno)
+			);
+		}
+	}
+
+	return traceDir;
+}
+
+
+// This function creates the final trace directory. If distributed memory is
+// enabled, it needs to ensure synchronization among all processes. Because
+// MPI_Finalize does not enforces a barrier, rank 0 creates the directory as
+// soon as possible.
+//
+// During shutdown, all ranks (including zero) call this again. The non-zero
+// ranks will wait for a certain time for the directory to be created. Rank
+// zero, will just return immediatelly.
+//
+// If distributed memory is not enabled, this function is not called in advance,
+// so it will be called at shutdown for the first time and rank 0 (the only
+// rank) will create the directory in-situ.
+std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
+{
+	if (_rank == 0) {
+		// Only rank 0 creates the directory
+		if (_finalTracePath != "") {
+			return _finalTracePath;
+		}
+
+		// Make trace directory path and ensure it is unused
+		_finalTracePath = prepareTraceDirectoryPath(_finalTraceBasePath, _binaryName);
+		int ret = mkdir(_finalTracePath.c_str(), 0766);
+		if (ret != 0) {
+			FatalErrorHandler::fail(
+				"ctf: Failed to create trace directories: ",
+				std::strerror(errno)
+			);
+		}
+	} else {
+		// The others, if any, wait for the directory
+		int ret;
+		struct stat st;
+		const int waitForSeconds = 30;
+		const int waitIntervalMicroSeconds = 5000;
+
+		// Make the expected trace directory path
+		_finalTracePath = mkTraceDirectoryName(_finalTraceBasePath, _binaryName);
+
+		// Wait some time for the directory (created by rank 0) to be
+		// visible for us in the filesystem
+		std::time_t start = std::time(nullptr);
+		std::time_t current = start;
+		while (
+			((ret = stat(_finalTracePath.c_str(), &st)) != 0) &&
+			(current - start) < waitForSeconds
+		) {
+			usleep(waitIntervalMicroSeconds);
+			current = std::time(nullptr);
+		}
+
+		if (ret != 0) {
+			FatalErrorHandler::fail(
+				"ctf: Timed out while waiting for trace directory to be created: ",
+				std::strerror(errno)
+			);
+		}
+
+		if (!S_ISDIR(st.st_mode)) {
+			FatalErrorHandler::fail(
+				"ctf: Timed out while waiting for trace directory to be created: "
+				+ _finalTracePath + " is not a directory"
+			);
+		}
+	}
+
+	return _finalTracePath;
 }
 
 static std::string getFullBinaryName()
@@ -261,9 +352,14 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 	//
 	std::cout << "Moving trace to current directory, please wait... " << std::flush;
 
-	// create final trace name
-	std::string finalTracePath = mkTraceDirectoryName(_finalTraceBasePath,
-							  _binaryName, _pid);
+	// Create final trace directory
+	std::string finalTracePath = makeFinalTraceDirectory();
+
+	// Add a subdirectory per rank if distributed memory is enabled
+	if (_numberOfRanks != 0) {
+		finalTracePath += "/" + std::to_string(_rank);
+	}
+
 	// copy temporal trace into final destination
 	if (!copyDir(_tmpTracePath, finalTracePath)) {
 		std::cerr << "Warning: ctf: The trace could not be moved to the current directory. Please copy the trace manually"
