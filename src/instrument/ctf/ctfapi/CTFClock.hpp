@@ -9,13 +9,8 @@
 
 #include <time.h>
 
-// We prefer CLOCK_MONOTONIC_RAW to prevent dynamic NTF time adjustments.
-// However, if the system does not support it, we fall back to CLOCK_MONOTONIC
-
-#ifdef CLOCK_MONOTONIC_RAW
-#define CTF_CLOCK CLOCK_MONOTONIC_RAW
-#else
+// Always use the CLOCK_MONOTONIC clock as it is drift-corrected by NTP,
+// and is not affected by time jumps.
 #define CTF_CLOCK CLOCK_MONOTONIC
-#endif
 
 #endif // CTF_CLOCK_HPP
