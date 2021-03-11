@@ -22,7 +22,6 @@ namespace Instrument {
 		CPULocalData *cpuLocalData = getCTFCPULocalData();
 		CTFAPI::CTFStream *userStream = cpuLocalData->userStream;
 		CTFAPI::CTFKernelStream *kernelStream = cpuLocalData->kernelStream;
-		assert(kernelStream != nullptr);
 		assert(userStream != nullptr);
 
 		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(userStream, userStream);
