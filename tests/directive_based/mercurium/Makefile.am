@@ -319,7 +319,7 @@ blocking_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 blocking_mercurium_test_SOURCES = ../blocking/blocking.cpp
 blocking_mercurium_test_CPPFLAGS = -DNDEBUG
 blocking_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-blocking_mercurium_test_LDFLAGS = $(test_common_debug_ldflags)
+blocking_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 events_mercurium_debug_test_SOURCES = ../events/events.cpp
 events_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -328,7 +328,7 @@ events_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 events_mercurium_test_SOURCES = ../events/events.cpp
 events_mercurium_test_CPPFLAGS = -DNDEBUG
 events_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-events_mercurium_test_LDFLAGS = $(test_common_debug_ldflags)
+events_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 events_dep_mercurium_debug_test_SOURCES = ../events/events-dep.cpp
 events_dep_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -337,7 +337,7 @@ events_dep_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 events_dep_mercurium_test_SOURCES = ../events/events-dep.cpp
 events_dep_mercurium_test_CPPFLAGS = -DNDEBUG
 events_dep_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-events_dep_mercurium_test_LDFLAGS = $(test_common_debug_ldflags)
+events_dep_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 onready_mercurium_debug_test_SOURCES = ../onready/onready.cpp
 onready_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -364,7 +364,7 @@ scheduling_wait_for_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 scheduling_wait_for_mercurium_test_SOURCES = ../scheduling/scheduling-wait-for.cpp
 scheduling_wait_for_mercurium_test_CPPFLAGS = -DNDEBUG
 scheduling_wait_for_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-scheduling_wait_for_mercurium_test_LDFLAGS = $(test_common_debug_ldflags)
+scheduling_wait_for_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 fibonacci_mercurium_debug_test_SOURCES = ../fibonacci/fibonacci.cpp
 fibonacci_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -373,7 +373,7 @@ fibonacci_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 fibonacci_mercurium_test_SOURCES = ../fibonacci/fibonacci.cpp
 fibonacci_mercurium_test_CPPFLAGS = -DNDEBUG
 fibonacci_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-fibonacci_mercurium_test_LDFLAGS = $(test_common_debug_ldflags)
+fibonacci_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 cpu_activation_mercurium_debug_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-activation/ConditionVariable.hpp
 cpu_activation_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

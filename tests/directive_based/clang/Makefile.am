@@ -266,7 +266,7 @@ blocking_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 blocking_clang_test_SOURCES = ../blocking/blocking.cpp
 blocking_clang_test_CPPFLAGS = -DNDEBUG
 blocking_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-blocking_clang_test_LDFLAGS = $(test_common_debug_ldflags)
+blocking_clang_test_LDFLAGS = $(test_common_ldflags)
 
 events_clang_debug_test_SOURCES = ../events/events.cpp
 events_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -275,7 +275,7 @@ events_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 events_clang_test_SOURCES = ../events/events.cpp
 events_clang_test_CPPFLAGS = -DNDEBUG
 events_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-events_clang_test_LDFLAGS = $(test_common_debug_ldflags)
+events_clang_test_LDFLAGS = $(test_common_ldflags)
 
 events_dep_clang_debug_test_SOURCES = ../events/events-dep.cpp
 events_dep_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -284,7 +284,7 @@ events_dep_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 events_dep_clang_test_SOURCES = ../events/events-dep.cpp
 events_dep_clang_test_CPPFLAGS = -DNDEBUG
 events_dep_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-events_dep_clang_test_LDFLAGS = $(test_common_debug_ldflags)
+events_dep_clang_test_LDFLAGS = $(test_common_ldflags)
 
 onready_clang_debug_test_SOURCES = ../onready/onready.cpp
 onready_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -311,7 +311,7 @@ scheduling_wait_for_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 scheduling_wait_for_clang_test_SOURCES = ../scheduling/scheduling-wait-for.cpp
 scheduling_wait_for_clang_test_CPPFLAGS = -DNDEBUG
 scheduling_wait_for_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-scheduling_wait_for_clang_test_LDFLAGS = $(test_common_debug_ldflags)
+scheduling_wait_for_clang_test_LDFLAGS = $(test_common_ldflags)
 
 fibonacci_clang_debug_test_SOURCES = ../fibonacci/fibonacci.cpp
 fibonacci_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -320,7 +320,7 @@ fibonacci_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 fibonacci_clang_test_SOURCES = ../fibonacci/fibonacci.cpp
 fibonacci_clang_test_CPPFLAGS = -DNDEBUG
 fibonacci_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-fibonacci_clang_test_LDFLAGS = $(test_common_debug_ldflags)
+fibonacci_clang_test_LDFLAGS = $(test_common_ldflags)
 
 cpu_activation_clang_debug_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-activation/ConditionVariable.hpp
 cpu_activation_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
