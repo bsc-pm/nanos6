@@ -38,6 +38,8 @@ base_tests += \
 	blocking.clang.test \
 	events.clang.test \
 	events-dep.clang.test \
+	onready.clang.test \
+	onready-events.clang.test \
 	scheduling-wait-for.clang.test \
 	fibonacci.clang.test \
 	dep-nonest.clang.test \
@@ -128,6 +130,8 @@ base_tests +=  \
 	blocking.clang.debug.test \
 	events.clang.debug.test \
 	events-dep.clang.debug.test \
+	onready.clang.debug.test \
+	onready-events.clang.debug.test \
 	scheduling-wait-for.clang.debug.test \
 	fibonacci.clang.debug.test \
 	dep-nonest.clang.debug.test \
@@ -281,6 +285,24 @@ events_dep_clang_test_SOURCES = ../events/events-dep.cpp
 events_dep_clang_test_CPPFLAGS = -DNDEBUG
 events_dep_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 events_dep_clang_test_LDFLAGS = $(test_common_debug_ldflags)
+
+onready_clang_debug_test_SOURCES = ../onready/onready.cpp
+onready_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+onready_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+onready_clang_test_SOURCES = ../onready/onready.cpp
+onready_clang_test_CPPFLAGS = -DNDEBUG
+onready_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+onready_clang_test_LDFLAGS = $(test_common_ldflags)
+
+onready_events_clang_debug_test_SOURCES = ../onready/onready-events.cpp
+onready_events_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+onready_events_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+onready_events_clang_test_SOURCES = ../onready/onready-events.cpp
+onready_events_clang_test_CPPFLAGS = -DNDEBUG
+onready_events_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+onready_events_clang_test_LDFLAGS = $(test_common_ldflags)
 
 scheduling_wait_for_clang_debug_test_SOURCES = ../scheduling/scheduling-wait-for.cpp
 scheduling_wait_for_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
