@@ -33,6 +33,7 @@ ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.c
 ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.converter.location");
 ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.converter.enabled");
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
+const int CTFAPI::CTFTrace::_traceVersion = 1;
 
 static bool copyFile(std::string &src, std::string &dst)
 {
@@ -190,6 +191,13 @@ std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
 				std::strerror(errno)
 			);
 		}
+
+		// Create info file
+		std::ofstream infoFile;
+		infoFile.open(_finalTracePath + "/.info");
+		infoFile << "nanos6_trace_version = "<< std::to_string(_traceVersion)  << "\n";
+		infoFile.close();
+		FatalErrorHandler::failIf(infoFile.bad(), "ctf: Failed to create .info file");
 	} else {
 		// The others, if any, wait for the directory
 		int ret;

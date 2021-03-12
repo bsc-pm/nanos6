@@ -17,6 +17,7 @@ std::string CTFAPI::CTFMetadata::_cpuList;
 uint32_t CTFAPI::CTFMetadata::_externalThreadsCount = 0;
 const char *CTFAPI::CTFMetadata::_meta_commonEnv =
 	"	/* ctf2prv converter variables */\n"
+	"	nanos6_trace_version = %d;\n"
 	"	cpu_list = \"%s\";\n"
 	"	external_thread_count = %" PRIu32 "; // LT + ETs\n"
 	"	binary_name = \"%s\";\n"
@@ -52,6 +53,7 @@ void CTFAPI::CTFMetadata::printCommonMetaEnv(FILE *f)
 	CTFTrace &trace = CTFTrace::getInstance();
 
 	fprintf(f, _meta_commonEnv,
+		CTFTrace::getTraceVersion(),
 		_cpuList.c_str(),
 		_externalThreadsCount,
 		trace.getBinaryName(),

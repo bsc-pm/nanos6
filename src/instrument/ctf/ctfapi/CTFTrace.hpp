@@ -27,11 +27,17 @@ namespace CTFAPI {
 			return instance;
 		}
 
+		static int getTraceVersion()
+		{
+			return _traceVersion;
+		}
+
 	private:
 		static ConfigVariable<std::string> _defaultTemporalPath;
 		static ConfigVariable<std::string> _ctf2prvWrapper;
 		static ConfigVariable<bool> _ctf2prvEnabled;
 		static EnvironmentVariable<std::string> _systemPATH;
+		static const int _traceVersion;
 
 		std::string _finalTracePath;
 		std::string _finalTraceBasePath;
