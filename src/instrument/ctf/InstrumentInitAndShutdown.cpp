@@ -263,10 +263,9 @@ void Instrument::shutdown()
 	delete externalThreadStream;
 	delete Instrument::getCTFVirtualCPULocalData();
 
-	// move tracing files to final directory
+	// Convert and move tracing files to final directory
 	trace.convertToParaver();
 	trace.moveTemporalTraceToFinalDirectory();
-	trace.clean();
 
 	// Disabling kernel tracing takes a considerable amount of time. Warn
 	// the user of it.
@@ -283,6 +282,9 @@ void Instrument::shutdown()
 		}
 		std::cout << "[DONE]" << std::endl;
 	}
+
+	// cleanup trace structures
+	trace.clean();
 }
 
 void Instrument::nanos6_preinit_finished()
