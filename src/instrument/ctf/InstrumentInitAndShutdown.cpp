@@ -282,7 +282,7 @@ void Instrument::shutdown()
 	// Disabling kernel tracing takes a considerable amount of time. Warn
 	// the user about it.
 	if (kernelMetadata->enabled()) {
-		std::cout << "Shutting down Linux Kernel tracing facility, please wait... " << std::flush;
+		std::cout << trace.getLogPreamble() << "Nanos6 is shutting down the Linux Kernel tracing facility, please wait" << std::endl;
 		for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 			cpu = cpus[i];
 			assert(cpu != nullptr);
@@ -292,8 +292,9 @@ void Instrument::shutdown()
 				delete kernelStream;
 			}
 		}
-		std::cout << "[DONE]" << std::endl;
 	}
+
+	std::cout << trace.getLogPreamble() << "Nanos6 has finished processing the trace and it is ready for inspection!" << std::endl;
 
 	// cleanup trace structures
 	trace.clean();

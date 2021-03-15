@@ -176,7 +176,13 @@ static std::string prepareTraceDirectoryPath(
 // rank) will create the directory in-situ.
 std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
 {
-	if (_rank == 0) {
+	if (!isDistributedMemoryEnabled()) {
+		// If distributed memory is not enabled, we only prepare the
+		// final trace path (moving old directories as necessary) but we
+		// do not need to create the final directory yet.
+		assert(_finalTracePath == "");
+		_finalTracePath = prepareTraceDirectoryPath(_finalTraceBasePath, _binaryName);
+	} else if (_rank == 0) {
 		// Only rank 0 creates the directory
 		if (_finalTracePath != "") {
 			return _finalTracePath;
@@ -204,6 +210,8 @@ std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
 		struct stat st;
 		const int waitForSeconds = 30;
 		const int waitIntervalMicroSeconds = 5000;
+
+		assert(_finalTracePath == "");
 
 		// Make the expected trace directory path
 		_finalTracePath = mkTraceDirectoryName(_finalTraceBasePath, _binaryName);
@@ -357,14 +365,13 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 {
 	// TODO do not copy the trace if it's located in the same filesystem,
 	// just rename it
-	//
-	std::cout << "Moving trace to current directory, please wait... " << std::flush;
+	std::cout << getLogPreamble() << "Nanos6 is moving the trace files to their final location, please wait" << std::endl;
 
 	// Create final trace directory
 	std::string finalTracePath = makeFinalTraceDirectory();
 
 	// Add a subdirectory per rank if distributed memory is enabled
-	if (_numberOfRanks != 0) {
+	if (isDistributedMemoryEnabled()) {
 		finalTracePath += "/" + std::to_string(_rank);
 	}
 
@@ -381,8 +388,6 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 			_tmpTracePath << "could not be removed. Please, remove it manually"
 			<< std::endl;
 	}
-
-	std::cout << "[DONE] " << std::endl;
 }
 
 static bool isExecutable(const char *file)
@@ -482,7 +487,7 @@ void CTFAPI::CTFTrace::convertToParaver()
 		return;
 	}
 
-	std::cout << "Converting CTF trace to Paraver, please wait... " << std::flush;
+	std::cout << getLogPreamble() << "Nanos6 is converting the trace to Paraver, please wait" << std::endl;
 
 	// Perform the conversion!
 	std::string command = converter + " " + _tmpTracePath;
@@ -492,8 +497,6 @@ void CTFAPI::CTFTrace::convertToParaver()
 		"ctf: automatic ctf to prv conversion failed: ",
 		strerror(errno)
 	);
-
-	std::cout << "[DONE]" << std::endl;
 }
 
 void CTFAPI::CTFTrace::initializeTraceTimer()

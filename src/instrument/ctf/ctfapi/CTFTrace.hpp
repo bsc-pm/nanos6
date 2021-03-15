@@ -45,6 +45,7 @@ namespace CTFAPI {
 		std::string _userPath;
 		std::string _kernelPath;
 		std::string _binaryName;
+		std::string _logPreamble;
 		uint64_t _pid;
 		uint32_t _rank;
 		uint32_t _numberOfRanks;
@@ -120,6 +121,16 @@ namespace CTFAPI {
 			_timeCorrection = timeCorrection;
 			_rank = rank;
 			_numberOfRanks = nranks;
+			if (isDistributedMemoryEnabled()) {
+				_logPreamble = "rank " + std::to_string(getRank()) + ": ";
+			}
+		}
+
+		inline bool isDistributedMemoryEnabled()
+		{
+			// We consider single-rank applications as non-
+			// distributed memory executions
+			return (_numberOfRanks > 1);
 		}
 
 		inline uint32_t getRank() const
@@ -130,6 +141,11 @@ namespace CTFAPI {
 		inline uint32_t getNumberOfRanks() const
 		{
 			return _numberOfRanks;
+		}
+
+		std::string getLogPreamble()
+		{
+			return _logPreamble;
 		}
 
 		inline uint64_t getAbsoluteStartTimestamp() const {
