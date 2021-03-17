@@ -53,6 +53,10 @@ int nanos6_is_distributed_instrument_enabled(void);
 
 //! \brief Setup the instrumentation in distributed executions
 //!
+//! This API provides nanos6 with distributed memory information for the current
+//! process. It might be called from within a task (typically the main task).
+//! A distributed memory barrier (such as MPI_Barrier()) must be called after this API.
+//!
 //! \param[in] info The information for distributed instrumentation
 void nanos6_setup_distributed_instrument(const nanos6_distributed_instrument_info_t *info);
 
