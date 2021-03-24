@@ -15,9 +15,9 @@
 
 
 namespace Instrument {
-	inline int isDistributedInstrumentEnabled() {
-		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
-		return trace.isDistributedMemoryEnabled();
+	inline int isDistributedInstrumentEnabled()
+	{
+		return true;
 	}
 
 	inline void setupDistributedMemoryEnvironment(
@@ -27,7 +27,7 @@ namespace Instrument {
 		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 		trace.setDistributedMemory(info->clock_offset.mean_sec,
 					   info->rank, info->num_ranks);
-		if (trace.isDistributedMemoryEnabled()) {
+		if (trace.isDistributedMemoryEnabled() && info->rank == 0) {
 			trace.makeFinalTraceDirectory();
 		}
 	}

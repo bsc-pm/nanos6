@@ -128,9 +128,7 @@ namespace CTFAPI {
 
 		inline bool isDistributedMemoryEnabled()
 		{
-			// We consider single-rank applications as non-
-			// distributed memory executions
-			return (_numberOfRanks > 1);
+			return (_numberOfRanks != 0);
 		}
 
 		inline uint32_t getRank() const
