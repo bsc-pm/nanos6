@@ -12,6 +12,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <pthread.h>
 
 #include "CPUManager.hpp"
@@ -32,6 +33,7 @@
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentWorkerThread.hpp>
+
 
 void WorkerThread::initialize()
 {
@@ -75,11 +77,35 @@ void WorkerThread::body()
 
 		// Update the CPU since the thread may have migrated
 		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
-
-		// There should not be any pre-assigned task
 		assert(_task == nullptr);
 
-		_task = Scheduler::getReadyTask(cpu, this);
+		Task *immediateSuccessor = cpu->getFirstSuccessor();
+		if (immediateSuccessor) {
+			// Draw a random number between 0.0 and 1.0
+			float randomISValue = _ISDistribution(_ISGenerator);
+
+			// Can only execute Immediate Successor if we accept replacement and probability allows us
+			bool probabilityOfIS = (randomISValue < Scheduler::getImmediateSuccessorAlpha());
+			if (!probabilityOfIS) {
+				Scheduler::addReadyTask(
+					immediateSuccessor,
+					(immediateSuccessor->getDeviceType() == cpu->getType() ? cpu : nullptr),
+					SIBLING_TASK_HINT);
+			} else {
+				// Check if the task needs to execute an onReady handler
+				if (immediateSuccessor->handleOnready(this))
+					_task = immediateSuccessor;
+
+				// Otherwise, we have no IS and should just get a scheduler task
+			}
+			cpu->setFirstSuccessor(nullptr);
+		}
+
+		// No immediate successor, get a task
+		if (_task == nullptr) {
+			_task = Scheduler::getReadyTask(cpu, this);
+		}
+
 		if (_task != nullptr) {
 			WorkerThread *assignedThread = _task->getThread();
 
@@ -110,13 +136,16 @@ void WorkerThread::body()
 
 					If0Task::executeNonInline(this, if0Task, cpu);
 				} else {
-					handleTask(cpu);
+					handleTask(cpu, true);
 				}
 
 				_task = nullptr;
 			}
 			CPUManager::checkIfMustReturnCPU(this);
 		} else {
+			// Execute polling services
+			// PollingAPI::handleServices();
+
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}
@@ -134,7 +163,7 @@ void WorkerThread::body()
 	ThreadManager::addShutdownThread(this);
 }
 
-void WorkerThread::handleTask(CPU *cpu)
+void WorkerThread::handleTask(CPU *cpu, bool)
 {
 	assert(_task != nullptr);
 	assert(cpu != nullptr);
@@ -165,8 +194,6 @@ void WorkerThread::handleTask(CPU *cpu)
 	// Execute the task
 	if (_task != nullptr) {
 		executeTask(cpu);
-
-		_task = nullptr;
 	}
 
 	Instrument::exitHandleTask();

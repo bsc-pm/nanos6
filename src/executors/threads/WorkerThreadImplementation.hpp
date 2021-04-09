@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef WORKER_THREAD_IMPLEMENTATION_HPP
@@ -20,7 +20,7 @@
 
 inline WorkerThread::WorkerThread(CPU *cpu)
 	: WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
-	_instrumentationData(), _hwCounters(), _replacementCount(0)
+	_instrumentationData(), _hwCounters(), _replacementCount(0), _ISDistribution(0.0, 1.0)
 {
 	_originalNumaNode = cpu->getNumaNodeId();
 	Instrument::enterThreadCreation(/* OUT */ _instrumentationId, cpu->getInstrumentationId());
@@ -78,7 +78,7 @@ inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 
 	// Run the task
 	_task = task;
-	handleTask(cpu);
+	handleTask(cpu, false);
 
 	// Restore the initial task
 	_task = oldTask;

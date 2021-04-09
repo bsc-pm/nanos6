@@ -148,7 +148,7 @@ bool Throttle::engage(Task *creator, WorkerThread *workerThread)
 
 	if (replacement != nullptr && workerThread->isTaskReplaceable()) {
 		workerThread->replaceTask(replacement);
-		workerThread->handleTask(currentCPU);
+		workerThread->handleTask(currentCPU, false);
 
 		// Restore
 		workerThread->restoreTask(creator);

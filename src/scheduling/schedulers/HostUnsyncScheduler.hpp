@@ -21,15 +21,11 @@ class HostUnsyncScheduler : public UnsyncScheduler {
 	taskfor_group_slots_t _groupSlots;
 
 public:
-	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor) :
-		UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
+	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority) :
+		UnsyncScheduler(policy, enablePriority)
 	{
 		size_t groups = CPUManager::getNumTaskforGroups();
 		_groupSlots = taskfor_group_slots_t(groups, nullptr);
-
-		if (enableImmediateSuccessor) {
-			_immediateSuccessorTaskfors = immediate_successor_tasks_t(groups*2, nullptr);
-		}
 
 		_deadlineTasks = new DeadlineQueue(policy);
 		assert(_deadlineTasks != nullptr);

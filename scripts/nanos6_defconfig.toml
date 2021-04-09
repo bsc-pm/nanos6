@@ -29,10 +29,10 @@
 	# Choose the task scheduling policy. Default is "fifo"
 	# Possible values: "fifo", "lifo"
 	policy = "fifo"
-	# Enable the immediate successor feature to improve cache data reutilization between successor
-	# tasks. If enabled, when a CPU finishes a task it starts executing the successor task (computed
-	# through their data dependencies). Default is true
-	immediate_successor = true
+	# Probability of enabling the immediate successor feature to improve cache data reutilization between
+	# successor tasks. If enabled, when a CPU finishes a task it starts executing the successor task
+	# (computed through their data dependencies). Default is 1.0
+	immediate_successor = 1.0
 	# Indicate whether the scheduler should consider task priorities defined by the user in the
 	# task's priority clause. Default is true
 	priority = true

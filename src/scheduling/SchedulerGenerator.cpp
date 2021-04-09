@@ -12,17 +12,15 @@
 HostScheduler *SchedulerGenerator::createHostScheduler(
 	size_t totalComputePlaces,
 	SchedulingPolicy policy,
-	bool enablePriority,
-	bool enableImmediateSuccessor)
+	bool enablePriority)
 {
-	return new HostScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor);
+	return new HostScheduler(totalComputePlaces, policy, enablePriority);
 }
 
 DeviceScheduler *SchedulerGenerator::createDeviceScheduler(
 	size_t totalComputePlaces,
 	SchedulingPolicy policy,
 	bool enablePriority,
-	bool enableImmediateSuccessor,
 	nanos6_device_t deviceType)
 {
 	// If there are no devices, disable the scheduler
@@ -35,7 +33,6 @@ DeviceScheduler *SchedulerGenerator::createDeviceScheduler(
 				totalComputePlaces,
 				policy,
 				enablePriority,
-				enableImmediateSuccessor,
 				deviceType,
 				"CUDADeviceScheduler");
 		case nanos6_openacc_device:
@@ -43,7 +40,6 @@ DeviceScheduler *SchedulerGenerator::createDeviceScheduler(
 				totalComputePlaces,
 				policy,
 				enablePriority,
-				enableImmediateSuccessor,
 				deviceType,
 				"OpenAccDeviceScheduler");
 		case nanos6_opencl_device:

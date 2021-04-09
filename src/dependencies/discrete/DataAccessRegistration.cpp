@@ -69,13 +69,27 @@ namespace DataAccessRegistration {
 			}
 
 			CPUDependencyData::satisfied_originator_list_t &list = hpDependencyData.getSatisfiedOriginators(i);
-			if (list.size() > 0) {
-				Scheduler::addReadyTasks(
-					(nanos6_device_t)i,
-					list.getArray(),
-					list.size(),
-					computePlaceHint,
-					schedulingHint);
+			bool successorExists = (computePlace != nullptr && (computePlace->getFirstSuccessor() != nullptr));
+			if (i == nanos6_host_device && list.size() > 0 && !fromBusyThread && !successorExists && !list.getArray()[0]->isTaskforSource()) {
+				computePlace->setFirstSuccessor(list.getArray()[0]);
+
+				if (list.size() > 1) {
+					Scheduler::addReadyTasks(
+						(nanos6_device_t)i,
+						list.getArray()+1,
+						list.size()-1,
+						computePlaceHint,
+						schedulingHint);
+				}
+			} else {
+				if (list.size() > 0) {
+					Scheduler::addReadyTasks(
+						(nanos6_device_t)i,
+						list.getArray(),
+						list.size(),
+						computePlaceHint,
+						schedulingHint);
+				}
 			}
 		}
 

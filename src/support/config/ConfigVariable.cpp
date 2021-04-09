@@ -48,11 +48,12 @@ ConfigVariableSet<T>::ConfigVariableSet(const std::string &name) :
 //! are templates but we define them in this source file to cut compilation
 //! times. Processing the header of ConfigCentral and toml is very expensive
 
-template class ConfigVariable<bool>;
 template class ConfigVariable<int>;
+template class ConfigVariable<bool>;
+template class ConfigVariable<float>;
 template class ConfigVariable<size_t>;
-template class ConfigVariable<unsigned int>;
 template class ConfigVariable<std::string>;
+template class ConfigVariable<unsigned int>;
 template class ConfigVariable<StringifiedMemorySize>;
 
 template class ConfigVariableSet<std::string>;

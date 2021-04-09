@@ -22,7 +22,7 @@ public:
 	DeviceScheduler(
 		size_t totalComputePlaces,
 		SchedulingPolicy policy,
-		bool enablePriority, bool,
+		bool enablePriority,
 		nanos6_device_t deviceType,
 		std::string name
 	) :
@@ -32,7 +32,7 @@ public:
 		_totalDevices = HardwareInfo::getComputePlaceCount(deviceType);
 
 		// Immediate successor support for devices is not available yet
-		_scheduler = new DeviceUnsyncScheduler(policy, enablePriority, false);
+		_scheduler = new DeviceUnsyncScheduler(policy, enablePriority);
 	}
 
 	inline Task *getReadyTask(ComputePlace *computePlace)

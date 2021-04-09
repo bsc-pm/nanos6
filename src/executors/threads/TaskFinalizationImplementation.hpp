@@ -25,15 +25,16 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadId.hpp>
 
-void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool fromBusyThread)
+void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool)
 {
 	assert(task != nullptr);
-	//! Decrease the _countdownToBeWokenUp of the task, which was initialized to 1.
-	//! If it then becomes 0, we can propagate the counter through its parents.
+
+	// Decrease the _countdownToBeWokenUp of the task, which was initialized to 1.
+	// If it then becomes 0, we can propagate the counter through its parents.
 	bool ready = task->finishChild();
 
-	//! We always use a local CPUDependencyData struct here to avoid issues
-	//! with re-using an already used CPUDependencyData
+	// We always use a local CPUDependencyData struct here to avoid issues
+	// with re-using an already used CPUDependencyData
 	CPUDependencyData *localHpDependencyData = nullptr;
 
 	while ((task != nullptr) && ready) {
@@ -56,7 +57,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 						task, computePlace,
 						*localHpDependencyData,
 						/* memory place */ nullptr,
-						fromBusyThread
+						true
 					);
 
 					// This is just to emulate a recursive call to TaskFinalization::taskFinished() again.
@@ -120,7 +121,6 @@ void TaskFinalization::disposeTask(Task *task)
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
 	while ((task != nullptr) && disposable) {
 		Task *parent = task->getParent();
-
 		assert(task->hasFinished());
 
 		disposable = task->unlinkFromParent();

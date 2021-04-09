@@ -116,6 +116,11 @@ public:
 	{
 		return SchedulerInterface::isPriorityEnabled();
 	}
+
+	static inline float getImmediateSuccessorAlpha()
+	{
+		return SchedulerInterface::getImmediateSuccessorAlpha();
+	}
 };
 
 #endif // SCHEDULER_HPP

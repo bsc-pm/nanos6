@@ -13,8 +13,8 @@
 
 class DeviceUnsyncScheduler : public UnsyncScheduler {
 public:
-	DeviceUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
-		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
+	DeviceUnsyncScheduler(SchedulingPolicy policy, bool enablePriority)
+		: UnsyncScheduler(policy, enablePriority)
 	{
 		_numQueues = 1;
 		_queues = (ReadyQueue **) MemoryAllocator::alloc(sizeof(ReadyQueue *));

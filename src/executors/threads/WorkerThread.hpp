@@ -7,6 +7,8 @@
 #ifndef WORKER_THREAD_HPP
 #define WORKER_THREAD_HPP
 
+#include <random>
+
 #include "DependencyDomain.hpp"
 #include "WorkerThreadBase.hpp"
 #include "hardware-counters/ThreadHardwareCounters.hpp"
@@ -40,12 +42,18 @@ private:
 	static constexpr size_t _maxReplaceCount = 16;
 
 	void initialize();
-	void handleTask(CPU *cpu);
+	void handleTask(CPU *cpu, bool);
 	void executeTask(CPU *cpu);
 
 	friend class ThreadManager;
 	friend class WorkerThreadRunner;
 	friend class Throttle;
+
+	//! Immediate successor probability generator
+	//! NOTE: Need one per WorkerThread as we want the distribution to act
+	//! in chain within each thread
+	std::default_random_engine _ISGenerator;
+	std::uniform_real_distribution<float> _ISDistribution;
 
 public:
 	WorkerThread() = delete;
