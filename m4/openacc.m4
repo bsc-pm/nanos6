@@ -27,7 +27,7 @@ AC_DEFUN([AC_PGI_VERSION_SELECT],
 				# 20.4 appears to break nanos6 loader even with all libraries linked
 				#ac_manual_pgi_acc_libs="-lacchost -laccdevice -lpgiman -lnvc -lnvomp -lcudadevice -lpgmath"
 				#;;
-			20.7*|20.9*|20.11*)
+			20.7*|20.9*|20.11*|21.*)
 				ac_manual_pgi_acc_libs="-lacchost -laccdevice -lnvhpcman -lnvc"
 				;;
 			*)
