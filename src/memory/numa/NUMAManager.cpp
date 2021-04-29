@@ -19,8 +19,9 @@ NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAnyActive;
 std::atomic<bool> NUMAManager::_trackingEnabled;
 ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
 ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
-ConfigVariable<std::string> NUMAManager::_discoverPageSize("numa.discover");
+ConfigVariable<bool> NUMAManager::_discoverPageSize("numa.discover");
 size_t NUMAManager::_realPageSize;
+int NUMAManager::_maxOSIndex;
 std::vector<int> NUMAManager::_logicalToOsIndex;
 
 #ifndef NDEBUG
@@ -151,7 +152,8 @@ void NUMAManager::discoverRealPageSize()
 
 	bitmask_t bitmaskCopy = _bitmaskNumaAnyActive;
 	assert(BitManipulation::countEnabledBits(&bitmaskCopy) > 1);
-	struct bitmask *tmpBitmask = numa_bitmask_alloc(HardwareInfo::getMemoryPlaceCount(nanos6_host_device));
+	assert(_maxOSIndex > 0);
+	struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex);
 	for (size_t i = 0; i < sizeAlloc; i += pageSize) {
 		// Touch first page using current CPU, and then the rest using the other.
 		// Thus, the first page that has a different NUMA id indicates us the

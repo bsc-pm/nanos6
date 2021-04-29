@@ -116,10 +116,10 @@ ConfigCentral::ConfigCentral() :
 	registerOption<bool_t>("monitoring.wisdom", false);
 
 	// NUMA support
+	registerOption<bool_t>("numa.discover", true);
 	registerOption<bool_t>("numa.report", false);
 	registerOption<bool_t>("numa.scheduling", true);
 	registerOption<string_t>("numa.tracking", "auto");
-	registerOption<string_t>("numa.discover", "auto");
 
 	// Scheduler
 	registerOption<bool_t>("scheduler.immediate_successor", true);

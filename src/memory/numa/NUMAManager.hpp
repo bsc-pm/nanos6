@@ -25,6 +25,7 @@
 #include "support/MathSupport.hpp"
 #include "support/config/ConfigVariable.hpp"
 
+#include <DataAccessRegistration.hpp>
 #include <MemoryAllocator.hpp>
 
 struct DirectoryInfo {
@@ -74,10 +75,14 @@ private:
 	//! Whether should report NUMA information
 	static ConfigVariable<bool> _reportEnabled;
 
-	//! The discoverPageSize mode "on", "off" or "auto"
-	static ConfigVariable<std::string> _discoverPageSize;
+	//! Wether the automatic page discovery is enabled or disabled
+	static ConfigVariable<bool> _discoverPageSize;
+
 	//! Real pagesize (especially important in case of THP)
 	static size_t _realPageSize;
+
+	//! Maximum OS Index for a NUMA node
+	static int _maxOSIndex;
 
 	//! Array to get the corresponding OS index of a logical index
 	static std::vector<int> _logicalToOsIndex;
@@ -127,6 +132,8 @@ public:
 			}
 		}
 
+		_maxOSIndex = -1;
+
 		// Enable corresponding bits in the bitmasks
 		for (size_t numaNode = 0; numaNode < cpusPerNumaNode.size(); numaNode++) {
 			NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
@@ -150,6 +157,16 @@ public:
 					}
 				}
 			}
+
+			if (osIndex > _maxOSIndex)
+				_maxOSIndex = osIndex;
+		}
+
+		// Page auto-discovery will be enabled if we have at least two active NUMA nodes and tracking is enabled or automatic
+		if (_discoverPageSize.getValue() && (trackingMode == "auto" || trackingMode == "on") && numNumaAnyActive > 1) {
+			discoverRealPageSize();
+		} else {
+			_realPageSize = HardwareInfo::getPageSize();
 		}
 
 		if (_reportEnabled) {
@@ -187,14 +204,6 @@ public:
 			return res;
 		}
 
-		if (_realPageSize == 0) {
-			std::string discoverPageSize = _discoverPageSize.getValue();
-			if (discoverPageSize == "auto") {
-				discoverRealPageSize();
-			} else {
-				_realPageSize = std::atoi(discoverPageSize.c_str());
-			}
-		}
 		assert(_realPageSize != 0);
 
 		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
@@ -231,7 +240,7 @@ public:
 		_allocations.emplace(res, size);
 		_allocationsLock.unlock();
 
-		struct bitmask *tmpBitmask = numa_bitmask_alloc(HardwareInfo::getMemoryPlaceCount(nanos6_host_device));
+		struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex);
 		for (size_t i = 0; i < size; i += blockSize) {
 			uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
@@ -268,8 +277,15 @@ public:
 	{
 		assert(size > 0);
 
+		size_t pageSize = HardwareInfo::getPageSize();
 		if (!enableTrackingIfAuto()) {
-			void *res = malloc(size);
+			void *res = nullptr;
+			if (size < pageSize) {
+				res = malloc(size);
+			} else {
+				int err = posix_memalign(&res, pageSize, size);
+				FatalErrorHandler::failIf(err != 0);
+			}
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 			return res;
 		}
@@ -278,10 +294,12 @@ public:
 		assert(blockSize > 0);
 
 		bitmask_t bitmaskCopy = *bitmask;
+		assert(_realPageSize != 0);
+
+		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
+		assert(pageSize > 0);
 
 		void *res = nullptr;
-		size_t pageSize = _realPageSize;
-
 		if (size < pageSize) {
 			// Use malloc for small allocations
 			res = malloc(size);
@@ -533,7 +551,7 @@ private:
 		}
 
 		std::string trackingMode = _trackingMode.getValue();
-		if (trackingMode == "auto" && getValidTrackingNodes() > 1) {
+		if (trackingMode == "auto" && getValidTrackingNodes() > 1 && DataAccessRegistration::supportsDataTracking()) {
 			_trackingEnabled.store(true, std::memory_order_release);
 			return true;
 		}
