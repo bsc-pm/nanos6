@@ -19,6 +19,7 @@ ConfigVariable<size_t> CPUManagerInterface::_taskforGroups("taskfor.groups");
 ConfigVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("taskfor.report");
 CPUManagerPolicyInterface *CPUManagerInterface::_cpuManagerPolicy;
 ConfigVariable<std::string> CPUManagerInterface::_policyChosen("cpumanager.policy");
+cpumanager_policy_t CPUManagerInterface::_policyId;
 size_t CPUManagerInterface::_firstCPUId;
 CPU *CPUManagerInterface::_leaderThreadCPU;
 

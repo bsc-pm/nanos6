@@ -19,6 +19,7 @@
 #include "lowlevel/DelegationLock.hpp"
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class SyncScheduler {
@@ -58,6 +59,12 @@ private:
 	//! too much time
 	size_t _maxServedTasks;
 
+	//! Number of served tasks since the last task was assigned
+	size_t _totalServedTasks;
+
+	//! The maximum number of iterations to wait before assigning a null task
+	static ConfigVariable<size_t> _numBusyIters;
+
 public:
 	//! NOTE We initialize the delegation lock with 2 * numCPUs since some
 	//! threads may oversubscribe and thus we may need more than numCPUs
@@ -68,7 +75,8 @@ public:
 		_totalComputePlaces(totalComputePlaces),
 		_lock((uint64_t) totalComputePlaces * 2),
 		_servingTasks(false),
-		_maxServedTasks(totalComputePlaces * 20)
+		_maxServedTasks(totalComputePlaces * 20),
+		_totalServedTasks(0)
 	{
 		uint64_t totalCPUsPow2 = SchedulerSupport::roundToNextPowOf2(_totalComputePlaces);
 		assert(SchedulerSupport::isPowOf2(totalCPUsPow2));

@@ -451,9 +451,10 @@ To implement a polling task, we recommend spawning a function using the `nanos6_
 Currently, Nanos6 offers different policies when handling CPUs through the `cpumanager.policy` configuration variable:
 * `cpumanager.policy = "idle"`: Activates the `idle` policy, in which idle threads halt on a blocking condition, while not consuming CPU cycles.
 * `cpumanager.policy = "busy"`: Activates the `busy` policy, in which idle threads continue spinning and never halt, consuming CPU cycles.
+* `cpumanager.policy = "hybrid"`: Activates the `hybrid` policy, in which idle threads spin for a specific number of iterations before halting on a blocking condition. The number of iterations is controlled by the `cpumanager.busy_iters` configuration variable, which defaults to 5000 iterations.
 * `cpumanager.policy = "lewi"`: If DLB is enabled, activates the LeWI policy. Similarly to the idle policy, in this one idle threads lend their CPU to other runtimes or processes.
 * `cpumanager.policy = "greedy"`: If DLB is enabled, activates the `greedy` policy, in which CPUs from the process' mask are never lent, but allows acquiring and lending external CPUs.
-* `cpumanager.policy = "default"`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `idle` policy, while if DLB is enabled it falls back to the `lewi` policy.
+* `cpumanager.policy = "default"`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `hybrid` policy, while if DLB is enabled it falls back to the `lewi` policy.
 
 ## Throttle
 
@@ -478,7 +479,7 @@ Although the throttle feature is disabled by default, it can be enabled and tunn
 ## NUMA support
 
 Nanos6 includes NUMA support based on three main components: an allocation/deallocation API, a data tracking system and a locality-aware scheduler.
-When allocating memory using the nanos6 NUMA API, we annotate in our directory the location of the data. Then, when a task becomes ready, we check where is each of the data dependences of the task, and schedule the task to be run in the NUMA node with a greater share of its data. The NUMA support can be handled through the `numa.tracking` configuration varible: 
+When allocating memory using the nanos6 NUMA API, we annotate in our directory the location of the data. Then, when a task becomes ready, we check where is each of the data dependences of the task, and schedule the task to be run in the NUMA node with a greater share of its data. The NUMA support can be handled through the `numa.tracking` configuration variable:
 * `numa.tracking = "on"`: Enables the NUMA support.
 * `numa.tracking = "off"`: Disables the NUMA support.
 * `numa.tracking = "auto"`: The NUMA support is enabled in the first allocation done using the Nanos6 NUMA API. If no allocation is done, the support is never enabled.

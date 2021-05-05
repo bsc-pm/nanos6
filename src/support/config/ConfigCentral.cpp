@@ -25,6 +25,7 @@ ConfigCentral::ConfigCentral() :
 
 	// CPU manager
 	registerOption<string_t>("cpumanager.policy", "default");
+	registerOption<size_t>("cpumanager.busy_iters", 5000);
 
 	// CUDA devices
 	registerOption<integer_t>("devices.cuda.page_size", 0x8000);

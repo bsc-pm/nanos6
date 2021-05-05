@@ -8,6 +8,8 @@
 
 #include <InstrumentScheduler.hpp>
 
+ConfigVariable<size_t> SyncScheduler::_numBusyIters("cpumanager.busy_iters");
+
 Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {
 	assert(computePlace != nullptr);
@@ -60,14 +62,34 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			if (task != nullptr)
 				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
 
-			// Assign the task to the waiting compute place even if it nullptr. The
-			// responsible for serving tasks is the current compute place, and we
-			// want to avoid changing the responsible constantly, as happened in the
-			// original implementation
-			_lock.setItem(computePlaceIdx, task);
+			// If we are using the hybrid policy, avoid assigning tasks even if
+			// none are found, so that threads do not spin in their body to avoid
+			// contention in here. The "responsible" thread will be the one busy
+			// iterating until the criteria of max busy iterations is met
+			if (CPUManager::getPolicyId() == HYBRID_POLICY) {
+				if (task != nullptr || _totalServedTasks >= _numBusyIters) {
+					_totalServedTasks = 0;
 
-			// Unblock the served compute place and advance to the next one
-			_lock.popFront();
+					// Assign the task to the waiting compute place even if it is nullptr. The
+					// responsible for serving tasks is the current compute place, and we want
+					// to avoid changing the responsible constantly, as happened in the original
+					// implementation
+					_lock.setItem(computePlaceIdx, task);
+
+					// Unblock the served compute place and advance to the next one
+					_lock.popFront();
+				}
+
+				_totalServedTasks++;
+			} else {
+				// Assign the task to the waiting compute place even if it is nullptr. The
+				// responsible for serving tasks is the current compute place, and we want
+				// to avoid changing the responsible constantly, as happened in the original
+				// implementation
+				_lock.setItem(computePlaceIdx, task);
+
+				_lock.popFront();
+			}
 
 			servedTasks++;
 			if (task == nullptr)

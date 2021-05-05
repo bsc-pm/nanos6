@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_HPP
@@ -57,6 +57,13 @@ public:
 
 		// Mark that the CPU Manager has finished preinitialization
 		_preinitialized = true;
+	}
+
+	static inline cpumanager_policy_t getPolicyId()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->getPolicyId();
 	}
 
 	//! \brief Check whether DLB is enabled

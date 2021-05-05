@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -47,8 +47,10 @@ void DLBCPUManager::preinitialize()
 	std::string policyValue = _policyChosen.getValue();
 	if (policyValue == "default" || policyValue == "lewi") {
 		_cpuManagerPolicy = new LeWIPolicy(numCPUs);
+		_policyId = LEWI_POLICY;
 	} else if (policyValue == "greedy") {
 		_cpuManagerPolicy = new GreedyPolicy(numCPUs);
+		_policyId = GREEDY_POLICY;
 	} else {
 		FatalErrorHandler::fail("Unexistent '", policyValue, "' CPU Manager Policy");
 	}
