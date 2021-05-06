@@ -153,7 +153,7 @@ void NUMAManager::discoverRealPageSize()
 	bitmask_t bitmaskCopy = _bitmaskNumaAnyActive;
 	assert(BitManipulation::countEnabledBits(&bitmaskCopy) > 1);
 	assert(_maxOSIndex > 0);
-	struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex);
+	struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex + 1);
 	for (size_t i = 0; i < sizeAlloc; i += pageSize) {
 		// Touch first page using current CPU, and then the rest using the other.
 		// Thus, the first page that has a different NUMA id indicates us the

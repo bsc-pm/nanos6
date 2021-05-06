@@ -240,7 +240,7 @@ public:
 		_allocations.emplace(res, size);
 		_allocationsLock.unlock();
 
-		struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex);
+		struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex + 1);
 		for (size_t i = 0; i < size; i += blockSize) {
 			uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
