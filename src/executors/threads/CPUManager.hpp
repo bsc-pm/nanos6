@@ -59,7 +59,7 @@ public:
 		_preinitialized = true;
 	}
 
-	static inline cpumanager_policy_t getPolicyId()
+	static inline CPUManagerPolicy getPolicyId()
 	{
 		assert(_cpuManager != nullptr);
 

@@ -16,7 +16,7 @@ enum CPUManagerPolicyHint {
 	HANDLE_TASKFOR
 };
 
-enum cpumanager_policy_t {
+enum CPUManagerPolicy {
 	IDLE_POLICY,
 	BUSY_POLICY,
 	HYBRID_POLICY,

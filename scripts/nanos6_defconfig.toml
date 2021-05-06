@@ -40,7 +40,7 @@
 [cpumanager]
 	# The underlying policy of the CPU manager for the handling of CPUs. Default is "default", which
 	# corresponds to "idle"
-	# Possible values: "default", "idle", "hybrid", "busy", "lewi", "greedy"
+	# Possible values: "default", "idle", "busy", "hybrid", "lewi", "greedy"
 	policy = "default"
 	# The maximum number of iterations to busy wait for before idling. Default is "5000". Only
 	# works for the 'hybrid' policy

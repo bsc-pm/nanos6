@@ -55,7 +55,7 @@ protected:
 	static ConfigVariable<std::string> _policyChosen;
 
 	//! The identifier of the policy
-	static cpumanager_policy_t _policyId;
+	static CPUManagerPolicy _policyId;
 
 	//! The virtual id of the first owned CPU of this process
 	static size_t _firstCPUId;
@@ -139,7 +139,7 @@ public:
 	virtual void initialize() = 0;
 
 	//! \brief Get the CPU manager's policy id
-	inline cpumanager_policy_t getPolicyId()
+	inline CPUManagerPolicy getPolicyId() const
 	{
 		return _policyId;
 	}
