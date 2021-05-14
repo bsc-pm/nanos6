@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "NUMAManager.hpp"
@@ -133,81 +133,125 @@ uint64_t NUMAManager::getTrackingNodes()
 
 void NUMAManager::discoverRealPageSize()
 {
-	// Discover pagesize
-	// In systems with Transparent Huge Pages (THP), we cannot know the THP pagesize.
-	// We try to discover it in this piece of code. Basically, we do an allocation aligned
-	// to 4MB. Then we try to distribute it in blocks of pagesize. Using move_pages, we
-	// check if the distribution is done as expected. Otherwise, it means THP is enabled.
-	// If so, we check the size of the THP by looking at the first page that has been
-	// allocated in a different NUMA node.
+	// In systems with Transparent Huge Pages (THP), we cannot know the real THP
+	// pagesize. To discover it, we allocate 32MB (16MB aligned to 16MB) and
+	// distribute the allocation in blocks of "pageSize". Using 'move_pages' we
+	// check if the distribution is done as expected. If it's not, it means THP
+	// is enabled, and we know the real size by checking the first page that is
+	// allocated in a different NUMA node
 
-	// Set up parameters of the allocation
-	size_t sizeAlloc = 16*1024*1024;
+	// Set up parameters of the allocation (32MB)
+	size_t sizeAlloc = 32*1024*1024;
+	int prot = PROT_READ | PROT_WRITE;
+	int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
+	int fd = -1;
+	int offset = 0;
+
+	// We use mmap as it returns virtual memory never allocated beforehand.
+	// 'malloc' or 'posix_memalign' could return recycled memory
+	void *tmp = mmap(nullptr, sizeAlloc, prot, flags, fd, offset);
+	FatalErrorHandler::failIf(tmp == MAP_FAILED, "Couldn't allocate memory.");
+
+	// We do this to obtain a pointer from 'tmp' aligned to 16MB
+	size_t sizeAligned = 16*1024*1024;
+	void *alignedTmp = (void *) (((uintptr_t) tmp + sizeAligned - 1) & ((uintptr_t) ~(sizeAligned - 1)));
+
+	// Page size returned by the system, we will check if THP is enabled
 	size_t pageSize = HardwareInfo::getPageSize();
-	void *tmp = nullptr;
-
-	// Actually perform the aligned allocation
-	int err = posix_memalign(&tmp, 4*1024*1024, sizeAlloc);
-	FatalErrorHandler::failIf(err != 0);
+	assert(pageSize > 0);
 
 	bitmask_t bitmaskCopy = _bitmaskNumaAnyActive;
 	assert(BitManipulation::countEnabledBits(&bitmaskCopy) > 1);
-	assert(_maxOSIndex > 0);
-	struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex + 1);
-	for (size_t i = 0; i < sizeAlloc; i += pageSize) {
-		// Touch first page using current CPU, and then the rest using the other.
-		// Thus, the first page that has a different NUMA id indicates us the
-		// real page size.
+
+	// Before changing the memory policy and binding, retreive their initial
+	// values to reset them later
+	int previousMemoryMode;
+	unsigned long previousMemoryNodemask;
+	size_t maxNumNUMANodes = numa_num_possible_nodes();
+	bitmask *previousMembindBitmask = MemoryAllocator::alloc(sizeof(bitmask));
+	previousMembindBitmask = numa_get_membind();
+	long retValue = get_mempolicy(&previousMemoryMode, &previousMemoryNodemask, maxNumNUMANodes, nullptr, 0);
+	FatalErrorHandler::failIf(retValue != 0, "Couldn't obtain the current memory policy");
+
+	// In this loop we visit the allocation of 16MB in chunks of 'pageSize'.
+	// We bind the current CPU to the first NUMA node and modify the first
+	// page-chunk. Then, we modify the rest of pages while binding the CPU
+	// to the second NUMA node. If THP is disabled, the second page will
+	// reside in the second NUMA node. Otherwise, more than just the first
+	// page will reside in the first NUMA node
+	bitmask *tmpBitmask = numa_bitmask_alloc(maxNumNUMANodes);
+	for (size_t i = 0; i < sizeAligned; i += pageSize) {
+		// If it's the first NUMA node, delete it from the mask as we
+		// only want one page in this NUMA node
 		numa_bitmask_clearall(tmpBitmask);
 		uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 		if (i == 0) {
 			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
 		}
+
+		// Prepare the current mask with the current NUMA node
 		numa_bitmask_setbit(tmpBitmask, _logicalToOsIndex[currentNodeIndex]);
+
+		// Make sure we're using a strict policy to ensure the mask
+		retValue = set_mempolicy(MPOL_BIND, tmpBitmask->maskp, maxNumNUMANodes);
+		FatalErrorHandler::failIf(retValue != 0, "Couldn't set a strict memory policy");
+
+		// Bind the current CPU to the current mask
 		numa_bind(tmpBitmask);
 
-		void *pageStart = (void *) ((uintptr_t) tmp + i);
+		// Modify the current page-chunk
+		void *pageStart = (void *) ((uintptr_t) alignedTmp + i);
 		memset(pageStart, 0, 1);
 	}
-	numa_bitmask_free(tmpBitmask);
 
-	assert(pageSize > 0);
-	unsigned long numPages = MathSupport::ceil(sizeAlloc, pageSize);
-	assert(numPages > 0);
+	// Reset the memory policy and binding to their previous values
+	numa_set_membind(previousMembindBitmask);
+	retValue = set_mempolicy(&previousMemoryMode, &previousMemoryNodemask, maxNumNUMANodes);
+	FatalErrorHandler::failIf(retValue != 0, "Couldn't reset the memory policy");
 
+	// Prepare pointers to each page-chunk for the 'move_pages' call
+	size_t numPages = MathSupport::ceil(sizeAligned, pageSize);
 	void **pages = (void **) MemoryAllocator::alloc(numPages * sizeof(void *));
+	int *status  = (int *)   MemoryAllocator::alloc(numPages * sizeof(int));
 	assert(pages != nullptr);
-
-	int *status = (int *) MemoryAllocator::alloc(numPages * sizeof(int));
 	assert(status != nullptr);
 
 	size_t page = 0;
-	for (size_t i = 0; i < sizeAlloc; i += pageSize) {
-		char *pageStart = (char *) tmp+i;
+	for (size_t i = 0; i < sizeAligned; i += pageSize) {
+		char *pageStart = (char *) alignedTmp + i;
 		pages[page++] = pageStart;
 	}
-	assert(numPages == page);
 
+	// Move the pages
 	{
-		int pid = 0;
-		int *nodes = nullptr;
-		int flags = 0;
-		__attribute__((unused)) long ret = move_pages(pid, numPages, pages, nodes, status, flags);
+		__attribute__((unused)) long ret = move_pages(0, numPages, pages, nullptr, status, 0);
 		assert(ret == 0);
 	}
 
-	// Check the first page with a different NUMA node
+	// Check which is the first page residing in a different NUMA node
 	for (size_t i = 1; i < numPages; i++) {
 		assert(status[i] >= 0);
-
 		if (status[i] != status[0]) {
-			_realPageSize = i*pageSize;
+			_realPageSize = i * pageSize;
 			break;
 		}
 	}
 
+	// Free all the unnecessary structures
+	retValue = munmap(tmp, sizeAlloc);
+	FatalErrorHandler::failIf(retValue != 0, "Couldn't unmap a memory region.");
+	numa_bitmask_free(tmpBitmask);
 	MemoryAllocator::free(pages, numPages * sizeof(void *));
 	MemoryAllocator::free(status, numPages * sizeof(int));
 
-	std::free(tmp);
+	// In the event that we have not found a page with a different NUMA node,
+	// it may happen that the system has pages larger than 32MB. In this
+	// scenario, warn the user that we are using a default size
+	if (_realPageSize == 0) {
+		FatalErrorHandler::warn("Could not determine whether the sizing of Transparent Huge Pages.");
+		FatalErrorHandler::warn("Using default page size, which may impace NUMA awareness performance.");
+		_realPageSize = pageSize;
+	}
+	assert(_realPageSize > 0);
 }
+
