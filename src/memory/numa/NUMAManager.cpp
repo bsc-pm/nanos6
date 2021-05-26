@@ -133,7 +133,7 @@ uint64_t NUMAManager::getTrackingNodes()
 	}
 }
 
-void NUMAManager::discoverRealPageSize()
+size_t NUMAManager::discoverRealPageSize()
 {
 	// In systems with Transparent Huge Pages (THP), we cannot know the real THP
 	// pagesize. To discover it, we try to obtain it from kernel files. Ultimately,
@@ -167,17 +167,15 @@ void NUMAManager::discoverRealPageSize()
 					}
 				}
 			}
-		} else {
-			pagesize = HardwareInfo::getPageSize();
 		}
 	}
 
-	if (pagesize > 0) {
-		_realPageSize = pagesize;
-	} else {
-		_realPageSize = HardwareInfo::getPageSize();
+	if (pagesize == 0) {
+		pagesize = HardwareInfo::getPageSize();
 		FatalErrorHandler::warn("Could not determine whether THP is enabled. Using default pagesize.");
 	}
-	assert(_realPageSize > 0);
+	assert(pagesize > 0);
+
+	return pagesize;
 }
 

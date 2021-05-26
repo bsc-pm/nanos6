@@ -164,7 +164,7 @@ public:
 
 		// Page auto-discovery will be enabled if we have at least two active NUMA nodes and tracking is enabled or automatic
 		if (_discoverPageSize.getValue() && (trackingMode == "auto" || trackingMode == "on") && numNumaAnyActive > 1) {
-			discoverRealPageSize();
+			_realPageSize = discoverRealPageSize();
 		} else {
 			_realPageSize = HardwareInfo::getPageSize();
 		}
@@ -569,7 +569,7 @@ private:
 		}
 	}
 
-	static void discoverRealPageSize();
+	static size_t discoverRealPageSize();
 
 #ifndef NDEBUG
 	static void checkAllocationCorrectness(
