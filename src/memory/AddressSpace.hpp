@@ -7,6 +7,7 @@
 #ifndef ADDRESS_SPACE_HPP
 #define ADDRESS_SPACE_HPP
 
+#include <cstddef>
 #include <vector>
 #include <map>
 
