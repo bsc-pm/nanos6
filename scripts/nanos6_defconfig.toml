@@ -307,8 +307,6 @@ __!require_CLUSTER
 [misc]
 	# Stack size of threads created by the runtime. Default is 8M
 	stack_size = "8M"
-	# Frequency for polling services expressed in microseconds. Default is 1ms
-	polling_frequency = 1000 # µs
 
 [loader]
 	# Enable verbose output of the loader, to debug dynamic linking problems. Default is false

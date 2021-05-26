@@ -1181,7 +1181,6 @@ noinst_HEADERS = \
 	src/system/BlockingAPI.hpp \
 	src/system/If0Task.hpp \
 	src/system/LeaderThread.hpp \
-	src/system/PollingAPI.hpp \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoEssentials.hpp \
 	src/system/Throttle.hpp \

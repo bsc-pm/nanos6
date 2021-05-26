@@ -23,7 +23,6 @@
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
-#include "system/PollingAPI.hpp"
 #include "system/TrackingPoints.hpp"
 #include "tasks/LoopGenerator.hpp"
 #include "tasks/Task.hpp"
@@ -116,9 +115,6 @@ void WorkerThread::body()
 			}
 			CPUManager::checkIfMustReturnCPU(this);
 		} else {
-			// Execute polling services
-			PollingAPI::handleServices();
-
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}

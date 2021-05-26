@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -40,7 +40,7 @@ void *CUDAReductionStorage::getFreeSlotStorage(
 	assert(!slot.initialized || slot.deviceId == deviceId);
 
 	if (!slot.initialized) {
-		// We assume we're coming from a polling service with a valid CUDA context
+		// We assume we're coming from a polling task with a valid CUDA context
 		oldDeviceId = CUDAFunctions::getActiveDevice();
 
 		// Set the GPU we're using if needed

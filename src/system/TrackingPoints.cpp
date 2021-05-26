@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "TrackingPoints.hpp"
@@ -248,15 +248,14 @@ void TrackingPoints::exitExecuteInline(const Task *task, const Task *if0Task)
 void TrackingPoints::enterSpawnFunction(Task *creator, bool fromUserCode)
 {
 	// NOTE: Our modules are interested in the transitions between Runtime and Tasks, however,
-	// these functions may be called from within the runtime with "fromUserCode" set to true (e.g.
-	// polling services are considered user code even if the code is from the runtime). To detect
-	// these transitions, we check whether we are outside the context of a task by ensuring that
-	// the current thread has a task assigned to itself. Thus, the possible scenarios are:
+	// these functions may be called from within the runtime with "fromUserCode" set to true. To
+	// detect these transitions, we check whether we are outside the context of a task by ensuring
+	// that the current thread has a task assigned to itself. Thus, the possible scenarios are:
 	//
 	// 1) fromUserCode == true && currentTask != nullptr:
 	//    From user code, within task context (a task calls this function). Runtime-task transition
 	// 2) fromUserCode == true && currentTask == nullptr:
-	//    From user code, outside task context (polling service or external thread). Not a transition
+	//    From user code, outside task context (external thread). Not a transition
 	// 3) fromUserCode == false:
 	//    From runtime code. This is not a transition between runtime and task context.
 

@@ -43,7 +43,7 @@ public:
 	//! \brief Executed when the service is completed
 	static void complete(void *);
 
-	//! \brief Initializes the Throttle status and registers polling services.
+	//! \brief Initializes the Throttle status and registers a polling task
 	//!
 	//! Should be called before any other throttle function
 	static void initialize();

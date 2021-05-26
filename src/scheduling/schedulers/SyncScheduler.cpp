@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "SyncScheduler.hpp"
@@ -36,9 +36,9 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	// serving tasks to the rest of active compute places, except when there is work for
 	// all compute places. A compute place should stay inside the scheduler to check for
 	// deadline tasks but also for progressively resuming idle compute places when there
-	// is available work. However, device scheduler do not work like that because they
-	// already implement their progress engine using polling services. Also, external
-	// or compute places being disabled should not serve tasks for a long time
+	// is available work. However, device schedulers do not work like that because they
+	// already implement their progress engine using polling tasks. Also, external or
+	// compute places being disabled should not serve tasks for a long time
 	do {
 		size_t servedTasks = 0;
 

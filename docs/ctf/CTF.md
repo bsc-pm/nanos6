@@ -204,7 +204,7 @@ Runtime Subsystems
 
 Shows the activity of the most interesting Nanos6 subsystems.
 In essence, a coarse-grained classification of the time spent while running Nanos6 core code.
-The displayed subsystems include: Task creation/initialization, dependency registration/unregistration, scheduling add/get tasks and polling services.
+The displayed subsystems include: Task creation/initialization, dependency registration/unregistration and scheduling add/get tasks.
 
 Number of Blocked Tasks
 -----------------------

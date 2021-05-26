@@ -105,8 +105,6 @@ ConfigCentral::ConfigCentral() :
 	registerOption<memory_t>("memory.pool.chunk_size", 128 * 1024);
 
 	// Miscellaneous
-	registerOption<integer_t>("misc.polling_frequency", 1000);
-	registerOption<bool_t>("misc.polling", true);
 	registerOption<memory_t>("misc.stack_size", 8 * 1024 * 1024);
 
 	// Monitoring

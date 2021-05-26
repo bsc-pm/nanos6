@@ -432,12 +432,19 @@ taskset -c 10-19 ./cholesky-fact.test &
 # ...
 ```
 
-## Polling Services
+## Polling Capabilities
 
-Polling services are executed by a dedicated thread at regular intervals, and also, opportunistically by idle worker threads.
-The approximate minimum frequency in time in which the polling services are going to be executed can be controlled by the `misc.polling_frequency` configuration variable.
-This variable can take an integer value that represents the polling frequency in microseconds.
-By default, the runtime system executes the polling services at least every 1000 microseconds.
+The polling services API is no longer supported and has been replaced by another mechanism more efficient and flexible.
+Now the polling feature is provided by a regular task scheduled periodically thanks to the `nanos6_wait_for` API function.
+The function, shown below, blocks the calling task during `time_us` microseconds (approximately), and the runtime system uses the CPU to execute other ready tasks meanwhile.
+
+```c
+uint64_t nanos6_wait_for(uint64_t time_us);
+```
+
+The function returns the actual time that has been sleeping, so the caller can take decisions based on that.
+Notice that the polling frequency is now dynamic and can be set programmatically.
+To implement a polling task, we recommend spawning a function using the `nanos6_spawn_function`, which instantiates an isolated task with an independent namespace of data dependencies and no relationship with others task (i.e. no taskwait will wait for it).
 
 ## CPU Managing Policies
 
