@@ -21,7 +21,7 @@ NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAnyActive;
 std::atomic<bool> NUMAManager::_trackingEnabled;
 ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
 ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
-ConfigVariable<bool> NUMAManager::_discoverPageSize("numa.discover");
+ConfigVariable<bool> NUMAManager::_discoverPageSize("numa.discover_pagesize");
 size_t NUMAManager::_realPageSize;
 int NUMAManager::_maxOSIndex;
 std::vector<int> NUMAManager::_logicalToOsIndex;
@@ -157,13 +157,15 @@ size_t NUMAManager::discoverRealPageSize()
 				pagesizeFile >> pagesize;
 			} else {
 				std::ifstream meminfoFile("/proc/meminfo");
-				while (std::getline(meminfoFile, line)) {
-					if (line.find("Hugepagesize") != std::string::npos) {
-						first = line.find(':');
-						last  = line.find("kB");
-						std::string psString = line.substr(first+1, last-first-1);
-						psString.erase(std::remove(psString.begin(), psString.end(), ' '), psString.end());
-						pagesize = strtoull(psString.c_str(), nullptr, 0) * 1024; // Assuming kB
+				if (meminfoFile.is_open()) {
+					while (std::getline(meminfoFile, line)) {
+						if (line.find("Hugepagesize") != std::string::npos) {
+							first = line.find(':');
+							last  = line.find("kB");
+							std::string psString = line.substr(first+1, last-first-1);
+							psString.erase(std::remove(psString.begin(), psString.end(), ' '), psString.end());
+							pagesize = strtoull(psString.c_str(), nullptr, 0) * 1024; // Assuming kB
+						}
 					}
 				}
 			}

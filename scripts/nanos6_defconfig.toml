@@ -77,7 +77,7 @@
 	# Use the page auto-discovery mechanism to detect the system's page size
 	# Default is true, which is useful in systems with THP enabled
 	# Set to false will use the default page size, which is arch-dependent
-	discover = true
+	discover_pagesize = true
 
 __require_DLB
 [dlb]

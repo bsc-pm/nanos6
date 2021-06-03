@@ -124,11 +124,15 @@ public:
 
 		// Get CPU list to check which CPUs we have in the process mask
 		const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
-		// Iterate over the CPU list to annotate CPUs per NUMA node
 		for (CPU *cpu : cpus) {
-			// In case DLB is enabled, we only want the CPUs we own
+			assert(cpu != nullptr);
+
+			size_t numaId = cpu->getNumaNodeId();
+			assert(numaId < numNumaAll);
+
+			// If DLB is enabled, we only want the CPUs we own
 			if (cpu->isOwned()) {
-				cpusPerNumaNode[cpu->getNumaNodeId()]++;
+				cpusPerNumaNode[numaId]++;
 			}
 		}
 
@@ -138,6 +142,7 @@ public:
 		for (size_t numaNode = 0; numaNode < cpusPerNumaNode.size(); numaNode++) {
 			NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
 			assert(numaPlace != nullptr);
+
 			// As we will interact with libnuma, we need to use the OS index in the bitmask
 			int osIndex = numaPlace->getOsIndex();
 			_logicalToOsIndex[numaNode] = osIndex;
@@ -158,9 +163,11 @@ public:
 				}
 			}
 
-			if (osIndex > _maxOSIndex)
+			if (osIndex > _maxOSIndex) {
 				_maxOSIndex = osIndex;
+			}
 		}
+		assert(_maxOSIndex != -1);
 
 		// Page auto-discovery will be enabled if we have at least two active NUMA nodes and tracking is enabled or automatic
 		if (_discoverPageSize.getValue() && (trackingMode == "auto" || trackingMode == "on") && numNumaAnyActive > 1) {
@@ -192,6 +199,8 @@ public:
 	static void *alloc(size_t size, const bitmask_t *bitmask, size_t blockSize)
 	{
 		size_t pageSize = HardwareInfo::getPageSize();
+		assert(pageSize > 0);
+
 		if (!enableTrackingIfAuto()) {
 			void *res = nullptr;
 			if (size < pageSize) {
@@ -203,11 +212,13 @@ public:
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 			return res;
 		}
-
 		assert(_realPageSize != 0);
 
-		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
-		assert(pageSize > 0);
+		// To explain the following code, let us assume a huge page is 2MB, and
+		// a normal system page is 4KB:
+		// - If the allocation size is < 4KB, we use malloc
+		// - If the allocation size is > 4KB, we use mmap and inertwine memory
+		//   between NUMA nodes using "blockSize" in each
 		if (size < pageSize) {
 			void *res = malloc(size);
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
@@ -218,8 +229,11 @@ public:
 		assert(*bitmask != 0);
 		assert(blockSize > 0);
 
+		// If we're allocating more than THP size, use that as page size
+		if (size > _realPageSize) {
+			pageSize = _realPageSize;
+		}
 		bitmask_t bitmaskCopy = *bitmask;
-
 		if (blockSize % pageSize != 0) {
 			blockSize = MathSupport::closestMultiple(blockSize, pageSize);
 		}
@@ -254,8 +268,10 @@ public:
 			// Set all the pages of a block in the same node.
 			numa_bitmask_clearall(tmpBitmask);
 			assert(_logicalToOsIndex[currentNodeIndex] != -1);
+
 			numa_bitmask_setbit(tmpBitmask, _logicalToOsIndex[currentNodeIndex]);
 			assert(numa_bitmask_isbitset(tmpBitmask, _logicalToOsIndex[currentNodeIndex]));
+
 			numa_interleave_memory(tmp, tmpSize, tmpBitmask);
 
 			// Insert into directory
