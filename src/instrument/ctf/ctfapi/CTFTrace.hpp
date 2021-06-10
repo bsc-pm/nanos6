@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CTFTRACE_HPP
@@ -53,9 +53,11 @@ namespace CTFAPI {
 		CTFUserMetadata *_userMetadata;
 		CTFKernelMetadata *_kernelMetadata;
 
+		// Times in nanoseconds
 		uint64_t _absoluteStartTime;
 		uint64_t _absoluteEndTime;
-		int32_t  _timeCorrection;
+		int64_t  _timeCorrection;
+
 		uint16_t _totalCPUs;
 
 		CTFTrace();
