@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <fstream>
@@ -53,7 +53,7 @@ const char *CTFAPI::CTFUserMetadata::meta_clock =
 	"	description = \"Monotonic Clock\";\n"
 	"	freq = 1000000000; /* Frequency, in Hz */\n"
 	"	/* clock value offset from Epoch is: offset * (1/freq) */\n"
-	"	offset = %" PRIu64 ";\n"
+	"	offset = %" PRIi64 ";\n"
 	"};\n"
 	"\n"
 	"typealias integer {\n"
