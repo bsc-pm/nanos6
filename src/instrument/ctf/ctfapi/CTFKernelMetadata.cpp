@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cinttypes>
@@ -339,7 +339,7 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile()
 		_kernelVersion.c_str()
 	);
 	printCommonMetaEnv(f);
-	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp() - trace.getTimeCorrection());
+	fprintf(f, meta_clock, trace.getTimeCorrection());
 	fprintf(f, meta_stream, CTFKernelStreamId);
 
 	for (std::string event : _enabledEventNames) {
