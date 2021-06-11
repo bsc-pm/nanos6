@@ -82,13 +82,17 @@ const char *CTFAPI::CTFKernelMetadata::meta_env =
 	"	tracer_minor = 10;\n"
 	"	tracer_patchlevel = 10;\n";
 
+// FIXME: This is duplicated in CTFUserMetadata.cpp
 const char *CTFAPI::CTFKernelMetadata::meta_clock =
 	"clock {\n"
 	"	name = \"monotonic\";\n"
 	"	description = \"Monotonic Clock\";\n"
 	"	freq = 1000000000; /* Frequency, in Hz */\n"
-	"	/* clock value offset from Epoch is: offset * (1/freq) */\n"
-	"	offset = %" PRIu64 ";\n"
+	"\n"
+	"	/* The offset corrects the clock value so that all events are\n"
+	"	 * relative to the start time of the runtime of the rank 0. */\n"
+	"	offset_s = %" PRIi64 "; /* In seconds. */\n"
+	"	offset   = %" PRIi64 "; /* In nanoseconds. Must be >=0 */\n"
 	"};\n"
 	"\n"
 	"typealias integer {\n"
@@ -339,7 +343,26 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile()
 		_kernelVersion.c_str()
 	);
 	printCommonMetaEnv(f);
-	fprintf(f, meta_clock, trace.getTimeCorrection());
+
+	// FIXME: This code is duplicated in CTFUserMetadata.cpp
+	// FIXME: We should find a better name than getTimeCorrection
+	int64_t rawOffset = trace.getTimeCorrection();
+	int64_t offset_s, offset, second_ns;
+
+	// 1e9
+	second_ns = 1000000000LL;
+
+	if (rawOffset >= 0) {
+		offset_s = 0;
+		offset = rawOffset;
+	} else {
+		offset_s = rawOffset / second_ns - 1;
+		offset = rawOffset - offset_s * second_ns;
+	}
+
+	fprintf(f, meta_clock, offset_s, offset);
+	/* End of duplicated code */
+
 	fprintf(f, meta_stream, CTFKernelStreamId);
 
 	for (std::string event : _enabledEventNames) {
