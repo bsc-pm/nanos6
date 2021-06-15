@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef _XOPEN_SOURCE
@@ -198,12 +198,12 @@ std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
 			);
 		}
 
-		// Create info file
-		std::ofstream infoFile;
-		infoFile.open(_finalTracePath + "/.info");
-		infoFile << "nanos6_trace_version = "<< std::to_string(_traceVersion)  << "\n";
-		infoFile.close();
-		FatalErrorHandler::failIf(infoFile.bad(), "ctf: Failed to create .info file");
+		// Create version file
+		std::ofstream versionFile;
+		versionFile.open(_finalTracePath + "/VERSION");
+		versionFile << std::to_string(_traceVersion) << "\n";
+		versionFile.close();
+		FatalErrorHandler::failIf(versionFile.bad(), "ctf: Failed to create VERSION file");
 	} else {
 		// The others, if any, wait for the directory
 		int ret;
