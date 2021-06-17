@@ -343,16 +343,7 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &basePath, std::string
 	ret = mkdir(_kernelPath.c_str(), 0766);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
-	_userPath += "/ust";
-	ret = mkdir(_userPath.c_str(), 0766);
-	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/uid";
-	ret = mkdir(_userPath.c_str(), 0766);
-	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/1000"; // TODO get real user ID
-	ret = mkdir(_userPath.c_str(), 0766);
-	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/64-bit";
+	_userPath += "/user";
 	ret = mkdir(_userPath.c_str(), 0766);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
