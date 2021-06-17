@@ -1,10 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
+#include <fstream>
+
 #include "NUMAManager.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -18,6 +21,10 @@ NUMAManager::bitmask_t NUMAManager::_bitmaskNumaAnyActive;
 std::atomic<bool> NUMAManager::_trackingEnabled;
 ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
 ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
+ConfigVariable<bool> NUMAManager::_discoverPageSize("numa.discover_pagesize");
+size_t NUMAManager::_realPageSize;
+int NUMAManager::_maxOSIndex;
+std::vector<int> NUMAManager::_logicalToOsIndex;
 
 #ifndef NDEBUG
 void NUMAManager::checkAllocationCorrectness(
@@ -25,7 +32,7 @@ void NUMAManager::checkAllocationCorrectness(
 	const bitmask_t *bitmask,
 	size_t blockSize
 ) {
-	size_t pageSize = HardwareInfo::getPageSize();
+	size_t pageSize = _realPageSize;
 	assert(pageSize > 0);
 
 	unsigned long numPages = MathSupport::ceil(size, pageSize);
@@ -57,7 +64,8 @@ void NUMAManager::checkAllocationCorrectness(
 		}
 
 		char *tmp = (char *) res+i;
-		tmp[0] = 0;
+		// Fault the page, otherwise move_pages do not work. Writing 1 byte is enough.
+		memset(tmp, 0, 1);
 		pages[page] = tmp;
 
 		blockBytes += pageSize;
@@ -93,7 +101,7 @@ void NUMAManager::checkAllocationCorrectness(
 		}
 
 		assert(status[i] >= 0);
-		FatalErrorHandler::warnIf(status[i] != currentNodeIndex, "Page is not where it should.");
+		FatalErrorHandler::warnIf(status[i] != _logicalToOsIndex[currentNodeIndex], "Page is not where it should.");
 
 		blockBytes += pageSize;
 	}
@@ -106,8 +114,8 @@ void NUMAManager::checkAllocationCorrectness(
 bool NUMAManager::isTrackingEnabled()
 {
 	return (_trackingEnabled.load(std::memory_order_relaxed) &&
-			getValidTrackingNodes() > 1 &&
-			DataAccessRegistration::supportsDataTracking());
+		getValidTrackingNodes() > 1 &&
+		DataAccessRegistration::supportsDataTracking());
 }
 
 uint64_t NUMAManager::getTrackingNodes()
@@ -115,9 +123,61 @@ uint64_t NUMAManager::getTrackingNodes()
 	// This method is called from UnsyncScheduler::UnsyncScheduler()
 	// before calling NUMAManager::initialize().
 	std::string trackingMode = _trackingMode.getValue();
-	if (trackingMode == "off" || !DataAccessRegistration::supportsDataTracking()) {
+	if (trackingMode == "off" ||
+		!DataAccessRegistration::supportsDataTracking() ||
+		!DataTrackingSupport::isNUMASchedulingEnabled())
+	{
 		return 1;
 	} else {
 		return HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
 	}
 }
+
+size_t NUMAManager::discoverRealPageSize()
+{
+	// In systems with Transparent Huge Pages (THP), we cannot know the real THP
+	// pagesize. To discover it, we try to obtain it from kernel files. Ultimately,
+	// we try to discover it using /proc/meminfo. If it is unobtainable using
+	// the previous methods, we fallback to a default value reported by sysconf
+
+	size_t pagesize = 0;
+	std::ifstream enabledFile("/sys/kernel/mm/transparent_hugepage/enabled");
+	if (enabledFile.is_open()) {
+		std::string line;
+		std::getline(enabledFile, line);
+		int first = line.find('[');
+		int last  = line.find(']');
+		std::string policyString = line.substr(first+1, last-first-1);
+
+		// If the policy is always (THP always enabled), we try to obtain the
+		// page size using files, otherwise we fallback to the default value
+		if (policyString == "always") {
+			std::ifstream pagesizeFile("/sys/kernel/mm/transparent_hugepage/hpage_pmd_size");
+			if (pagesizeFile.is_open()) {
+				pagesizeFile >> pagesize;
+			} else {
+				std::ifstream meminfoFile("/proc/meminfo");
+				if (meminfoFile.is_open()) {
+					while (std::getline(meminfoFile, line)) {
+						if (line.find("Hugepagesize") != std::string::npos) {
+							first = line.find(':');
+							last  = line.find("kB");
+							std::string psString = line.substr(first+1, last-first-1);
+							psString.erase(std::remove(psString.begin(), psString.end(), ' '), psString.end());
+							pagesize = strtoull(psString.c_str(), nullptr, 0) * 1024; // Assuming kB
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (pagesize == 0) {
+		pagesize = HardwareInfo::getPageSize();
+		FatalErrorHandler::warn("Could not determine whether THP is enabled. Using default pagesize.");
+	}
+	assert(pagesize > 0);
+
+	return pagesize;
+}
+

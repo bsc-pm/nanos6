@@ -1,17 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef L2_CACHE_HPP
 #define L2_CACHE_HPP
 
 #include "HardwareCache.hpp"
-
-#ifndef L2_DEFAULT_CACHE_SIZE
-#define L2_DEFAULT_CACHE_SIZE 1*1024*1024
-#endif // L2_DEFAULT_CACHE_SIZE
 
 class L3Cache;
 

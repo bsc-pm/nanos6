@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MANAGER_NUMA_HPP
@@ -25,6 +25,7 @@
 #include "support/MathSupport.hpp"
 #include "support/config/ConfigVariable.hpp"
 
+#include <DataAccessRegistration.hpp>
 #include <MemoryAllocator.hpp>
 
 struct DirectoryInfo {
@@ -74,6 +75,18 @@ private:
 	//! Whether should report NUMA information
 	static ConfigVariable<bool> _reportEnabled;
 
+	//! Wether the automatic page discovery is enabled or disabled
+	static ConfigVariable<bool> _discoverPageSize;
+
+	//! Real pagesize (especially important in case of THP)
+	static size_t _realPageSize;
+
+	//! Maximum OS Index for a NUMA node
+	static int _maxOSIndex;
+
+	//! Array to get the corresponding OS index of a logical index
+	static std::vector<int> _logicalToOsIndex;
+
 public:
 	static void initialize()
 	{
@@ -99,6 +112,7 @@ public:
 		size_t numNumaAnyActive = 0;
 
 		numNumaAll = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
+		_logicalToOsIndex.resize(numNumaAll);
 
 		// Currently, we are using uint64_t as type for the bitmasks. In case we have
 		// more than 64 nodes, the bitmask cannot represent all the NUMA nodes
@@ -110,32 +124,56 @@ public:
 
 		// Get CPU list to check which CPUs we have in the process mask
 		const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
-		// Iterate over the CPU list to annotate CPUs per NUMA node
 		for (CPU *cpu : cpus) {
-			// In case DLB is enabled, we only want the CPUs we own
+			assert(cpu != nullptr);
+
+			size_t numaId = cpu->getNumaNodeId();
+			assert(numaId < numNumaAll);
+
+			// If DLB is enabled, we only want the CPUs we own
 			if (cpu->isOwned()) {
-				cpusPerNumaNode[cpu->getNumaNodeId()]++;
+				cpusPerNumaNode[numaId]++;
 			}
 		}
 
+		_maxOSIndex = -1;
+
 		// Enable corresponding bits in the bitmasks
 		for (size_t numaNode = 0; numaNode < cpusPerNumaNode.size(); numaNode++) {
-			// NUMA_ALL enables a bit per NUMA node available in the system
-			BitManipulation::enableBit(&_bitmaskNumaAll, numaNode);
+			NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
+			assert(numaPlace != nullptr);
 
-			// NUMA_ANY_ACTIVE enables a bit per NUMA node containing at least one CPU assigned to this process
-			if (cpusPerNumaNode[numaNode] > 0) {
-				BitManipulation::enableBit(&_bitmaskNumaAnyActive, numaNode);
-				numNumaAnyActive++;
+			// As we will interact with libnuma, we need to use the OS index in the bitmask
+			int osIndex = numaPlace->getOsIndex();
+			_logicalToOsIndex[numaNode] = osIndex;
+			if (osIndex != -1) {
+				// NUMA_ALL enables a bit per NUMA node available in the system
+				BitManipulation::enableBit(&_bitmaskNumaAll, numaNode);
 
-				// NUMA_ALL_ACTIVE enables a bit per NUMA node containing all the CPUs assigned to this process
-				NUMAPlace *numaPlace = (NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, numaNode);
-				assert(numaPlace != nullptr);
-				if (cpusPerNumaNode[numaNode] == numaPlace->getNumLocalCores()) {
-					BitManipulation::enableBit(&_bitmaskNumaAllActive, numaNode);
-					numNumaAllActive++;
+				// NUMA_ANY_ACTIVE enables a bit per NUMA node containing at least one CPU assigned to this process
+				if (cpusPerNumaNode[numaNode] > 0) {
+					BitManipulation::enableBit(&_bitmaskNumaAnyActive, numaNode);
+					numNumaAnyActive++;
+
+					// NUMA_ALL_ACTIVE enables a bit per NUMA node containing all the CPUs assigned to this process
+					if (cpusPerNumaNode[numaNode] == numaPlace->getNumLocalCores()) {
+						BitManipulation::enableBit(&_bitmaskNumaAllActive, numaNode);
+						numNumaAllActive++;
+					}
 				}
 			}
+
+			if (osIndex > _maxOSIndex) {
+				_maxOSIndex = osIndex;
+			}
+		}
+		assert(_maxOSIndex != -1);
+
+		// Page auto-discovery will be enabled if we have at least two active NUMA nodes and tracking is enabled or automatic
+		if (_discoverPageSize.getValue() && (trackingMode == "auto" || trackingMode == "on") && numNumaAnyActive > 1) {
+			_realPageSize = discoverRealPageSize();
+		} else {
+			_realPageSize = HardwareInfo::getPageSize();
 		}
 
 		if (_reportEnabled) {
@@ -161,22 +199,41 @@ public:
 	static void *alloc(size_t size, const bitmask_t *bitmask, size_t blockSize)
 	{
 		size_t pageSize = HardwareInfo::getPageSize();
+		assert(pageSize > 0);
+
+		if (!enableTrackingIfAuto()) {
+			void *res = nullptr;
+			if (size < pageSize) {
+				res = malloc(size);
+			} else {
+				int err = posix_memalign(&res, pageSize, size);
+				FatalErrorHandler::failIf(err != 0);
+			}
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+			return res;
+		}
+		assert(_realPageSize != 0);
+
+		// To explain the following code, let us assume a huge page is 2MB, and
+		// a normal system page is 4KB:
+		// - If the allocation size is < 4KB, we use malloc
+		// - If the allocation size is > 4KB, we use mmap and inertwine memory
+		//   between NUMA nodes using "blockSize" in each
 		if (size < pageSize) {
-			FatalErrorHandler::fail("Allocation size cannot be smaller than pagesize ", pageSize);
+			void *res = malloc(size);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+			return res;
 		}
 
 		assert(bitmask != nullptr);
 		assert(*bitmask != 0);
 		assert(blockSize > 0);
 
-		if (!enableTrackingIfAuto()) {
-			void *res = malloc(size);
-			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
-			return res;
+		// If we're allocating more than THP size, use that as page size
+		if (size > _realPageSize) {
+			pageSize = _realPageSize;
 		}
-
 		bitmask_t bitmaskCopy = *bitmask;
-
 		if (blockSize % pageSize != 0) {
 			blockSize = MathSupport::closestMultiple(blockSize, pageSize);
 		}
@@ -197,8 +254,7 @@ public:
 		_allocations.emplace(res, size);
 		_allocationsLock.unlock();
 
-		struct bitmask *tmpBitmask = numa_bitmask_alloc(HardwareInfo::getMemoryPlaceCount(nanos6_host_device));
-
+		struct bitmask *tmpBitmask = numa_bitmask_alloc(_maxOSIndex + 1);
 		for (size_t i = 0; i < size; i += blockSize) {
 			uint8_t currentNodeIndex = BitManipulation::indexFirstEnabledBit(bitmaskCopy);
 			BitManipulation::disableBit(&bitmaskCopy, currentNodeIndex);
@@ -206,12 +262,16 @@ public:
 				bitmaskCopy = *bitmask;
 			}
 
-			// Place pages where they must be
 			void *tmp = (void *) ((uintptr_t) res + i);
-			numa_bitmask_clearall(tmpBitmask);
-			numa_bitmask_setbit(tmpBitmask, currentNodeIndex);
-			assert(numa_bitmask_isbitset(tmpBitmask, currentNodeIndex));
 			size_t tmpSize = std::min(blockSize, size-i);
+
+			// Set all the pages of a block in the same node.
+			numa_bitmask_clearall(tmpBitmask);
+			assert(_logicalToOsIndex[currentNodeIndex] != -1);
+
+			numa_bitmask_setbit(tmpBitmask, _logicalToOsIndex[currentNodeIndex]);
+			assert(numa_bitmask_isbitset(tmpBitmask, _logicalToOsIndex[currentNodeIndex]));
+
 			numa_interleave_memory(tmp, tmpSize, tmpBitmask);
 
 			// Insert into directory
@@ -220,7 +280,6 @@ public:
 			_directory.emplace(tmp, info);
 			_lock.writeUnlock();
 		}
-
 		numa_bitmask_free(tmpBitmask);
 
 #ifndef NDEBUG
@@ -234,8 +293,15 @@ public:
 	{
 		assert(size > 0);
 
+		size_t pageSize = HardwareInfo::getPageSize();
 		if (!enableTrackingIfAuto()) {
-			void *res = malloc(size);
+			void *res = nullptr;
+			if (size < pageSize) {
+				res = malloc(size);
+			} else {
+				int err = posix_memalign(&res, pageSize, size);
+				FatalErrorHandler::failIf(err != 0);
+			}
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 			return res;
 		}
@@ -244,10 +310,12 @@ public:
 		assert(blockSize > 0);
 
 		bitmask_t bitmaskCopy = *bitmask;
+		assert(_realPageSize != 0);
+
+		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
+		assert(pageSize > 0);
 
 		void *res = nullptr;
-		size_t pageSize = HardwareInfo::getPageSize();
-
 		if (size < pageSize) {
 			// Use malloc for small allocations
 			res = malloc(size);
@@ -297,12 +365,19 @@ public:
 			return;
 		}
 
-		size_t pageSize = HardwareInfo::getPageSize();
-
 		_allocationsLock.lock();
 		// Find the allocation size and remove (one single map search)
 		auto allocIt = _allocations.find(ptr);
-		assert(allocIt != _allocations.end());
+
+		// In some cases, in the alloc methods, we simply use the standard
+		// malloc and we do not annotate that in the map. Thus, simply
+		// release the lock and use standard free.
+		if (allocIt == _allocations.end()) {
+			_allocationsLock.unlock();
+			std::free(ptr);
+			return;
+		}
+
 		size_t size = allocIt->second;
 		_allocations.erase(allocIt);
 		_allocationsLock.unlock();
@@ -320,6 +395,8 @@ public:
 		_lock.writeUnlock();
 
 		// Release memory
+		size_t pageSize = HardwareInfo::getPageSize();
+		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
 		if (size < pageSize) {
 			std::free(ptr);
 		} else {
@@ -459,6 +536,12 @@ public:
 		return BitManipulation::checkBit(&_bitmaskNumaAnyActive, bitIndex);
 	}
 
+	static inline size_t getOSIndex(size_t logicalId)
+	{
+		assert(logicalId < _logicalToOsIndex.size());
+		return _logicalToOsIndex[logicalId];
+	}
+
 	static uint64_t getTrackingNodes();
 
 private:
@@ -484,7 +567,7 @@ private:
 		}
 
 		std::string trackingMode = _trackingMode.getValue();
-		if (trackingMode == "auto" && getValidTrackingNodes() > 1) {
+		if (trackingMode == "auto" && getValidTrackingNodes() > 1 && DataAccessRegistration::supportsDataTracking()) {
 			_trackingEnabled.store(true, std::memory_order_release);
 			return true;
 		}
@@ -501,6 +584,8 @@ private:
 			return BitManipulation::countEnabledBits(&_bitmaskNumaAnyActive);
 		}
 	}
+
+	static size_t discoverRealPageSize();
 
 #ifndef NDEBUG
 	static void checkAllocationCorrectness(
