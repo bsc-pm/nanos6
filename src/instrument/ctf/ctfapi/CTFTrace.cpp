@@ -361,9 +361,12 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 	// Create final trace directory
 	std::string finalTracePath = makeFinalTraceDirectory();
 
-	// Add a subdirectory per rank if distributed memory is enabled
+	// Add a subdirectory per rank
 	if (isDistributedMemoryEnabled()) {
 		finalTracePath += "/" + std::to_string(_rank);
+	} else {
+		// Use 0 as rank without distributed instrumentation
+		finalTracePath += "/0";
 	}
 
 	// copy temporal trace into final destination
