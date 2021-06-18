@@ -1,15 +1,17 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef BUSY_POLICY_HPP
 #define BUSY_POLICY_HPP
 
-#include "executors/threads/CPUManagerPolicyInterface.hpp"
+#include <limits>
 
 #include "InstrumentWorkerThread.hpp"
+#include "executors/threads/CPUManagerPolicyInterface.hpp"
+
 
 class ComputePlace;
 
@@ -27,6 +29,13 @@ public:
 
 		if (hint == IDLE_CANDIDATE)
 			Instrument::workerThreadBusyWaits();
+	}
+
+	inline size_t getMaxBusyIterations() const
+	{
+		// In the busy policy, the maximum number of busy iterations should
+		// be a value large enough so that it can barely be reached
+		return std::numeric_limits<std::size_t>::max();
 	}
 
 };

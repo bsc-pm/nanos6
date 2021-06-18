@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_INTERFACE_HPP
@@ -53,6 +53,9 @@ protected:
 
 	//! The chosen CPU Manager policy
 	static ConfigVariable<std::string> _policyChosen;
+
+	//! The identifier of the policy
+	static CPUManagerPolicy _policyId;
 
 	//! The virtual id of the first owned CPU of this process
 	static size_t _firstCPUId;
@@ -135,6 +138,12 @@ public:
 	//! \brief Initialize all structures for the CPUManager
 	virtual void initialize() = 0;
 
+	//! \brief Get the CPU manager's policy id
+	inline CPUManagerPolicy getPolicyId() const
+	{
+		return _policyId;
+	}
+
 	//! \brief Check whether DLB is enabled
 	inline virtual bool isDLBEnabled() const
 	{
@@ -168,6 +177,14 @@ public:
 		CPUManagerPolicyHint hint,
 		size_t numRequested = 0
 	) = 0;
+
+	//! \brief Get the maximum number of busy iterations
+	inline size_t getMaxBusyIterations() const
+	{
+		assert(_cpuManagerPolicy != nullptr);
+
+		return _cpuManagerPolicy->getMaxBusyIterations();
+	}
 
 	//! \brief Get the maximum number of CPUs that will be used by the runtime
 	//!

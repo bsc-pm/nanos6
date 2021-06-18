@@ -9,7 +9,7 @@
 #include "executors/threads/cpu-managers/default/DefaultCPUManager.hpp"
 
 
-void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested)
+void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested, size_t numCPUs)
 {
 	// NOTE: This policy works as follows:
 	// - If the hint is IDLE_CANDIDATE, we try to idle the current CPU
@@ -35,7 +35,7 @@ void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 		assert(numRequested > 0);
 
 		// At most we will obtain as many idle CPUs as the maximum amount
-		size_t numCPUsToObtain = std::min(_numCPUs, numRequested);
+		size_t numCPUsToObtain = std::min(numCPUs, numRequested);
 		CPU *idleCPUs[numCPUsToObtain];
 
 		// Try to get as many idle CPUs as we need

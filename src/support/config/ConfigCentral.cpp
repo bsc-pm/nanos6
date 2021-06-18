@@ -24,6 +24,7 @@ ConfigCentral::ConfigCentral() :
 	registerOption<integer_t>("cluster.va_start", 0);
 
 	// CPU manager
+	registerOption<size_t>("cpumanager.busy_iters", 5000);
 	registerOption<string_t>("cpumanager.policy", "default");
 
 	// CUDA devices

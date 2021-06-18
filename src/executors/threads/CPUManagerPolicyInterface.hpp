@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_POLICY_INTERFACE_HPP
@@ -14,6 +14,14 @@ enum CPUManagerPolicyHint {
 	IDLE_CANDIDATE,
 	REQUEST_CPUS,
 	HANDLE_TASKFOR
+};
+
+enum CPUManagerPolicy {
+	IDLE_POLICY,
+	BUSY_POLICY,
+	HYBRID_POLICY,
+	LEWI_POLICY,
+	GREEDY_POLICY
 };
 
 
@@ -32,6 +40,12 @@ public:
 	//! \param[in] numRequested If hint == REQUEST_CPUS, numRequested is the amount
 	//! of idle CPUs to resume
 	virtual void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested = 0) = 0;
+
+	//! \brief Return the maximum number of busy iterations before idling of this policy
+	virtual inline size_t getMaxBusyIterations() const
+	{
+		return 0;
+	}
 
 };
 

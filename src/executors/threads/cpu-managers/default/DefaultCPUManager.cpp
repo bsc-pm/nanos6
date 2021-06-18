@@ -1,13 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "DefaultCPUActivation.hpp"
 #include "DefaultCPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
+#include "executors/threads/cpu-managers/default/policies/HybridPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/TrackingPoints.hpp"
@@ -41,10 +42,15 @@ void DefaultCPUManager::preinitialize()
 
 	// Create the chosen policy for this CPUManager
 	std::string policyValue = _policyChosen.getValue();
-	if (policyValue == "default" || policyValue == "idle") {
-		_cpuManagerPolicy = new IdlePolicy(numCPUs);
-	} else if (policyValue == "busy") {
+	if (policyValue == "busy") {
 		_cpuManagerPolicy = new BusyPolicy();
+		_policyId = BUSY_POLICY;
+	} else if (policyValue == "idle" ) {
+		_cpuManagerPolicy = new IdlePolicy(numCPUs);
+		_policyId = IDLE_POLICY;
+	} else if (policyValue == "hybrid" || policyValue == "default") {
+		_cpuManagerPolicy = new HybridPolicy(numCPUs);
+		_policyId = HYBRID_POLICY;
 	} else {
 		FatalErrorHandler::fail("Unexistent '", policyValue, "' CPU Manager Policy");
 	}

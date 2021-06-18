@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYNC_SCHEDULER_HPP
@@ -52,11 +52,16 @@ private:
 	//! serving tasks inside the scheduling loop
 	std::atomic<bool> _servingTasks;
 
-	//! The limit of tasks that a compute place can serve within a
-	//! single burst in the scheduling loop. This avoids that an
-	//! external compute place gets stuck solely serving tasks for
-	//! too much time
-	size_t _maxServedTasks;
+	//! The limit of iteration that a compute place can serve for within a
+	//! single burst in the scheduling loop. This avoids that an external
+	//! compute place gets stuck solely serving tasks for too much time
+	size_t _maxServingIters;
+
+	//! The number of busy iterations since the last task was assigned
+	size_t _currentBusyIters;
+
+	//! The maximum number of iterations to wait before assigning a null task
+	size_t _numBusyIters;
 
 public:
 	//! NOTE We initialize the delegation lock with 2 * numCPUs since some
@@ -68,7 +73,8 @@ public:
 		_totalComputePlaces(totalComputePlaces),
 		_lock((uint64_t) totalComputePlaces * 2),
 		_servingTasks(false),
-		_maxServedTasks(totalComputePlaces * 20)
+		_maxServingIters(totalComputePlaces * 20),
+		_currentBusyIters(0)
 	{
 		uint64_t totalCPUsPow2 = SchedulerSupport::roundToNextPowOf2(_totalComputePlaces);
 		assert(SchedulerSupport::isPowOf2(totalCPUsPow2));
@@ -88,6 +94,8 @@ public:
 			new (&_addQueues[i]) add_queue_t(totalCPUsPow2*4);
 			new (&_addQueuesLocks[i]) TicketArraySpinLock(_totalComputePlaces);
 		}
+
+		_numBusyIters = CPUManager::getMaxBusyIterations();
 	}
 
 	virtual ~SyncScheduler()

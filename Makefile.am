@@ -380,6 +380,7 @@ common_sources = \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUManager.cpp \
+	src/executors/threads/cpu-managers/default/policies/HybridPolicy.cpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/device/Accelerator.cpp \
@@ -739,6 +740,7 @@ noinst_HEADERS = \
 	src/executors/threads/cpu-managers/default/DefaultCPUActivation.hpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUManager.hpp \
 	src/executors/threads/cpu-managers/default/policies/BusyPolicy.hpp \
+	src/executors/threads/cpu-managers/default/policies/HybridPolicy.hpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUManager.hpp \

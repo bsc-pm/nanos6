@@ -8,6 +8,7 @@
 
 #include <InstrumentScheduler.hpp>
 
+
 Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {
 	assert(computePlace != nullptr);
@@ -40,13 +41,13 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	// already implement their progress engine using polling tasks. Also, external or
 	// compute places being disabled should not serve tasks for a long time
 	do {
-		size_t servedTasks = 0;
+		size_t servingIters = 0;
 
 		// Move ready tasks from add queues to the unsynchronized scheduler
 		processReadyTasks();
 
 		// Serve the rest of computes places that are waiting
-		while (servedTasks < _maxServedTasks && !_lock.empty()) {
+		while (servingIters < _maxServingIters && !_lock.empty()) {
 			// Get the index of the waiting compute place
 			computePlaceIdx = _lock.front();
 			assert(computePlaceIdx < _totalComputePlaces);
@@ -60,16 +61,24 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			if (task != nullptr)
 				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
 
-			// Assign the task to the waiting compute place even if it nullptr. The
-			// responsible for serving tasks is the current compute place, and we
-			// want to avoid changing the responsible constantly, as happened in the
-			// original implementation
-			_lock.setItem(computePlaceIdx, task);
+			// If we are using the hybrid/busy policy, avoid assigning tasks even if
+			// none are found, so that threads do not spin in their body to avoid
+			// contention in here. The "responsible" thread will be the one busy
+			// iterating until the criteria of max busy iterations is met
+			if (task != nullptr || _currentBusyIters++ >= _numBusyIters) {
+				// Assign the task to the waiting compute place even if it is nullptr. The
+				// responsible for serving tasks is the current compute place, and we want
+				// to avoid changing the responsible constantly, as happened in the original
+				// implementation
+				_lock.setItem(computePlaceIdx, task);
 
-			// Unblock the served compute place and advance to the next one
-			_lock.popFront();
+				// Unblock the served compute place and advance to the next one
+				_lock.popFront();
 
-			servedTasks++;
+				_currentBusyIters = 0;
+			}
+
+			servingIters++;
 			if (task == nullptr)
 				break;
 		}
