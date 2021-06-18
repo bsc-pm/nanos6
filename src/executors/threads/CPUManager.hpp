@@ -136,6 +136,14 @@ public:
 		_cpuManager->executeCPUManagerPolicy(cpu, hint, numRequested);
 	}
 
+	//! \brief Get the maximum number of busy iterations
+	static inline size_t getMaxBusyIterations()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->getMaxBusyIterations();
+	}
+
 	//! \brief Get the maximum number of CPUs that will be used by the runtime
 	//!
 	//! \return The maximum number of CPUs that the runtime will ever use in

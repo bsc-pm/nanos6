@@ -178,6 +178,14 @@ public:
 		size_t numRequested = 0
 	) = 0;
 
+	//! \brief Get the maximum number of busy iterations
+	inline size_t getMaxBusyIterations() const
+	{
+		assert(_cpuManagerPolicy != nullptr);
+
+		return _cpuManagerPolicy->getMaxBusyIterations();
+	}
+
 	//! \brief Get the maximum number of CPUs that will be used by the runtime
 	//!
 	//! \return The maximum number of CPUs that the runtime will ever use in

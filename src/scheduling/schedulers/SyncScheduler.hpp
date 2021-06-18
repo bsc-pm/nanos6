@@ -8,7 +8,6 @@
 #define SYNC_SCHEDULER_HPP
 
 #include <atomic>
-#include <limits>
 
 #include <boost/lockfree/spsc_queue.hpp>
 
@@ -20,7 +19,6 @@
 #include "lowlevel/DelegationLock.hpp"
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
-#include "support/config/ConfigVariable.hpp"
 
 
 class SyncScheduler {
@@ -63,7 +61,7 @@ private:
 	size_t _currentBusyIters;
 
 	//! The maximum number of iterations to wait before assigning a null task
-	static ConfigVariable<size_t> _numBusyIters;
+	size_t _numBusyIters;
 
 public:
 	//! NOTE We initialize the delegation lock with 2 * numCPUs since some
@@ -97,17 +95,7 @@ public:
 			new (&_addQueuesLocks[i]) TicketArraySpinLock(_totalComputePlaces);
 		}
 
-		CPUManagerPolicy cpuManagerPolicy = CPUManager::getPolicyId();
-		if (cpuManagerPolicy == IDLE_POLICY) {
-			// After one iteration, if no tasks are found, let go off the CPU
-			// so that it can be processed by the Idle Policy
-			_numBusyIters.setValue(0);
-		} else if (cpuManagerPolicy == BUSY_POLICY) {
-			// In the busy policy, the maximum number of busy iterations should
-			// be a value large enough so that is can barely be reached
-			_numBusyIters.setValue(std::numeric_limits<std::size_t>::max());
-		}
-
+		_numBusyIters = CPUManager::getMaxBusyIterations();
 	}
 
 	virtual ~SyncScheduler()

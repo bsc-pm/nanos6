@@ -8,7 +8,6 @@
 
 #include <InstrumentScheduler.hpp>
 
-ConfigVariable<size_t> SyncScheduler::_numBusyIters("cpumanager.busy_iters");
 
 Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {

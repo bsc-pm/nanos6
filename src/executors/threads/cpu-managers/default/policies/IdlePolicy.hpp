@@ -21,12 +21,18 @@ private:
 public:
 
 	inline IdlePolicy(size_t numCPUs)
-		: _numCPUs(numCPUs)
 	{
+		_numCPUs = numCPUs;
 	}
 
-	void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested = 0);
+	inline void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested = 0)
+	{
+		idlePolicyDefaultExecution(cpu, hint, numRequested, _numCPUs);
+	}
 
+	//! \brief We hide the default implementation in this function, as multiple
+	//! policies may need to use it
+	static void idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested, size_t numCPUs);
 };
 
 #endif // IDLE_POLICY_HPP

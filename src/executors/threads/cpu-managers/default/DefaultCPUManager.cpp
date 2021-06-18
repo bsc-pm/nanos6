@@ -8,6 +8,7 @@
 #include "DefaultCPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
+#include "executors/threads/cpu-managers/default/policies/HybridPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/TrackingPoints.hpp"
@@ -44,11 +45,11 @@ void DefaultCPUManager::preinitialize()
 	if (policyValue == "busy") {
 		_cpuManagerPolicy = new BusyPolicy();
 		_policyId = BUSY_POLICY;
-	} else if (policyValue == "idle") {
+	} else if (policyValue == "idle" ) {
 		_cpuManagerPolicy = new IdlePolicy(numCPUs);
 		_policyId = IDLE_POLICY;
 	} else if (policyValue == "hybrid" || policyValue == "default") {
-		_cpuManagerPolicy = new IdlePolicy(numCPUs);
+		_cpuManagerPolicy = new HybridPolicy(numCPUs);
 		_policyId = HYBRID_POLICY;
 	} else {
 		FatalErrorHandler::fail("Unexistent '", policyValue, "' CPU Manager Policy");

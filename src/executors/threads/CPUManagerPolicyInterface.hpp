@@ -41,6 +41,12 @@ public:
 	//! of idle CPUs to resume
 	virtual void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested = 0) = 0;
 
+	//! \brief Return the maximum number of busy iterations before idling of this policy
+	virtual inline size_t getMaxBusyIterations() const
+	{
+		return 0;
+	}
+
 };
 
 
