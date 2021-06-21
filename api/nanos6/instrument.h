@@ -7,7 +7,7 @@
 #ifndef NANOS6_INSTRUMENT_H
 #define NANOS6_INSTRUMENT_H
 
-#include <stddef.h>
+#include <stdint.h>
 
 #include "major.h"
 
@@ -26,23 +26,23 @@ extern "C" {
 
 typedef struct
 {
-	//! \brief Number of samples used to compute the offset mean and stdev
-	size_t num_samples;
+	//! \brief Clock offset (ns) of the current process
+	int64_t offset_ns;
 
-	//! \brief Mean of the clock offsets in seconds within a sample of size num_samples
-	double mean_sec;
+	//! \brief Number of samples used to compute the offset stdev
+	uint64_t num_samples;
 
-	//! \brief Standard deviation of the clock offsets within a sample of size num_samples
-	double stdev_sec;
+	//! \brief Standard deviation of clock offset (ns) in a sample of size num_samples
+	double stdev_ns;
 } nanos6_clock_offset_t;
 
 typedef struct
 {
 	//! \brief The rank of the current process in the distributed execution
-	size_t rank;
+	uint64_t rank;
 
 	//! \brief The number of ranks in the distributed execution
-	size_t num_ranks;
+	uint64_t num_ranks;
 
 	//! \brief The local clock offset respecting the reference clock computed across all ranks
 	nanos6_clock_offset_t clock_offset;
@@ -59,6 +59,9 @@ int nanos6_is_distributed_instrument_enabled(void);
 //!
 //! \param[in] info The information for distributed instrumentation
 void nanos6_setup_distributed_instrument(const nanos6_distributed_instrument_info_t *info);
+
+//! \brief Get the start time of the instrumentation (ns)
+int64_t nanos6_get_instrument_start_time_ns(void);
 
 #ifdef __cplusplus
 }

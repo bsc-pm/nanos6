@@ -300,7 +300,7 @@ void Instrument::shutdown()
 	trace.clean();
 }
 
-void Instrument::nanos6_preinit_finished()
+void Instrument::preinitFinished()
 {
 	// emit an event per each registered task type with its label and source
 	TaskInfo::processAllTasktypes(
@@ -310,4 +310,10 @@ void Instrument::nanos6_preinit_finished()
 			tp_task_label(tasktypeLabel.c_str(), tasktypeSource.c_str(), tasktypeId);
 		}
 	);
+}
+
+int64_t Instrument::getInstrumentStartTime()
+{
+	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
+	return trace.getAbsoluteStartTimestamp();
 }

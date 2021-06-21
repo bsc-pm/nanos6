@@ -24,9 +24,18 @@ namespace Instrument {
 		const nanos6_distributed_instrument_info_t * info
 	) {
 		assert(info != nullptr);
+
+		// This offset corresponds to the one stored in the clock object of
+		// the metadata file in the CTF trace. It is used to synchronize
+		// multiple Nanos6 runtime clocks, so that events happening at the
+		// same time appear with the same time value when processed by
+		// babeltrace2. Further information can be found in:
+		// https://babeltrace.org/docs/v2.0/libbabeltrace2/group__api-tir-cs.html
+		const int64_t offset = info->clock_offset.offset_ns;
+
 		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
-		trace.setDistributedMemory(info->clock_offset.mean_sec,
-					   info->rank, info->num_ranks);
+		trace.setDistributedMemory(offset, info->rank, info->num_ranks);
+
 		if (trace.isDistributedMemoryEnabled() && info->rank == 0) {
 			trace.makeFinalTraceDirectory();
 		}

@@ -5,8 +5,11 @@
 */
 
 #include <cassert>
+#include <cstdint>
 
 #include <nanos6/instrument.h>
+
+#include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentDistributedMemory.hpp>
 
 
@@ -20,4 +23,9 @@ extern "C" void nanos6_setup_distributed_instrument(
 ) {
 	assert(info != nullptr);
 	Instrument::setupDistributedMemoryEnvironment(info);
+}
+
+extern "C" int64_t nanos6_get_instrument_start_time_ns(void)
+{
+	return Instrument::getInstrumentStartTime();
 }

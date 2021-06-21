@@ -115,7 +115,7 @@ void nanos6_preinit(void)
 	LeaderThread::initialize(leaderThreadCPU);
 
 	CPUManager::initialize();
-	Instrument::nanos6_preinit_finished();
+	Instrument::preinitFinished();
 
 	// Assert config conditions if any
 	ConfigChecker::assertConditions();
