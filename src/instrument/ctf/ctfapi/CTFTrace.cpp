@@ -63,7 +63,7 @@ static bool copyDir(std::string &src, std::string &dst)
 	}
 
 	// create destination directory
-	if (mkdir(dst.c_str(), 0700) != 0) {
+	if (mkdir(dst.c_str(), 0755) != 0) {
 		std::cerr << "Warning: ctf: Couldn't create final trace directory " << dst << std::endl;
 		return false;
 	}
@@ -190,7 +190,7 @@ std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
 
 		// Make trace directory path and ensure it is unused
 		_finalTracePath = prepareTraceDirectoryPath(_finalTraceBasePath, _binaryName);
-		int ret = mkdir(_finalTracePath.c_str(), 0766);
+		int ret = mkdir(_finalTracePath.c_str(), 0755);
 		if (ret != 0) {
 			FatalErrorHandler::fail(
 				"ctf: Failed to create trace directories: ",
@@ -333,18 +333,18 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &basePath, std::string
 	std::string tracePath = _tmpTracePath;
 
 	tracePath += "/ctf";
-	ret = mkdir(tracePath.c_str(), 0766);
+	ret = mkdir(tracePath.c_str(), 0755);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
 	_userPath   = tracePath;
 	_kernelPath = tracePath;
 
 	_kernelPath += "/kernel";
-	ret = mkdir(_kernelPath.c_str(), 0766);
+	ret = mkdir(_kernelPath.c_str(), 0755);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
 	_userPath += "/user";
-	ret = mkdir(_userPath.c_str(), 0766);
+	ret = mkdir(_userPath.c_str(), 0755);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
 	basePath   = _tmpTracePath;
