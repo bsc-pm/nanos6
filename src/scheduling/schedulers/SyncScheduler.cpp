@@ -42,6 +42,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	// compute places being disabled should not serve tasks for a long time
 	do {
 		size_t servingIters = 0;
+		bool hasIncompatibleWork;
 
 		// Move ready tasks from add queues to the unsynchronized scheduler
 		processReadyTasks();
@@ -56,7 +57,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			assert(waitingComputePlace != nullptr);
 
 			// Try to get a ready task from the scheduler
-			task = _scheduler->getReadyTask(waitingComputePlace);
+			task = _scheduler->getReadyTask(waitingComputePlace, hasIncompatibleWork);
 
 			if (task != nullptr)
 				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
@@ -65,7 +66,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			// none are found, so that threads do not spin in their body to avoid
 			// contention in here. The "responsible" thread will be the one busy
 			// iterating until the criteria of max busy iterations is met
-			if (task != nullptr || _currentBusyIters++ >= _numBusyIters) {
+			if (task != nullptr || _currentBusyIters++ >= _numBusyIters || hasIncompatibleWork) {
 				// Assign the task to the waiting compute place even if it is nullptr. The
 				// responsible for serving tasks is the current compute place, and we want
 				// to avoid changing the responsible constantly, as happened in the original
@@ -84,7 +85,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 		}
 
 		// No more compute places waiting; try to get work for myself
-		task = _scheduler->getReadyTask(computePlace);
+		task = _scheduler->getReadyTask(computePlace, hasIncompatibleWork);
 
 		// Keep serving while there is no work for the current compute
 		// place or it is external/disabling

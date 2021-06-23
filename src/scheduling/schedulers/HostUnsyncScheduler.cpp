@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "HostUnsyncScheduler.hpp"
@@ -12,7 +12,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
 
-Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
+Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace, bool &hasIncompatibleWork)
 {
 	assert(computePlace != nullptr);
 	assert(_deadlineTasks != nullptr);
@@ -23,6 +23,8 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	long cpuId = computePlace->getIndex();
 	long groupId = ((CPU *)computePlace)->getGroupId();
 	long immediateSuccessorGroupId = groupId*2;
+
+	hasIncompatibleWork = false;
 
 	// 1. Try to get a task with a satisfied deadline
 	result = _deadlineTasks->getReadyTask(computePlace);
@@ -99,7 +101,18 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		}
 	}
 
-	if (result == nullptr || !result->isTaskforSource()) {
+	if (result == nullptr) {
+		// 8. If there is a hidden Taskfor in any of the slots not accessible
+		// to this computePlace, alert about it through the bool
+		for (int i = 0; i < (int) _groupSlots.size(); ++i) {
+			if (i != groupId && _groupSlots[i] != nullptr) {
+				hasIncompatibleWork = true;
+			}
+		}
+		return result;
+	}
+
+	if (!result->isTaskforSource()) {
 		return result;
 	}
 
@@ -109,5 +122,5 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	Taskfor *taskfor = (Taskfor *) result;
 	_groupSlots[groupId] = taskfor;
 	taskfor->markAsScheduled();
-	return getReadyTask(computePlace);
+	return getReadyTask(computePlace, hasIncompatibleWork);
 }

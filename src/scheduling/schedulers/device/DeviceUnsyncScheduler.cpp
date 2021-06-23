@@ -1,14 +1,15 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include "DeviceUnsyncScheduler.hpp"
 
-Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
+Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace, bool &hasIncompatibleWork)
 {
 	Task *task = nullptr;
+	hasIncompatibleWork = false;
 
 	// 1. Check if there is an immediate successor.
 	if (_enableImmediateSuccessor && computePlace != nullptr) {
