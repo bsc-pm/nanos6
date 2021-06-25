@@ -290,7 +290,7 @@ mkpath(char *file_path, mode_t mode, int last)
 void
 usage(int argc, char *argv[])
 {
-	fprintf(stderr, "Usage: cn6 [-jq] [-o <dir>] <trace>\n");
+	fprintf(stderr, "Usage: %s [-jq] [-o <dir>] <trace>\n", argv[0]);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "  Convert CTF traces to PRV\n");
 	fprintf(stderr, "\n");

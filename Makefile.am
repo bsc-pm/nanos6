@@ -1649,6 +1649,13 @@ deprecated_libs = \
 	libnanos6-verbose-discrete.la \
 	libnanos6-verbose-debug-discrete.la
 
+disabled_libs =
+disabled_bins =
+
+if !BUILD_CTF2PRV_FAST
+disabled_libs += nanos6/libprv.la
+disabled_bins += nanos6-ctf2prv-fast nanos6-mergerprv
+endif
 
 all-local: $(lib_OBJECTS)
 
@@ -1688,6 +1695,18 @@ install-exec-local: $(lib_OBJECTS)
 	for f in scripts/nanos6_hwcounters.json ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
+		fi ; \
+	done
+	@echo Removing disabled libraries
+	for l in $(disabled_libs) ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
+	@echo Removing disabled binaries
+	for f in $(disabled_bins) ; do \
+		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
+			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
 

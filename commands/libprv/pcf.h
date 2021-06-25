@@ -7,6 +7,8 @@
 #ifndef CN6_PCF_H
 #define CN6_PCF_H
 
+#include "prv.h"
+
 #include <stdio.h>
 
 enum runtime_activity {

@@ -15,7 +15,7 @@
 #include <time.h>
 #include <linux/limits.h>
 
-#include "cn6.h"
+#include "prv.h"
 #include "pcf.h"
 #include "hwc.h"
 

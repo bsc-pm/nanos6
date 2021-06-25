@@ -94,6 +94,9 @@ AC_CHECK_DLB
 AC_CHECK_JEMALLOC
 AC_CHECK_BABELTRACE2
 
+# Build ctf2prv fast converter if Babeltrace2 is available
+AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])
+
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
 AC_CHECK_MADV_FREE
 
