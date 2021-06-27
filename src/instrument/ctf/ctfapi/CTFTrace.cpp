@@ -32,6 +32,7 @@
 ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir");
 ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.converter.location");
 ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.converter.enabled");
+ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvFast("instrument.ctf.converter.fast");
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
 const int CTFAPI::CTFTrace::_traceVersion = 1;
 
@@ -483,8 +484,10 @@ void CTFAPI::CTFTrace::convertToParaver()
 
 	std::cout << getLogPreamble() << "Nanos6 is converting the trace to Paraver, please wait" << std::endl;
 
+	std::string maybeFast = _ctf2prvFast.getValue() ? " --fast" : "";
+
 	// Perform the conversion!
-	std::string command = converter + " " + _tmpTracePath;
+	std::string command = converter + maybeFast + " " + _tmpTracePath;
 	int ret = system(command.c_str());
 	FatalErrorHandler::warnIf(
 		ret == -1,

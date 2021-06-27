@@ -195,6 +195,8 @@ __require_CTF
 			# Indicate whether the trace converter should automatically generate the trace after
 			# executing a program with CTF instrumentation
 			enabled = true
+			# Use the fast converter (experimental)
+			fast = false
 			# Indicate the location of the ctf2prv converter script. Default is none (not set),
 			# which means that the $CTF2PRV will be used if present, or ctf2prv in $PATH
 			# otherwise

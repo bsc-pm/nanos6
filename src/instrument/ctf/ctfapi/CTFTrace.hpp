@@ -36,6 +36,7 @@ namespace CTFAPI {
 		static ConfigVariable<std::string> _defaultTemporalPath;
 		static ConfigVariable<std::string> _ctf2prvWrapper;
 		static ConfigVariable<bool> _ctf2prvEnabled;
+		static ConfigVariable<bool> _ctf2prvFast;
 		static EnvironmentVariable<std::string> _systemPATH;
 		static const int _traceVersion;
 
