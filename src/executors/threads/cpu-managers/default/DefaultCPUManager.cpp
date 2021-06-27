@@ -45,10 +45,10 @@ void DefaultCPUManager::preinitialize()
 	if (policyValue == "busy") {
 		_cpuManagerPolicy = new BusyPolicy();
 		_policyId = BUSY_POLICY;
-	} else if (policyValue == "idle" ) {
+	} else if (policyValue == "idle" || policyValue == "default") {
 		_cpuManagerPolicy = new IdlePolicy(numCPUs);
 		_policyId = IDLE_POLICY;
-	} else if (policyValue == "hybrid" || policyValue == "default") {
+	} else if (policyValue == "hybrid") {
 		_cpuManagerPolicy = new HybridPolicy(numCPUs);
 		_policyId = HYBRID_POLICY;
 	} else {

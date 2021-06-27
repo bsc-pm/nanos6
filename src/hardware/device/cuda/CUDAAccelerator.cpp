@@ -5,6 +5,7 @@
 */
 
 #include "CUDAAccelerator.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -24,12 +25,15 @@ void CUDAAccelerator::acceleratorServiceLoop()
 {
 	const size_t sleepTime = _usPollingPeriod.getValue();
 
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+
 	while (!shouldStopService()) {
 		bool activeDevice = false;
 		do {
 			// Launch as many ready device tasks as possible
 			while (_streamPool.streamAvailable()) {
-				Task *task = Scheduler::getReadyTask(_computePlace);
+				Task *task = Scheduler::getReadyTask(_computePlace, currentThread);
 				if (task == nullptr)
 					break;
 

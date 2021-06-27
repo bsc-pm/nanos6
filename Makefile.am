@@ -434,6 +434,7 @@ common_sources = \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
+	src/tasks/Task.cpp \
 	src/tasks/Taskfor.cpp \
 	src/tasks/TaskInfo.cpp \
 	src/tasks/Taskloop.cpp

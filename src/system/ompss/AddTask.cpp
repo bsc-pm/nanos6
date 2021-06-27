@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 // This is for posix_memalign
@@ -216,6 +216,11 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 
 	assert(parent != nullptr || ready);
 	assert(parent != nullptr || !isIf0);
+
+	// The ready if0 host tasks should run the onready now
+	if (ready && isIf0 && !executesInDevice) {
+		ready = task->handleOnready(workerThread);
+	}
 
 	if (ready && (!isIf0 || executesInDevice)) {
 		// Queue the task if ready and not if0. Device if0 ready tasks must be

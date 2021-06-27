@@ -77,7 +77,7 @@ void WorkerThread::body()
 		// There should not be any pre-assigned task
 		assert(_task == nullptr);
 
-		_task = Scheduler::getReadyTask(cpu);
+		_task = Scheduler::getReadyTask(cpu, this);
 		if (_task != nullptr) {
 			WorkerThread *assignedThread = _task->getThread();
 
@@ -159,6 +159,7 @@ void WorkerThread::handleTask(CPU *cpu)
 	// Execute the task
 	if (_task != nullptr) {
 		executeTask(cpu);
+
 		_task = nullptr;
 	}
 }
