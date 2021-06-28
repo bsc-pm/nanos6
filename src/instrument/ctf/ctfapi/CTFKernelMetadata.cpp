@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cinttypes>
@@ -19,7 +19,6 @@
 #include "support/JsonFile.hpp"
 
 
-// TODO factor out common operations/data with CTFMetadata
 ConfigVariable<std::string> CTFAPI::CTFKernelMetadata::_kernelEventFile("instrument.ctf.events.kernel.file");
 ConfigVariableSet<std::string> CTFAPI::CTFKernelMetadata::_kernelEventPresets("instrument.ctf.events.kernel.presets");
 ConfigVariableSet<std::string> CTFAPI::CTFKernelMetadata::_kernelExcludedEvents("instrument.ctf.events.kernel.exclude");
@@ -81,20 +80,19 @@ const char *CTFAPI::CTFKernelMetadata::meta_env =
 	"	tracer_name = \"lttng-modules\";\n"
 	"	tracer_major = 2;\n"
 	"	tracer_minor = 10;\n"
-	"	tracer_patchlevel = 10;\n"
-	"	/* ctf2prv converter variables */\n"
-	"	cpu_list = \"%s\";\n"
-	"	binary_name = \"%s\";\n"
-	"	pid = %" PRIu64 ";\n"
-	"};\n\n";
+	"	tracer_patchlevel = 10;\n";
 
+// FIXME: This is duplicated in CTFUserMetadata.cpp
 const char *CTFAPI::CTFKernelMetadata::meta_clock =
 	"clock {\n"
 	"	name = \"monotonic\";\n"
 	"	description = \"Monotonic Clock\";\n"
 	"	freq = 1000000000; /* Frequency, in Hz */\n"
-	"	/* clock value offset from Epoch is: offset * (1/freq) */\n"
-	"	offset = %" PRIu64 ";\n"
+	"\n"
+	"	/* The offset corrects the clock value so that all events are\n"
+	"	 * relative to the start time of the runtime of the rank 0. */\n"
+	"	offset_s = %" PRIi64 "; /* In seconds. */\n"
+	"	offset   = %" PRIi64 "; /* In nanoseconds. Must be >=0 */\n"
 	"};\n"
 	"\n"
 	"typealias integer {\n"
@@ -317,18 +315,17 @@ void CTFAPI::CTFKernelMetadata::translateEvents()
 	}
 }
 
-void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
+void CTFAPI::CTFKernelMetadata::writeMetadataFile()
 {
 	int ret;
 	FILE *f;
-	std::string path;
 
 	if (!_enabled)
 		return;
 
 	CTFTrace &trace = CTFTrace::getInstance();
-
-	path = kernelPath + "/metadata";
+	std::string kernelPath = trace.getKernelTracePath();
+	std::string path = kernelPath + "/metadata";
 
 	f = fopen(path.c_str(), "w");
 	if (f == NULL) {
@@ -343,11 +340,29 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 	fputs(meta_trace, f);
 	fprintf(f, meta_env,
 		_kernelRelease.c_str(),
-		_kernelVersion.c_str(),
-		_cpuList.c_str(),
-		trace.getBinaryName(),
-		trace.getPid());
-	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
+		_kernelVersion.c_str()
+	);
+	printCommonMetaEnv(f);
+
+	// FIXME: This code is duplicated in CTFUserMetadata.cpp
+	// FIXME: We should find a better name than getTimeCorrection
+	int64_t rawOffset = trace.getTimeCorrection();
+	int64_t offset_s, offset, second_ns;
+
+	// 1e9
+	second_ns = 1000000000LL;
+
+	if (rawOffset >= 0) {
+		offset_s = 0;
+		offset = rawOffset;
+	} else {
+		offset_s = rawOffset / second_ns - 1;
+		offset = rawOffset - offset_s * second_ns;
+	}
+
+	fprintf(f, meta_clock, offset_s, offset);
+	/* End of duplicated code */
+
 	fprintf(f, meta_stream, CTFKernelStreamId);
 
 	for (std::string event : _enabledEventNames) {

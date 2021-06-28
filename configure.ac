@@ -92,6 +92,10 @@ AC_CHECK_PAPI
 AC_CHECK_PQOS
 AC_CHECK_DLB
 AC_CHECK_JEMALLOC
+AC_CHECK_BABELTRACE2
+
+# Build ctf2prv fast converter if Babeltrace2 is available
+AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])
 
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
 AC_CHECK_MADV_FREE
@@ -402,6 +406,16 @@ if test x"${ac_use_jemalloc}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([   jemalloc CPPFLAGS... ${jemalloc_CPPFLAGS}])
 	_AS_ECHO([   jemalloc LIBS... ${jemalloc_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Fast CTF trace converter is enabled... ])
+if test x"${ac_use_babeltrace2}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   babeltrace2 CPPFLAGS... ${babeltrace2_CPPFLAGS}])
+	_AS_ECHO([   babeltrace2 LIBS... ${babeltrace2_LIBS}])
 else
 	AC_MSG_RESULT([no])
 fi

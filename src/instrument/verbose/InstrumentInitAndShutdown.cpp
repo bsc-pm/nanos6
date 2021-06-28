@@ -157,8 +157,13 @@ namespace Instrument {
 		// TODO: Free up all the memory
 	}
 
-	void nanos6_preinit_finished()
+	void preinitFinished()
 	{
+	}
+
+	int64_t getInstrumentStartTime()
+	{
+		return 0;
 	}
 } // namespace Instrument
 

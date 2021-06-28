@@ -2,13 +2,30 @@
 #
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 #
 
 usage() {
-	echo "usage: ctf2prv <ctf_trace_directory>"
+  cat >&2 <<EOF
+Usage: ctf2prv [--fast] <ctf_trace_directory>
+
+Converts the given nanos6 CTF trace to the PRV format, so it can be loaded into
+paraver or other tools. The "ctf" subdirectory must exist inside the specified
+trace directory.
+
+Use --fast to enable the experimental fast converter. Beware that not all
+features are supported yet.
+
+After a successful conversion, a "prv" subdirectory will be created containing
+the PRV trace.
+EOF
 }
 
+if [ "$1" == "--fast" ]; then
+  shift
+  exec nanos6-ctf2prv-fast -q "$@"
+  exit 1
+fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 CTFPLUGINS=$DIR/../share/doc/nanos6/scripts/ctf/plugins
@@ -25,7 +42,7 @@ if [[ ! $(type -P "babeltrace2") ]]; then
 	exit 1;
 fi
 
-CTF_USER_TRACE_PATH=`readlink -f $1/ctf/ust/uid/*/64-bit`
+CTF_USER_TRACE_PATH=`readlink -f $1/ctf/user`
 CTF_KERNEL_TRACE_PATH=`readlink -f $1/ctf/kernel`
 
 if [ ! -f $CTF_USER_TRACE_PATH/metadata ]; then

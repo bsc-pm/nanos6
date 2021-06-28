@@ -2,7 +2,7 @@
 #
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 #
 
 usage() {
@@ -24,7 +24,7 @@ if [[ ! $(type -P "babeltrace2") ]]; then
 	exit 1;
 fi
 
-CTF_USER_TRACE_PATH=`readlink -f $1/ctf/ust/uid/*/64-bit`
+CTF_USER_TRACE_PATH=`readlink -f $1/ctf/user`
 CTF_KERNEL_TRACE_PATH=`readlink -f $1/ctf/kernel`
 
 if [ ! -f $CTF_USER_TRACE_PATH/metadata ]; then

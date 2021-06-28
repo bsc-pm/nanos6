@@ -89,7 +89,7 @@ namespace CTFAPI {
 			return entry.first;
 		}
 
-		void writeMetadataFile(std::string kernelPath);
+		void writeMetadataFile();
 		void parseKernelEventDefinitions();
 		void initialize();
 	};

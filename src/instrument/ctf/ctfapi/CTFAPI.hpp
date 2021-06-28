@@ -36,7 +36,7 @@ namespace CTFAPI {
 	void flushAll(CTFStream *stream, uint64_t *before, uint64_t *after);
 	void flushSubBuffers(CTFStream *stream, uint64_t *before, uint64_t *after);
 	void writeFlushingTracepoint(CTFStream *stream, uint64_t tsBefore, uint64_t tsAfter);
-	void updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userStream);
+	void updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userStream, bool emitTracepointOnFlush = true);
 
 	template <typename T>
 	static inline size_t sizeOfVariadic(T arg)

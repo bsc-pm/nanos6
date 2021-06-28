@@ -69,7 +69,7 @@ namespace CTFAPI {
 		}
 
 		void refineEvents();
-		void writeMetadataFile(std::string userPath);
+		void writeMetadataFile();
 	};
 }
 

@@ -180,11 +180,11 @@ void Instrument::initialize()
 	std::string basePath, userPath, kernelPath;
 
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
-	CTFAPI::CTFMetadata::collectCommonInformation();
+	CTFAPI::CTFMetadata::collectCommonInformationAtInit();
 	CTFAPI::CTFUserMetadata *userMetadata = new CTFAPI::CTFUserMetadata();
 	CTFAPI::CTFKernelMetadata *kernelMetadata = new CTFAPI::CTFKernelMetadata();
 
-	trace.setMetadata(userMetadata);
+	trace.setUserMetadata(userMetadata);
 	trace.setKernelMetadata(kernelMetadata);
 	trace.setTracePath(".");
 	trace.initializeTraceTimer();
@@ -197,8 +197,6 @@ void Instrument::initialize()
 	preinitializeCTFEvents(userMetadata);
 	userMetadata->refineEvents();
 	initializeCTFEvents(userMetadata);
-	userMetadata->writeMetadataFile(userPath);
-	kernelMetadata->writeMetadataFile(kernelPath);
 }
 
 void Instrument::shutdown()
@@ -207,13 +205,23 @@ void Instrument::shutdown()
 	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
+	CTFAPI::CTFUserMetadata *userMetadata = trace.getUserMetadata();
 	CTFAPI::CTFKernelMetadata *kernelMetadata = trace.getKernelMetadata();
+	assert(userMetadata != nullptr);
 	assert(kernelMetadata != nullptr);
+
+	trace.finalizeTraceTimer();
+	CTFAPI::CTFMetadata::collectCommonInformationAtShutdown();
+	userMetadata->writeMetadataFile();
+	kernelMetadata->writeMetadataFile();
+
+	// TODO add general assert to ensure that no CTF event is generated
+	// past this point
 
 	// First disable kernel tracing. We do so in a separate loop because we
 	// do not want to trace the cleanup process of the shutdown phase.
-	// Please, note that the cleanup of per-cpu ctf structures is being done
-	// sequentially by a single core.
+	// Please, note that the cleanup of all per-cpu ctf structures is being
+	// done sequentially by a single core.
 	if (kernelMetadata->enabled()) {
 		for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 			cpu = cpus[i];
@@ -234,7 +242,10 @@ void Instrument::shutdown()
 		assert(userStream != nullptr);
 
 		if (kernelStream != nullptr) {
-			CTFAPI::updateKernelEvents(kernelStream, userStream);
+			// Get the kernel events generated before we disabled
+			// them, but do not generate an flush event at this
+			// point as it is no longer of interest
+			CTFAPI::updateKernelEvents(kernelStream, userStream, false);
 			uint64_t lost = kernelStream->getLostEventsCount();
 			kernelStream->shutdown();
 			if (lost > 0) {
@@ -269,9 +280,9 @@ void Instrument::shutdown()
 	trace.moveTemporalTraceToFinalDirectory();
 
 	// Disabling kernel tracing takes a considerable amount of time. Warn
-	// the user of it.
+	// the user about it.
 	if (kernelMetadata->enabled()) {
-		std::cout << "Shutting down Linux Kernel tracing facility, please wait... " << std::flush;
+		std::cout << trace.getLogPreamble() << "Nanos6 is shutting down the Linux Kernel tracing facility, please wait" << std::endl;
 		for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 			cpu = cpus[i];
 			assert(cpu != nullptr);
@@ -281,14 +292,15 @@ void Instrument::shutdown()
 				delete kernelStream;
 			}
 		}
-		std::cout << "[DONE]" << std::endl;
 	}
+
+	std::cout << trace.getLogPreamble() << "Nanos6 has finished processing the trace and it is ready for inspection!" << std::endl;
 
 	// cleanup trace structures
 	trace.clean();
 }
 
-void Instrument::nanos6_preinit_finished()
+void Instrument::preinitFinished()
 {
 	// emit an event per each registered task type with its label and source
 	TaskInfo::processAllTasktypes(
@@ -298,4 +310,10 @@ void Instrument::nanos6_preinit_finished()
 			tp_task_label(tasktypeLabel.c_str(), tasktypeSource.c_str(), tasktypeId);
 		}
 	);
+}
+
+int64_t Instrument::getInstrumentStartTime()
+{
+	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
+	return trace.getAbsoluteStartTimestamp();
 }

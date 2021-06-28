@@ -194,7 +194,7 @@ To generate a CTF trace, run the application with the `version.instrument` confi
 By default, only Nanos6 internal events are recorded.
 For details on how to additionally record system-wide Linux Kernel events, please check the section "Linux Kernel Tracing" under [CTF.md](docs/ctf/CTF.md).
 
-A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
+A directory named `trace_<binary_name>` will be created at the current working directory at the end of the execution.
 To visualize this trace it needs to be converted to Paraver format first.
 By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.converter.enabled = false`.
 The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.

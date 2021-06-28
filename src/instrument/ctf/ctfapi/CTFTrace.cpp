@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef _XOPEN_SOURCE
@@ -9,14 +9,14 @@
 #endif
 
 
+#include <cstdlib>
+#include <cstring>
 #include <dirent.h>
 #include <errno.h>
 #include <fstream>
 #include <ftw.h>
 #include <iostream>
 #include <libgen.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -32,7 +32,9 @@
 ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir");
 ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.converter.location");
 ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.converter.enabled");
+ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvFast("instrument.ctf.converter.fast");
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
+const int CTFAPI::CTFTrace::_traceVersion = 1;
 
 static bool copyFile(std::string &src, std::string &dst)
 {
@@ -62,7 +64,7 @@ static bool copyDir(std::string &src, std::string &dst)
 	}
 
 	// create destination directory
-	if (mkdir(dst.c_str(), 0700) != 0) {
+	if (mkdir(dst.c_str(), 0755) != 0) {
 		std::cerr << "Warning: ctf: Couldn't create final trace directory " << dst << std::endl;
 		return false;
 	}
@@ -118,25 +120,131 @@ static bool removeDir(std::string &path)
 	return (rv == 0);
 }
 
-static std::string mkTraceDirectoryName(std::string finalTracePath,
-					std::string &binaryName, uint64_t pid)
-{
+static std::string mkTraceDirectoryName(
+	std::string finalTracePath,
+	std::string &binaryName
+) {
+	finalTracePath += "/trace_" + binaryName;
+	return finalTracePath;
+}
+
+// Builds trace directory name. If a directory with the same name exist, append
+// and index to the path name and try again. When a valid unused path is found,
+// rename the conflicting directory to the unused path. Then return the now
+// unused initial path. This mechanism is used to ensure that all processes in a
+// distributed memory execution can compute a valif trace path without
+// explicitly negotiating it.
+static std::string prepareTraceDirectoryPath(
+	std::string finalTracePath,
+	std::string &binaryName
+) {
 	int cnt;
 	struct stat st;
-	std::string traceDir, tmp;
 
-	// build a name the trace directory name for the specified tracePath,
-	// ensuring that no other directory with this name exist
-	traceDir = finalTracePath;
-	traceDir += "/trace_" + binaryName + "_" + std::to_string(pid);
-	tmp = traceDir;
+	std::string traceDir = mkTraceDirectoryName(finalTracePath, binaryName);
+	std::string candidateDir = traceDir;
+
 	cnt = 1;
-	while (stat(tmp.c_str(), &st) == 0) {
-		tmp = traceDir + "_" + std::to_string(cnt);
+	while (stat(candidateDir.c_str(), &st) == 0) {
+		candidateDir = traceDir + "_" + std::to_string(cnt);
 		cnt++;
 	}
 
-	return tmp;
+	if (cnt > 1) {
+		if (rename(traceDir.c_str(), candidateDir.c_str())) {
+			FatalErrorHandler::fail(
+				"ctf: Cannot move old trace directory: ",
+				std::strerror(errno)
+			);
+		}
+	}
+
+	return traceDir;
+}
+
+
+// This function creates the final trace directory. If distributed memory is
+// enabled, it needs to ensure synchronization among all processes. Because
+// MPI_Finalize does not enforces a barrier, rank 0 creates the directory as
+// soon as possible.
+//
+// During shutdown, all ranks (including zero) call this again. The non-zero
+// ranks will wait for a certain time for the directory to be created. Rank
+// zero, will just return immediatelly.
+//
+// If distributed memory is not enabled, this function is not called in advance,
+// so it will be called at shutdown for the first time and rank 0 (the only
+// rank) will create the directory in-situ.
+std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
+{
+	if (!isDistributedMemoryEnabled()) {
+		// If distributed memory is not enabled, we only prepare the
+		// final trace path (moving old directories as necessary) but we
+		// do not need to create the final directory yet.
+		assert(_finalTracePath == "");
+		_finalTracePath = prepareTraceDirectoryPath(_finalTraceBasePath, _binaryName);
+	} else if (_rank == 0) {
+		// Only rank 0 creates the directory
+		if (_finalTracePath != "") {
+			return _finalTracePath;
+		}
+
+		// Make trace directory path and ensure it is unused
+		_finalTracePath = prepareTraceDirectoryPath(_finalTraceBasePath, _binaryName);
+		int ret = mkdir(_finalTracePath.c_str(), 0755);
+		if (ret != 0) {
+			FatalErrorHandler::fail(
+				"ctf: Failed to create trace directories: ",
+				std::strerror(errno)
+			);
+		}
+
+		// Create version file
+		std::ofstream versionFile;
+		versionFile.open(_finalTracePath + "/VERSION");
+		versionFile << std::to_string(_traceVersion) << "\n";
+		versionFile.close();
+		FatalErrorHandler::failIf(versionFile.bad(), "ctf: Failed to create VERSION file");
+	} else {
+		// The others, if any, wait for the directory
+		int ret;
+		struct stat st;
+		const int waitForSeconds = 30;
+		const int waitIntervalMicroSeconds = 5000;
+
+		assert(_finalTracePath == "");
+
+		// Make the expected trace directory path
+		_finalTracePath = mkTraceDirectoryName(_finalTraceBasePath, _binaryName);
+
+		// Wait some time for the directory (created by rank 0) to be
+		// visible for us in the filesystem
+		std::time_t start = std::time(nullptr);
+		std::time_t current = start;
+		while (
+			((ret = stat(_finalTracePath.c_str(), &st)) != 0) &&
+			(current - start) < waitForSeconds
+		) {
+			usleep(waitIntervalMicroSeconds);
+			current = std::time(nullptr);
+		}
+
+		if (ret != 0) {
+			FatalErrorHandler::fail(
+				"ctf: Timed out while waiting for trace directory to be created: ",
+				std::strerror(errno)
+			);
+		}
+
+		if (!S_ISDIR(st.st_mode)) {
+			FatalErrorHandler::fail(
+				"ctf: Timed out while waiting for trace directory to be created: "
+				+ _finalTracePath + " is not a directory"
+			);
+		}
+	}
+
+	return _finalTracePath;
 }
 
 static std::string getFullBinaryName()
@@ -177,6 +285,7 @@ static std::string getFullBinaryName()
 }
 
 CTFAPI::CTFTrace::CTFTrace()
+	: _rank(0), _numberOfRanks(0), _timeCorrection(0)
 {
 	// get process PID
 	_pid = (uint64_t) getpid();
@@ -225,27 +334,18 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &basePath, std::string
 	std::string tracePath = _tmpTracePath;
 
 	tracePath += "/ctf";
-	ret = mkdir(tracePath.c_str(), 0766);
+	ret = mkdir(tracePath.c_str(), 0755);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
 	_userPath   = tracePath;
 	_kernelPath = tracePath;
 
 	_kernelPath += "/kernel";
-	ret = mkdir(_kernelPath.c_str(), 0766);
+	ret = mkdir(_kernelPath.c_str(), 0755);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
-	_userPath += "/ust";
-	ret = mkdir(_userPath.c_str(), 0766);
-	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/uid";
-	ret = mkdir(_userPath.c_str(), 0766);
-	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/1000";
-	ret = mkdir(_userPath.c_str(), 0766);
-	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
-	_userPath += "/64-bit";
-	ret = mkdir(_userPath.c_str(), 0766);
+	_userPath += "/user";
+	ret = mkdir(_userPath.c_str(), 0755);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
 	basePath   = _tmpTracePath;
@@ -257,12 +357,19 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 {
 	// TODO do not copy the trace if it's located in the same filesystem,
 	// just rename it
-	//
-	std::cout << "Moving trace to current directory, please wait... " << std::flush;
+	std::cout << getLogPreamble() << "Nanos6 is moving the trace files to their final location, please wait" << std::endl;
 
-	// create final trace name
-	std::string finalTracePath = mkTraceDirectoryName(_finalTraceBasePath,
-							  _binaryName, _pid);
+	// Create final trace directory
+	std::string finalTracePath = makeFinalTraceDirectory();
+
+	// Add a subdirectory per rank
+	if (isDistributedMemoryEnabled()) {
+		finalTracePath += "/" + std::to_string(_rank);
+	} else {
+		// Use 0 as rank without distributed instrumentation
+		finalTracePath += "/0";
+	}
+
 	// copy temporal trace into final destination
 	if (!copyDir(_tmpTracePath, finalTracePath)) {
 		std::cerr << "Warning: ctf: The trace could not be moved to the current directory. Please copy the trace manually"
@@ -276,8 +383,6 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 			_tmpTracePath << "could not be removed. Please, remove it manually"
 			<< std::endl;
 	}
-
-	std::cout << "[DONE] " << std::endl;
 }
 
 static bool isExecutable(const char *file)
@@ -377,18 +482,18 @@ void CTFAPI::CTFTrace::convertToParaver()
 		return;
 	}
 
-	std::cout << "Converting CTF trace to Paraver, please wait... " << std::flush;
+	std::cout << getLogPreamble() << "Nanos6 is converting the trace to Paraver, please wait" << std::endl;
+
+	std::string maybeFast = _ctf2prvFast.getValue() ? " --fast" : "";
 
 	// Perform the conversion!
-	std::string command = converter + " " + _tmpTracePath;
+	std::string command = converter + maybeFast + " " + _tmpTracePath;
 	int ret = system(command.c_str());
 	FatalErrorHandler::warnIf(
 		ret == -1,
 		"ctf: automatic ctf to prv conversion failed: ",
 		strerror(errno)
 	);
-
-	std::cout << "[DONE]" << std::endl;
 }
 
 void CTFAPI::CTFTrace::initializeTraceTimer()
@@ -397,6 +502,11 @@ void CTFAPI::CTFTrace::initializeTraceTimer()
 	// tracepoints. On Linux, this timestamp is actually relative to boot
 	// time.
 	_absoluteStartTime = CTFAPI::getTimestamp();
+}
+
+void CTFAPI::CTFTrace::finalizeTraceTimer()
+{
+	_absoluteEndTime = CTFAPI::getTimestamp();
 }
 
 void CTFAPI::CTFTrace::clean()

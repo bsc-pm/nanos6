@@ -59,6 +59,7 @@ ConfigCentral::ConfigCentral() :
 
 	// CTF instrumentation
 	registerOption<bool_t>("instrument.ctf.converter.enabled", true);
+	registerOption<bool_t>("instrument.ctf.converter.fast", false);
 	registerOption<string_t>("instrument.ctf.converter.location", "");
 	registerOption<string_t>("instrument.ctf.events.kernel.exclude", {});
 	registerOption<string_t>("instrument.ctf.events.kernel.file", "");
