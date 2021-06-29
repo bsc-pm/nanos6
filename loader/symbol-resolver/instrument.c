@@ -9,3 +9,4 @@
 
 RESOLVE_API_FUNCTION(nanos6_is_distributed_instrument_enabled, "instrument", NULL);
 RESOLVE_API_FUNCTION(nanos6_setup_distributed_instrument, "instrument", NULL);
+RESOLVE_API_FUNCTION(nanos6_get_instrument_start_time_ns, "instrument", NULL);
