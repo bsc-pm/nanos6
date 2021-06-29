@@ -20,7 +20,9 @@ private:
 	//! The maximum amount of CPUs in the system
 	size_t _numCPUs;
 
-	//! The maximum number of iterations to wait before assigning a null task
+	//! The maximum number of iterations to wait before assigning a null task.
+	//! This variable refers to the sum of iterations for all CPUs, thus to
+	//! obtain the number per CPU it must be divided by _numCPUs
 	static ConfigVariable<size_t> _numBusyIters;
 
 public:
@@ -40,7 +42,7 @@ public:
 	{
 		// In the busy policy, the maximum number of busy iterations should
 		// be a value large enough so that it can barely be reached
-		return _numBusyIters.getValue();
+		return ((size_t) (_numBusyIters.getValue() / _numCPUs));
 	}
 };
 

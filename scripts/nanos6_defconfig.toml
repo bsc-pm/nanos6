@@ -42,9 +42,10 @@
 	# corresponds to "idle"
 	# Possible values: "default", "idle", "busy", "hybrid", "lewi", "greedy"
 	policy = "default"
-	# The maximum number of iterations to busy wait for before idling. Default is "5000". Only
-	# works for the 'hybrid' policy
-	busy_iters = 5000
+	# The maximum number of iterations to busy wait for before idling. Default is "240000". Only
+	# works for the 'hybrid' policy. This number will be divided by the number of active CPUs to
+	# obtain a "busy_iters per CPU" metric for each individual CPU to busy-wait for
+	busy_iters = 240000
 
 [taskfor]
 	# Choose the total number of CPU groups that will execute the worksharing tasks (taskfors). Default
