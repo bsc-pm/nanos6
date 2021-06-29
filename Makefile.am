@@ -1741,6 +1741,18 @@ uninstall-hook:
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
+	@echo Removing disabled libraries
+	for l in $(disabled_libs) ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
+	@echo Removing disabled binaries
+	for f in $(disabled_bins) ; do \
+		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
+			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
+		fi ; \
+	done
 
 install-data-hook:
 	chmod +x $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
