@@ -68,6 +68,7 @@ The configure script accepts the following options:
 1. `--enable-openacc` to enable support for OpenACC tasks; requires PGI compilers
 1. `--with-pgi=prefix` to specify the prefix of the PGI or NVIDIA HPC-SDK compilers installation, in case they are not in `$PATH`
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
+1. `--with-babeltrace2=prefix` to specify the prefix of the Babeltrace2 installation and enable the fast converter
 
 The location of elfutils and hwloc is always retrieved through pkg-config.
 If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
@@ -188,17 +189,63 @@ The resulting trace will show the activity of the actual threads instead of the 
 In the future, this problem will be fixed.
 
 
-### Tracing a Nanos6 application with CTF (Experimental)
+### Tracing a Nanos6 application with CTF
 
-To generate a CTF trace, run the application with the `version.instrument` config set to `ctf`.
-By default, only Nanos6 internal events are recorded.
-For details on how to additionally record system-wide Linux Kernel events, please check the section "Linux Kernel Tracing" under [CTF.md](docs/ctf/CTF.md).
+Nanos6 includes another instrumentation mechanism which provides detailed
+information of the internal runtime state as the execution evolves. The
+instrumentation produces a lightweight binary trace in the CTF format which is
+later converted to the Paraver PRV format. To generate a trace, run the
+application with `version.instrument=ctf`.
 
-A directory named `trace_<binary_name>` will be created at the current working directory at the end of the execution.
-To visualize this trace it needs to be converted to Paraver format first.
-By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.converter.enabled = false`.
-The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
-Please note that the conversion tool requires python3 and the babeltrace2 packages.
+By default, only Nanos6 internal events are recorded, such as the information
+about the tasks or the state of the runtime. For details on how to additionally
+record system-wide Linux Kernel events, please check the section "Linux Kernel
+Tracing" under [CTF.md](docs/ctf/CTF.md).
+
+The main trace directory named `trace_<binary_name>` will be created at the current
+working directory at the end of the execution, which contains all the related
+trace files and directories.
+
+The CTF instrumentation supports multiple processes running in parallel with MPI.
+In order to coordinate the clock synchronization, it is required to run the
+application with [TAMPI](https://github.com/bsc-pm/tampi) (at least version 1.1).
+
+Every process will create the rank subdirectory inside the trace directory, with
+a name that corresponds to the rank number. In the absence of MPI, when there is
+only a single process, the folder will be named 0.
+
+Inside the rank directory, the CTF trace is stored in a subdirectory named
+"ctf". A post-processing step is required to reconstruct the timeline of events
+from the CTF trace. In order to visualize the events, the trace is converted to
+the Paraver PRV format. The resulting PRV trace is stored in the "prv"
+subdirectory.
+
+By default, Nanos6 will convert the trace automatically at the end of the
+execution unless the user explicitly sets the configuration variable
+`instrument.ctf.converter.enabled = false`.
+
+The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the
+conversion after the specified elapsed time in minutes. Please note that the
+conversion tool requires python3 and the babeltrace2 packages.
+
+An experimental conversion tool written in C is included, with a faster
+conversion speed, but not all features are yet supported. In order to
+enable it, Nanos6 must be compiled with babeltrace2 support using the configure
+option `--with-babeltrace2=prefix`, pointing to a valid babeltrace2 installation.
+Additionally, you will need to enable the fast converter in the configuration
+with `instrument.ctf.converter.fast = true`.
+
+Every Nanos6 process will only convert its own CTF trace to PRV. When you have
+multiple MPI processes, you may want to integrate all the PRV files per rank
+into a single trace. Beware that it may easily exceed the recommended PRV size
+for Paraver. You can use the included merger as:
+
+	$ nanos6-mergeprv trace_<binary_name>
+
+The merged trace will be placed in the main trace directory, at
+`trace_<binary_name>/trace.prv`.
+
+#### Paraver configurations for CTF
 
 The Paraver configuration files can be found under:
 
@@ -216,8 +263,12 @@ $ ctf2prv $TRACE
 
 which will generate the directory `$TRACE/prv` with the Paraver trace.
 
-Although the `ctf2prv` tool requires python3 and babeltrace2 python modules, Nanos6 does not require any package to generate CTF traces.
-For more information on how the CTF instrumentation variant works see [CTF.md](docs/ctf/CTF.md).
+Although the `ctf2prv` tool requires python3 and babeltrace2 python modules,
+Nanos6 does not require any package to generate CTF traces.  For more
+information on how the CTF instrumentation variant works see
+[CTF.md](docs/ctf/CTF.md).
+
+To run the experimental fast converter, add the option `--fast`.
 
 
 ### Generating a graphical representation of the dependency graph
