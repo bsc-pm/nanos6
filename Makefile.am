@@ -1649,13 +1649,11 @@ deprecated_libs = \
 	libnanos6-verbose-discrete.la \
 	libnanos6-verbose-debug-discrete.la
 
-disabled_libs =
-disabled_bins =
+# Extra libraries and binaries to uninstall manually
+uninstall_libs = nanos6/libprv.la
+uninstall_bins = nanos6-ctf2prv-fast nanos6-mergeprv
+uninstall_links = nanos6-ctf2prv
 
-if !BUILD_CTF2PRV_FAST
-disabled_libs += nanos6/libprv.la
-disabled_bins += nanos6-ctf2prv-fast nanos6-mergerprv
-endif
 
 all-local: $(lib_OBJECTS)
 
@@ -1697,15 +1695,21 @@ install-exec-local: $(lib_OBJECTS)
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing disabled libraries
-	for l in $(disabled_libs) ; do \
+	@echo Removing other libraries
+	for l in $(uninstall_libs) ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
-	@echo Removing disabled binaries
-	for f in $(disabled_bins) ; do \
+	@echo Removing other binaries
+	for f in $(uninstall_bins) ; do \
 		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
+			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
+		fi ; \
+	done
+	@echo Removing other links
+	for f in $(uninstall_links) ; do \
+		if test -L "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
@@ -1741,18 +1745,27 @@ uninstall-hook:
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing disabled libraries
-	for l in $(disabled_libs) ; do \
+	@echo Removing other libraries
+	for l in $(uninstall_libs) ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
-	@echo Removing disabled binaries
-	for f in $(disabled_bins) ; do \
+	@echo Removing other binaries
+	for f in $(uninstall_bins) ; do \
 		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
+	@echo Removing other links
+	for f in $(uninstall_links) ; do \
+		if test -L "$(DESTDIR)$(bindir)/$$f" ; then \
+			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
+		fi ; \
+	done
+
+install-exec-hook:
+	cd $(DESTDIR)$(bindir) && $(LN_S) ctf2prv nanos6-ctf2prv
 
 install-data-hook:
 	chmod +x $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
