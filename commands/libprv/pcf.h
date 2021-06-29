@@ -4,8 +4,8 @@
 	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CN6_PCF_H
-#define CN6_PCF_H
+#ifndef LIBPRV_PCF_H
+#define LIBPRV_PCF_H
 
 #include "prv.h"
 
@@ -84,4 +84,4 @@ pcf_write(struct pcf *pcf, FILE *f);
 void
 pcf_set_task_types(struct pcf *pcf, struct task_type *task_types);
 
-#endif /*CN6_PCF_H*/
+#endif // LIBPRV_PCF_H

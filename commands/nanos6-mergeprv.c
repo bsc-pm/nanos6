@@ -134,7 +134,7 @@ read_prv_header(FILE *f, struct prv_header *h)
 	int ntok;
 
 	/* Read the constant field part first */
-	ntok = fscanf(f, "#Paraver (%d/%d/%d at %d:%d):%" SCNi64 "_ns:%d:",
+	ntok = fscanf(f, "#Paraver (%d/%d/%d at %d:%d):%" SCNd64 "_ns:%d:",
 			&h->day, &h->month, &h->year,
 			&h->hour, &h->minute,
 			&h->timespan, &h->nodes);

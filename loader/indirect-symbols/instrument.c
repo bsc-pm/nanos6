@@ -6,6 +6,8 @@
 
 #include "resolve.h"
 
+#include <stdint.h>
+
 
 #pragma GCC visibility push(default)
 
@@ -31,6 +33,18 @@ void nanos6_setup_distributed_instrument(const nanos6_distributed_instrument_inf
 	}
 
 	(*symbol)(info);
+}
+
+int64_t nanos6_get_instrument_start_time_ns(void)
+{
+	typedef int64_t nanos6_get_instrument_start_time_ns_t(void);
+
+	static nanos6_get_instrument_start_time_ns_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_get_instrument_start_time_ns_t *) _nanos6_resolve_symbol("nanos6_get_instrument_start_time_ns", "instrument", NULL);
+	}
+
+	return (*symbol)();
 }
 
 #pragma GCC visibility pop

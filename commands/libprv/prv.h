@@ -4,8 +4,8 @@
 	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CN6_H
-#define CN6_H
+#ifndef LIBPRV_PRV_H
+#define LIBPRV_PRV_H
 
 #include <stdint.h>
 #include "uthash.h"
@@ -20,4 +20,4 @@ struct task_type {
 	UT_hash_handle hh;
 };
 
-#endif /* CN6_H */
+#endif // LIBPRV_PRV_H

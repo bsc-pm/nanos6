@@ -328,10 +328,6 @@ class ParaverTrace:
 		cls.__prvFile.write(paraverHeader + "\n")
 
 	@classmethod
-	def addTraceName(cls, traceName):
-		cls.__name = traceName
-
-	@classmethod
 	def addStartTime(cls, startTime):
 		cls.__startTime = startTime
 
