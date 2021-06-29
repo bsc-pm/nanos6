@@ -4,8 +4,8 @@
 	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CN6_HWC_H
-#define CN6_HWC_H
+#ifndef LIBPRV_HWC_H
+#define LIBPRV_HWC_H
 
 struct hwc {
 	char *name;
@@ -135,4 +135,4 @@ struct hwc hwc_table[] = {
 	{ NULL,	0, NULL }
 };
 
-#endif /* CN6_HWC_H */
+#endif // LIBPRV_HWC_H
