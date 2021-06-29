@@ -194,9 +194,10 @@ __require_CTF
 		# tmpdir = "/tmp"
 		[instrument.ctf.converter]
 			# Indicate whether the trace converter should automatically generate the trace after
-			# executing a program with CTF instrumentation
+			# executing a program with CTF instrumentation. Default is true
 			enabled = true
-			# Use the fast converter (experimental)
+			# Use the fast converter. This feature is experimental and generates a trace compatible
+			# with just a subset of Paraver cfgs. Default is false
 			fast = false
 			# Indicate the location of the ctf2prv converter script. Default is none (not set),
 			# which means that the $CTF2PRV will be used if present, or ctf2prv in $PATH
