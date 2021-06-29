@@ -117,11 +117,8 @@ class ctf2prv(bt2._UserSinkComponent):
 			assert(ts >= 0)
 			cpuList = str(msg.event.stream.trace.environment["cpu_list"])
 			binaryName = msg.event.stream.trace.environment["binary_name"]
-			pid = msg.event.stream.trace.environment["pid"]
-			traceName = "trace_" + str(binaryName) + "_" + str(pid)
 
 			# initialize paraver trace
-			ParaverTrace.addTraceName(traceName)
 			ParaverTrace.addAbsoluteStartTime(absoluteStartTime)
 			ParaverTrace.addStartTime(ts)
 			ParaverTrace.addCPUList(cpuList)
