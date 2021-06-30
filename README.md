@@ -508,7 +508,7 @@ Currently, Nanos6 offers different policies when handling CPUs through the `cpum
 * `cpumanager.policy = "hybrid"`: Activates the `hybrid` policy, in which idle threads spin for a specific number of iterations before halting on a blocking condition. The number of iterations is controlled by the `cpumanager.busy_iters` configuration variable, which defaults to 240000 collective iterations across all the available CPUs (the real number per CPU is the collective one divided by the number of CPUs).
 * `cpumanager.policy = "lewi"`: If DLB is enabled, activates the LeWI policy. Similarly to the idle policy, in this one idle threads lend their CPU to other runtimes or processes.
 * `cpumanager.policy = "greedy"`: If DLB is enabled, activates the `greedy` policy, in which CPUs from the process' mask are never lent, but allows acquiring and lending external CPUs.
-* `cpumanager.policy = "default"`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `idle` policy, while if DLB is enabled it falls back to the `lewi` policy.
+* `cpumanager.policy = "default"`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `hybrid` policy, while if DLB is enabled it falls back to the `lewi` policy.
 
 ## Throttle
 
