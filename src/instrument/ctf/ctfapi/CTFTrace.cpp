@@ -177,13 +177,7 @@ static std::string prepareTraceDirectoryPath(
 // rank) will create the directory in-situ.
 std::string CTFAPI::CTFTrace::makeFinalTraceDirectory()
 {
-	if (!isDistributedMemoryEnabled()) {
-		// If distributed memory is not enabled, we only prepare the
-		// final trace path (moving old directories as necessary) but we
-		// do not need to create the final directory yet.
-		assert(_finalTracePath == "");
-		_finalTracePath = prepareTraceDirectoryPath(_finalTraceBasePath, _binaryName);
-	} else if (_rank == 0) {
+	if (!isDistributedMemoryEnabled() || _rank == 0) {
 		// Only rank 0 creates the directory
 		if (_finalTracePath != "") {
 			return _finalTracePath;
