@@ -78,8 +78,8 @@ private:
 	//! Wether the automatic page discovery is enabled or disabled
 	static ConfigVariable<bool> _discoverPageSize;
 
-	//! Real pagesize (especially important in case of THP)
-	static size_t _realPageSize;
+	//! Whether the real pagesize must be discovered
+	static bool _mustDiscoverRealPageSize;
 
 	//! Maximum OS Index for a NUMA node
 	static int _maxOSIndex;
@@ -171,9 +171,9 @@ public:
 
 		// Page auto-discovery will be enabled if we have at least two active NUMA nodes and tracking is enabled or automatic
 		if (_discoverPageSize.getValue() && (trackingMode == "auto" || trackingMode == "on") && numNumaAnyActive > 1) {
-			_realPageSize = discoverRealPageSize();
+			_mustDiscoverRealPageSize = true;
 		} else {
-			_realPageSize = HardwareInfo::getPageSize();
+			_mustDiscoverRealPageSize = false;
 		}
 
 		if (_reportEnabled) {
@@ -212,7 +212,9 @@ public:
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 			return res;
 		}
-		assert(_realPageSize != 0);
+
+		size_t realPageSize = getRealPageSize();
+		assert(realPageSize != 0);
 
 		// To explain the following code, let us assume a huge page is 2MB, and
 		// a normal system page is 4KB:
@@ -230,8 +232,8 @@ public:
 		assert(blockSize > 0);
 
 		// If we're allocating more than THP size, use that as page size
-		if (size > _realPageSize) {
-			pageSize = _realPageSize;
+		if (size > realPageSize) {
+			pageSize = realPageSize;
 		}
 		bitmask_t bitmaskCopy = *bitmask;
 		if (blockSize % pageSize != 0) {
@@ -310,9 +312,10 @@ public:
 		assert(blockSize > 0);
 
 		bitmask_t bitmaskCopy = *bitmask;
-		assert(_realPageSize != 0);
+		size_t realPageSize = getRealPageSize();
+		assert(realPageSize != 0);
 
-		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
+		pageSize = (size <= realPageSize) ? pageSize : realPageSize;
 		assert(pageSize > 0);
 
 		void *res = nullptr;
@@ -396,7 +399,8 @@ public:
 
 		// Release memory
 		size_t pageSize = HardwareInfo::getPageSize();
-		pageSize = (size <= _realPageSize) ? pageSize : _realPageSize;
+		size_t realPageSize = getRealPageSize();
+		pageSize = (size <= realPageSize) ? pageSize : realPageSize;
 		if (size < pageSize) {
 			std::free(ptr);
 		} else {
@@ -584,6 +588,8 @@ private:
 			return BitManipulation::countEnabledBits(&_bitmaskNumaAnyActive);
 		}
 	}
+
+	static size_t getRealPageSize();
 
 	static size_t discoverRealPageSize();
 

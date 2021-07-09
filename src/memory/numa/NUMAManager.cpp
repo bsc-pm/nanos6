@@ -22,7 +22,7 @@ std::atomic<bool> NUMAManager::_trackingEnabled;
 ConfigVariable<bool> NUMAManager::_reportEnabled("numa.report");
 ConfigVariable<std::string> NUMAManager::_trackingMode("numa.tracking");
 ConfigVariable<bool> NUMAManager::_discoverPageSize("numa.discover_pagesize");
-size_t NUMAManager::_realPageSize;
+bool NUMAManager::_mustDiscoverRealPageSize;
 int NUMAManager::_maxOSIndex;
 std::vector<int> NUMAManager::_logicalToOsIndex;
 
@@ -32,7 +32,7 @@ void NUMAManager::checkAllocationCorrectness(
 	const bitmask_t *bitmask,
 	size_t blockSize
 ) {
-	size_t pageSize = _realPageSize;
+	size_t pageSize = getRealPageSize();
 	assert(pageSize > 0);
 
 	unsigned long numPages = MathSupport::ceil(size, pageSize);
@@ -130,6 +130,23 @@ uint64_t NUMAManager::getTrackingNodes()
 		return 1;
 	} else {
 		return HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
+	}
+}
+
+size_t NUMAManager::getRealPageSize()
+{
+	// NOTE: We codify this inside a function so that:
+	// 1) A warning is only generated if users are using the NUMA API through
+	//    the "alloc" or "free" functions
+	// 2) Should we need to call this function multiple times, the warning and
+	//    the discovery will only be done once, as they're saved on a static
+	//    variable
+	if (_mustDiscoverRealPageSize) {
+		static size_t realPageSize = discoverRealPageSize();
+		return realPageSize;
+	} else {
+		static size_t realPageSize = HardwareInfo::getPageSize();
+		return realPageSize;
 	}
 }
 
