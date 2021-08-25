@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <sys/utsname.h>
+#include <string>
 
 #include "PQoSHardwareCounters.hpp"
 #include "PQoSTaskHardwareCounters.hpp"
