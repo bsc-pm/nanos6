@@ -1,11 +1,12 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
 #include <cassert>
+#include <string>
 #include <sys/utsname.h>
 
 #include "PQoSHardwareCounters.hpp"
