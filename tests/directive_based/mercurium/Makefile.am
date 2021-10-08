@@ -29,7 +29,6 @@ cpu_management_tests =
 user_mutex_tests =
 linear_region_tests =
 reductions_tests =
-runtime_handled_reductions_tests =
 discrete_tests =
 dlb_tests =
 numa_tests =
@@ -134,17 +133,6 @@ numa_tests += \
 	numa-on.mercurium.test \
 	numa-wildcards.mercurium.test
 
-# The following tests are designed for testing reductions implementations where
-# the combination is handled by the runtime. They are not enabled at the
-# moment, as the current implementation is based on task privatization and the
-# combination is handled at compile time.
-#runtime_handled_reductions_tests += \
-#	red-nest-taskwait.mercurium.test \
-#	red-combine-finish-access.mercurium.test \
-#	red-combine-new-access.mercurium.test \
-#	red-combine-taskwait.mercurium.test \
-#	red-combine-taskwait-mark.mercurium.test
-
 base_tests +=  \
 	blocking.mercurium.debug.test \
 	events.mercurium.debug.test \
@@ -240,16 +228,6 @@ numa_tests += \
 	numa-on.mercurium.debug.test \
 	numa-wildcards.mercurium.debug.test
 
-# The following tests are designed for testing reductions implementations where
-# the combination is handled by the runtime. They are not enabled at the
-# moment, as the current implementation is based on task privatization and the
-# combination is handled at compile time.
-#runtime_handled_reductions_tests += \
-#	red-nest-taskwait.mercurium.debug.test \
-#	red-combine-finish-access.mercurium.debug.test \
-#	red-combine-new-access.mercurium.debug.test \
-#	red-combine-taskwait.mercurium.debug.test \
-#	red-combine-taskwait-mark.mercurium.debug.test
 endif
 
 
@@ -867,51 +845,6 @@ discrete_red_stress_mercurium_test_SOURCES = ../discrete/discrete-red-stress.cpp
 discrete_red_stress_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_red_stress_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_red_stress_mercurium_test_LDFLAGS = $(test_common_ldflags)
-
-#red_nest_taskwait_mercurium_debug_test_SOURCES = ../reductions/red-nest-taskwait.cpp
-#red_nest_taskwait_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-#red_nest_taskwait_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-#red_nest_taskwait_mercurium_test_SOURCES = ../reductions/red-nest-taskwait.cpp
-#red_nest_taskwait_mercurium_test_CPPFLAGS = -DNDEBUG
-#red_nest_taskwait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-#red_nest_taskwait_mercurium_test_LDFLAGS = $(test_common_ldflags)
-
-#red_combine_finish_access_mercurium_debug_test_SOURCES = ../reductions/red-combine-finish-access.cpp
-#red_combine_finish_access_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_finish_access_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-#red_combine_finish_access_mercurium_test_SOURCES = ../reductions/red-combine-finish-access.cpp
-#red_combine_finish_access_mercurium_test_CPPFLAGS = -DNDEBUG
-#red_combine_finish_access_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_finish_access_mercurium_test_LDFLAGS = $(test_common_ldflags)
-
-#red_combine_new_access_mercurium_debug_test_SOURCES = ../reductions/red-combine-new-access.cpp
-#red_combine_new_access_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_new_access_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-#red_combine_new_access_mercurium_test_SOURCES = ../reductions/red-combine-new-access.cpp
-#red_combine_new_access_mercurium_test_CPPFLAGS = -DNDEBUG
-#red_combine_new_access_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_new_access_mercurium_test_LDFLAGS = $(test_common_ldflags)
-
-#red_combine_taskwait_mercurium_debug_test_SOURCES = ../reductions/red-combine-taskwait.cpp
-#red_combine_taskwait_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_taskwait_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-#red_combine_taskwait_mercurium_test_SOURCES = ../reductions/red-combine-taskwait.cpp
-#red_combine_taskwait_mercurium_test_CPPFLAGS = -DNDEBUG
-#red_combine_taskwait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_taskwait_mercurium_test_LDFLAGS = $(test_common_ldflags)
-
-#red_combine_taskwait_mark_mercurium_debug_test_SOURCES = ../reductions/red-combine-taskwait-mark.cpp
-#red_combine_taskwait_mark_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_taskwait_mark_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-#red_combine_taskwait_mark_mercurium_test_SOURCES = ../reductions/red-combine-taskwait-mark.cpp
-#red_combine_taskwait_mark_mercurium_test_CPPFLAGS = -DNDEBUG
-#red_combine_taskwait_mark_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-#red_combine_taskwait_mark_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 red_nqueens_mercurium_debug_test_SOURCES = ../reductions/red-nqueens.cpp
 red_nqueens_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

@@ -27,7 +27,6 @@ cpu_management_tests =
 user_mutex_tests =
 linear_region_tests =
 reductions_tests =
-runtime_handled_reductions_tests =
 discrete_tests =
 dlb_tests =
 numa_tests =
