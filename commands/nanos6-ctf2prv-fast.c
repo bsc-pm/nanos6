@@ -23,11 +23,14 @@
 #define PRV_LIB_PATH "."
 #endif
 
+#define MAX_FILTER 16
+
 #define err(...) fprintf(stderr, __VA_ARGS__);
 
 static bt_graph *
 create_graph(const char *input_trace, const char *output_dir,
-		int split_events, int quiet)
+		int split_events, long *filter_events, int num_filters,
+	       	int quiet)
 {
 	bt_graph *graph;
 	const bt_component_class_source *source_class;
@@ -189,6 +192,27 @@ create_graph(const char *input_trace, const char *output_dir,
 		exit(EXIT_FAILURE);
 	}
 
+	bt_value *filters = bt_value_array_create();
+	assert(filters);
+
+	for (int i = 0; i < num_filters; ++i) {
+		if(bt_value_array_append_signed_integer_element(filters,
+			filter_events[i])
+			!= BT_VALUE_ARRAY_APPEND_ELEMENT_STATUS_OK)
+		{
+			err("bt_value_array_append_signed_integer_element failed\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	if(bt_value_map_insert_entry(sink_params,
+				"filters", filters)
+			!= BT_VALUE_MAP_INSERT_ENTRY_STATUS_OK)
+	{
+		err("bt_value_map_insert_entry failed\n");
+		exit(EXIT_FAILURE);
+	}
+
 	if(bt_graph_add_sink_component(graph, sink_class,
 			"sink.ctf.fs", sink_params,
 			GRAPH_LOG_LEVEL, &sink)
@@ -290,7 +314,7 @@ mkpath(char *file_path, mode_t mode, int last)
 void
 usage(int argc, char *argv[])
 {
-	fprintf(stderr, "Usage: %s [-jq] [-o <dir>] <trace>\n", argv[0]);
+	fprintf(stderr, "Usage: %s [-jq] [-o <dir>] [-f <types>] <trace>\n", argv[0]);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "  Convert CTF traces to PRV\n");
 	fprintf(stderr, "\n");
@@ -305,17 +329,52 @@ usage(int argc, char *argv[])
 	fprintf(stderr, "This results in smaller traces but harder to\n");
 	fprintf(stderr, "manipulate with common text processing tool.\n");
 	fprintf(stderr, "\n");
+	fprintf(stderr, "Use -f to specify a list of comma-delimited\n");
+	fprintf(stderr, "Paraver event types. Only events matching the\n");
+	fprintf(stderr, "specified type numbers will be written in the\n");
+	fprintf(stderr, "PRV file if this option is enabled.\n");
+	fprintf(stderr, "Don't use spaces between commas.\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Use -q to be quiet.\n");
 
 	exit(EXIT_FAILURE);
 }
 
+void parse_filters(long filter_events[MAX_FILTER], int *num_filters, char *arg)
+{
+	char *event;
+	int i = 0;
+
+	event = strtok(arg, ",");
+
+	while (event != NULL) {
+		if (i >= MAX_FILTER) {
+			fprintf(stderr, "too many filters\n");
+			exit(EXIT_FAILURE);
+		}
+
+		errno = 0;
+		filter_events[i] = strtol(event, NULL, 10);
+
+		if (errno) {
+			perror("could not parse filter event type\n");
+			exit(EXIT_FAILURE);
+		}
+
+		++i;
+		event = strtok(NULL, ",");
+	}
+
+	*num_filters = i;
+}
 
 int main(int argc, char *argv[])
 {
 	bt_graph *graph;
 	char input_trace[PATH_MAX];
 	char output_dir[PATH_MAX];
+	long filter_events[MAX_FILTER];
+	int num_filters;
 	const char *input_dir;
 	int opt, split_events, quiet;
 
@@ -324,7 +383,7 @@ int main(int argc, char *argv[])
 	split_events = 1;
 	quiet = 0;
 
-	while ((opt = getopt(argc, argv, "jqo:h")) != -1)
+	while ((opt = getopt(argc, argv, "jqo:f:h")) != -1)
 	{
 		switch (opt) {
 		case 'j':
@@ -340,6 +399,9 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			strcpy(output_dir, optarg);
+			break;
+		case 'f':
+			parse_filters(filter_events, &num_filters, optarg);
 			break;
 		case 'h':
 		default: /* '?' */
@@ -378,7 +440,7 @@ int main(int argc, char *argv[])
 	}
 
 	graph = create_graph(input_trace, output_dir, split_events,
-			quiet);
+			filter_events, num_filters, quiet);
 
 	if(bt_graph_run(graph) != BT_GRAPH_RUN_STATUS_OK)
 	{

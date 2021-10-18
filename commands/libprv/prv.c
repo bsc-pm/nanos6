@@ -23,6 +23,7 @@
 #define MAX_CPUS 1024
 #define MAX_ID 128
 #define MAX_HWC 64
+#define MAX_FILTERS 16
 
 #define TRACE_NAME "trace"
 
@@ -281,6 +282,12 @@ struct conv {
 
 	/* Number of external threads (extra rows) */
 	int64_t external_threads;
+
+	/* Number of event filters */
+	int nfilters;
+
+	/* Array of events that are filtered */
+	long filters[MAX_FILTERS];
 };
 
 /* When a event needs to stack a subsystem in the thread stack, we
@@ -306,15 +313,15 @@ int ss_list[][2] = {
 
   { CLASS_ID_TC_TASKWAIT_ENTER,			RS_TASK_WAIT },
   { CLASS_ID_TC_TASKWAIT_EXIT,			RS_TASK_WAIT },
-  
+
   { CLASS_ID_TC_WAITFOR_ENTER,			RS_WAIT_FOR },
   { CLASS_ID_TC_WAITFOR_EXIT,			RS_WAIT_FOR },
-  
+
   { CLASS_ID_TC_MUTEX_LOCK_ENTER,		RS_LOCK },
   { CLASS_ID_TC_MUTEX_LOCK_EXIT,		RS_LOCK },
   { CLASS_ID_TC_MUTEX_UNLOCK_ENTER,		RS_UNLOCK },
   { CLASS_ID_TC_MUTEX_UNLOCK_EXIT,		RS_UNLOCK },
-  
+
   { CLASS_ID_TC_BLOCKING_API_BLOCK_ENTER,	RS_BLOCKING_API_BLOCK },
   { CLASS_ID_TC_BLOCKING_API_BLOCK_EXIT,	RS_BLOCKING_API_BLOCK },
   { CLASS_ID_TC_BLOCKING_API_UNBLOCK_ENTER,	RS_BLOCKING_API_UNBLOCK },
@@ -344,7 +351,7 @@ int ss_list[][2] = {
   { CLASS_ID_TC_TASK_CREATE_EXIT,		RS_TASK_CREATE },
   { CLASS_ID_OC_TASK_CREATE_ENTER,		RS_TASK_CREATE },
   { CLASS_ID_OC_TASK_CREATE_EXIT,		RS_TASK_CREATE },
-  
+
   { CLASS_ID_TC_TASK_SUBMIT_ENTER,		RS_TASK_SUBMIT },
   { CLASS_ID_TC_TASK_SUBMIT_EXIT,		RS_TASK_SUBMIT },
   { CLASS_ID_OC_TASK_SUBMIT_ENTER,		RS_TASK_SUBMIT },
@@ -730,6 +737,19 @@ bt_component_class_initialize_method_status conv_initialize(
 
 	conv->quiet = bt_value_bool_get(quiet_value);
 
+	const bt_value *filters = bt_value_map_borrow_entry_value_const(params, "filters");
+	assert(filters);
+	assert(bt_value_is_array(filters));
+
+	conv->nfilters = bt_value_array_get_length(filters);
+
+	for (int i = 0; i < conv->nfilters; ++i) {
+		const bt_value *event = bt_value_array_borrow_element_by_index_const(filters, i);
+		assert(event);
+		assert(bt_value_is_signed_integer(event));
+		conv->filters[i] = bt_value_integer_signed_get(event);
+	}
+
 	const bt_value* path_value = bt_value_map_borrow_entry_value_const(
 			params, "output_dir");
 
@@ -941,7 +961,7 @@ get_event_external_tid(struct conv *conv, const struct bt_event *event)
 
 	ctx = bt_event_borrow_common_context_field_const(event);
 	assert(ctx);
-	
+
 	unbounded = bt_field_structure_borrow_member_field_by_name_const(
 			ctx, "unbounded");
 
@@ -1048,6 +1068,20 @@ get_field_int64(const struct bt_event *event, const char *name)
 	return (uint64_t) bt_field_integer_signed_get_value(field);
 }
 
+static inline int
+filter_allowed(struct conv *conv, long long type)
+{
+	if (!conv->nfilters)
+		return 1;
+
+	for (int i = 0; i < conv->nfilters; ++i) {
+		if (type == (long long) conv->filters[i])
+			return 1;
+	}
+
+	return 0;
+}
+
 void
 add_prv_ev(struct conv *conv, long long type, long long value)
 {
@@ -1059,6 +1093,9 @@ add_prv_ev(struct conv *conv, long long type, long long value)
 	}
 
 	i = conv->n_acc_ev;
+
+	if (!filter_allowed(conv, type))
+		return;
 
 	conv->acc_ev[i].type = type;
 	conv->acc_ev[i].value = value;
@@ -1235,7 +1272,7 @@ hook_thread_suspend(struct conv *conv, const struct bt_event *event, int class_i
 		hook_task_stop(conv, event, class_id);
 
 	/* FIXME: The task stop may emit a RM_RUNTIME event, which will
-	 * be duplicated with this one: */ 
+	 * be duplicated with this one: */
 	add_prv_ev(conv, EV_TYPE_RUNTIME_MODE, RM_DEAD);
 }
 
@@ -1454,7 +1491,7 @@ hook_flush(struct conv *conv, const struct bt_event *event, int class_id)
 {
 	int prv_cpu;
 	int64_t t0, t1;
-	
+
 	t0 = get_field_uint64(event, "start");
 	t1 = get_field_uint64(event, "end");
 
@@ -1600,7 +1637,7 @@ hook_ss_lock_client(struct conv *conv, const struct bt_event *event, int class_i
 {
 	int prv_cpu;
 	int64_t ts;
-	
+
 	ts = (int64_t) get_field_uint64(event, "ts_acquire");
 	ts += conv->clock_offset_ns;
 
@@ -1625,7 +1662,7 @@ hook_ss_lock_server(struct conv *conv, const struct bt_event *event, int class_i
 {
 	int prv_cpu;
 	int64_t ts;
-	
+
 	ts = (int64_t) get_field_int64(event, "ts_acquire");
 	ts += conv->clock_offset_ns;
 
@@ -1822,7 +1859,7 @@ get_external_thread_cpu(struct conv *conv, const bt_event *event)
 	assert(thread->external);
 	assert(thread->tid == tid);
 	assert(thread->cpu >= conv->ncpus);
-	
+
 	conv->cpus[thread->cpu].thread = thread;
 	dbg("thread at cpu %d is %p\n", thread->cpu,
 			conv->cpus[thread->cpu].thread);
@@ -1871,7 +1908,7 @@ parse_metadata(struct conv *conv, const bt_message *message)
 	assert(value);
 
 	assert(bt_value_is_string(value));
-	
+
 	cpulist = bt_value_string_get(value);
 
 	/* Physical CPUs */
@@ -1880,7 +1917,7 @@ parse_metadata(struct conv *conv, const bt_message *message)
 	/* Begin without virtual CPUs; they are populated as external
 	 * threads are created (including the leader thread) */
 	conv->nvcpus = 0;
-	
+
 	/* Get the clock offset using the time_correction field */
 	conv->clock_offset_ns = get_env_int64(trace, "time_correction");
 
