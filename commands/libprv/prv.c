@@ -138,13 +138,19 @@ enum thread_st {
 };
 
 #define MAX_EV_STACK 256
+#define MAX_TASK_STACK 8
+
+struct task_stack {
+	int num_tasks;
+	struct task *task[MAX_TASK_STACK];
+};
 
 struct thread {
 	uint64_t tid; /* Thread ID */
 	int cpu; /* On which CPU is the thread running on */
 	int external; /* Wether the thread is external */
 	int state; /* Thread state */
-	struct task *task; /* Task running in the thread or NULL */
+	struct task_stack tasks; /* Stack containing all tasks running in the thread */
 	int busy_wait; /* 1 if is busy waiting */
 	int color; /* Paraver color */
 	int ev_stack[MAX_EV_STACK];
@@ -153,7 +159,6 @@ struct thread {
 };
 
 #define MAX_HOOKS 10
-
 
 struct conv;
 typedef void (*hook_func_t)(struct conv *conv,
@@ -1112,6 +1117,62 @@ get_thread(struct conv *conv, uint64_t tid)
 	return t;
 }
 
+static inline void task_stack_init(struct task_stack *tasks)
+{
+	tasks->num_tasks = 0;
+}
+
+static inline int task_stack_push(struct task_stack *tasks, struct task *task)
+{
+	if (tasks->num_tasks == MAX_TASK_STACK) {
+		err("Reached maximum task recursion limit of %d tasks per thread\n", MAX_TASK_STACK);
+		exit(EXIT_FAILURE);
+	}
+
+	tasks->task[tasks->num_tasks++] = task;
+}
+
+static inline struct task *task_stack_top(struct task_stack *tasks)
+{
+	if (!tasks->num_tasks)
+		return NULL;
+
+	return tasks->task[tasks->num_tasks - 1];
+}
+
+static inline void task_stack_pop(struct task_stack *tasks)
+{
+	if (!tasks->num_tasks) {
+		err("Tried to pop task from empty task stack, probably due to an unmatched task_end event\n");
+		exit(EXIT_FAILURE);
+	}
+
+	tasks->num_tasks--;
+}
+
+static inline struct thread *alloc_thread(struct conv *conv, uint64_t tid, int external, int cpu, int state)
+{
+	struct thread *thread;
+	thread = malloc(sizeof(*thread));
+	if (!thread) {
+		err("malloc failed in alloc_thread\n");
+		exit(EXIT_FAILURE);
+	}
+
+	thread->tid = tid;
+	thread->cpu = cpu;
+	thread->external = external;
+	thread->state = state;
+	task_stack_init(&thread->tasks);
+	thread->busy_wait = 0;
+	thread->color = conv->last_thread_color++;
+	thread->n_stack = 0;
+
+	HASH_ADD(hh, conv->threads, tid, sizeof(thread->tid), thread);
+
+	return thread;
+}
+
 void
 hook_ext_thread_create(struct conv *conv, const struct bt_event *event, int class_id)
 {
@@ -1131,19 +1192,7 @@ hook_ext_thread_create(struct conv *conv, const struct bt_event *event, int clas
 	}
 	else
 	{
-		thread = malloc(sizeof(*thread));
-		if(!thread) exit(1);
-
-		thread->tid = tid;
-		thread->cpu = conv->curr_cpu;
-		thread->external = 1;
-		thread->state = THREAD_ST_CREATED;
-		thread->task = NULL;
-		thread->busy_wait = 0;
-		thread->color = conv->last_thread_color++;
-		thread->n_stack = 0;
-
-		HASH_ADD(hh, conv->threads, tid, sizeof(thread->tid), thread);
+		thread = alloc_thread(conv, tid, 1, conv->curr_cpu, THREAD_ST_CREATED);
 	}
 
 	conv->cpus[conv->curr_cpu].thread = thread;
@@ -1175,19 +1224,7 @@ hook_thread_create(struct conv *conv, const struct bt_event *event, int class_id
 		HASH_FIND(hh, conv->threads, &tid, sizeof(tid), thread);
 		assert(!thread);
 
-		thread = malloc(sizeof(*thread));
-		if(!thread) exit(1);
-
-		thread->tid = tid;
-		thread->cpu = conv->curr_cpu;
-		thread->external = 0;
-		thread->state = THREAD_ST_CREATED;
-		thread->task = NULL;
-		thread->busy_wait = 0;
-		thread->color = conv->last_thread_color++;
-		thread->n_stack = 0;
-
-		HASH_ADD(hh, conv->threads, tid, sizeof(thread->tid), thread);
+		thread = alloc_thread(conv, tid, 0, conv->curr_cpu, THREAD_ST_CREATED);
 	}
 
 	conv->cpus[conv->curr_cpu].thread = thread;
@@ -1228,7 +1265,8 @@ hook_thread_resume(struct conv *conv, const struct bt_event *event, int class_id
 	if(thread->busy_wait)
 		add_prv_ev(conv, EV_TYPE_RUNTIME_BUSYWAITING, RA_BUSYWAITING);
 
-	if(thread->task && thread->task->state == TASK_ST_RUNNING)
+	struct task *task = task_stack_top(&thread->tasks);
+	if(task && task->state == TASK_ST_RUNNING)
 		hook_task_execute(conv, event, class_id);
 
 	/* Reset the counters if we have HWC */
@@ -1268,7 +1306,8 @@ hook_thread_suspend(struct conv *conv, const struct bt_event *event, int class_i
 	if(thread->busy_wait)
 		add_prv_ev(conv, EV_TYPE_RUNTIME_BUSYWAITING, RA_END);
 
-	if(thread->task && thread->task->state == TASK_ST_RUNNING)
+	struct task *task = task_stack_top(&thread->tasks);
+	if(task && task->state == TASK_ST_RUNNING)
 		hook_task_stop(conv, event, class_id);
 
 	/* FIXME: The task stop may emit a RM_RUNTIME event, which will
@@ -1348,7 +1387,7 @@ hook_task_label_start(struct conv *conv, const struct bt_event *event, int class
 	dbg("task_label_start: class_id=%d\n", class_id);
 	struct thread *thread = conv->cpus[conv->curr_cpu].thread;
 	assert(thread);
-	struct task *task = thread->task;
+	struct task *task = task_stack_top(&thread->tasks);
 	assert(task);
 
 	add_prv_ev(conv, EV_TYPE_RUNNING_TASK_LABEL, task->type);
@@ -1361,7 +1400,7 @@ hook_task_label_stop(struct conv *conv, const struct bt_event *event, int class_
 	dbg("task_label_stop: class_id=%d\n", class_id);
 	struct thread *thread = conv->cpus[conv->curr_cpu].thread;
 	assert(thread);
-	struct task *task = thread->task;
+	struct task *task = task_stack_top(&thread->tasks);
 	assert(task);
 
 	add_prv_ev(conv, EV_TYPE_RUNNING_TASK_LABEL, RA_END);
@@ -1424,8 +1463,7 @@ hook_task_start(struct conv *conv, const struct bt_event *event, int class_id)
 
 	dbg("task_start: id=%lu\n", task->id);
 
-	assert(thread->task == NULL);
-	thread->task = task;
+	task_stack_push(&thread->tasks, task);
 
 	dbg("task_start: thread=%p task=%p\n", thread, task);
 	dbg("task_start: cpu=%d\n", conv->curr_cpu);
@@ -1441,7 +1479,7 @@ hook_task_execute(struct conv *conv, const struct bt_event *event, int class_id)
 	assert(thread);
 	dbg("task_execute: thread=%p\n", thread);
 	dbg("task_execute: cpu=%d\n", conv->curr_cpu);
-	struct task *task = thread->task;
+	struct task *task = task_stack_top(&thread->tasks);
 	assert(task);
 
 	add_prv_ev(conv, EV_TYPE_RUNTIME_TASKS, RA_TASK);
@@ -1481,7 +1519,7 @@ hook_task_end(struct conv *conv, const struct bt_event *event, int class_id)
 	struct thread *thread = conv->cpus[conv->curr_cpu].thread;
 	assert(thread);
 
-	thread->task = NULL;
+	task_stack_pop(&thread->tasks);
 
 	hook_task_stop(conv, event, class_id);
 }
@@ -1832,23 +1870,8 @@ get_external_thread_cpu(struct conv *conv, const bt_event *event)
 	/* Add the thread if not found */
 	if(thread == NULL)
 	{
-		thread = malloc(sizeof(*thread));
-		if(!thread)
-		{
-			err("out of memory");
-			exit(EXIT_FAILURE);
-		}
-
-		thread->tid = tid;
-		thread->cpu = conv->ncpus + conv->nvcpus++;
-		thread->external = thread->cpu;
-		thread->state = THREAD_ST_UNKNOWN;
-		thread->task = NULL;
-		thread->busy_wait = 0;
-		thread->color = conv->last_thread_color++;
-		thread->n_stack = 0;
-
-		HASH_ADD(hh, conv->threads, tid, sizeof(thread->tid), thread);
+		int cpu = conv->ncpus + conv->nvcpus++;
+		thread = alloc_thread(conv, tid, cpu, cpu, THREAD_ST_UNKNOWN);
 		dbg("new thread %p\n", thread);
 	}
 	else
