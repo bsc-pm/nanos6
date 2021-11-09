@@ -21,13 +21,14 @@ the PRV trace.
 EOF
 }
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 if [ "$1" == "--fast" ]; then
   shift
-  exec nanos6-ctf2prv-fast -q "$@"
+  exec $DIR/nanos6-ctf2prv-fast -q "$@"
   exit 1
 fi
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 CTFPLUGINS=$DIR/../share/doc/nanos6/scripts/ctf/plugins
 CTFPLUGINS=$CTFPLUGINS:$DIR/plugins
 export PYTHONPATH=$PYTHONPATH:$CTFPLUGINS
