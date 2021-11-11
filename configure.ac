@@ -6,7 +6,7 @@
 #	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 
 # Nanos6 version and copyright
-m4_define([nanos6_version], [2.6])
+m4_define([nanos6_version], [2.7])
 m4_define([nanos6_license], ["GPL3"])
 m4_define([nanos6_copyright], ["2015-2021 Barcelona Supercomputing Center (BSC)"])
 
