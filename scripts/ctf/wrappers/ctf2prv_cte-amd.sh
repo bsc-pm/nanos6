@@ -11,23 +11,20 @@ else
 	exec 3>/dev/null
 fi
 
-if [ $# -eq 1 ]; then
-		comm="ctf2prv"
-		args=$@
-elif [ $# -eq 2 ]; then
-		comm=$1
-		args=${@:2}
-else
-	>&2 echo "usage: $0 <command> <arguments>"
-	>&2 echo "       $0 <arguments> # defaults to ctf2prv"
+if [ $# -eq 0 ]; then
+	>&2 echo "$0: bad usage"
+	>&2 echo "usage: $0 command [args]"
 	exit 1
 fi
+
+comm="$1"
+shift
 
 commpath=$(type -P "$comm")
 notfound=$?
 
 if [[ "$notfound" == "1" ]]; then
-	>&2 echo "The ctf2prv converter is not in the system path. ctf to prv conversion was not possible."
+	>&2 echo "Cannot find $comm in the system path"
 	exit 1
 fi
 
@@ -36,4 +33,4 @@ fi
 1>&3 2>&3 module load gcc/10.2.0 python/3.9.1 glib/2.66.6 babeltrace2/2.0.3
 1>&3      echo "Loading modules done"
 
-$commpath $args
+"$commpath" "$@"
