@@ -445,10 +445,6 @@ struct hook_entry hook_list[] = {
 
 	/* Task label */
 	{ CLASS_ID_TASK_LABEL,			hook_task_label_register },
-	{ CLASS_ID_TASK_START,			hook_task_label_start },
-	{ CLASS_ID_TASK_END,			hook_task_label_stop },
-	{ CLASS_ID_TASK_UNBLOCK,		hook_task_label_start },
-	{ CLASS_ID_TASK_BLOCK,			hook_task_label_stop },
 
 	/* Task end (must be after task label) */
 	{ CLASS_ID_TASK_END,			hook_task_end },
@@ -1400,8 +1396,6 @@ hook_task_label_stop(struct conv *conv, const struct bt_event *event, int class_
 	dbg("task_label_stop: class_id=%d\n", class_id);
 	struct thread *thread = conv->cpus[conv->curr_cpu].thread;
 	assert(thread);
-	struct task *task = task_stack_top(&thread->tasks);
-	assert(task);
 
 	add_prv_ev(conv, EV_TYPE_RUNNING_TASK_LABEL, RA_END);
 	add_prv_ev(conv, EV_TYPE_RUNNING_TASK_SOURCE, RA_END);
@@ -1484,6 +1478,7 @@ hook_task_execute(struct conv *conv, const struct bt_event *event, int class_id)
 
 	add_prv_ev(conv, EV_TYPE_RUNTIME_TASKS, RA_TASK);
 	add_prv_ev(conv, EV_TYPE_RUNNING_TASK_ID, task->id);
+	hook_task_label_start(conv, event, class_id);
 
 	/* Avoid a task mode event when we are in waitfor */
 	if(!(class_id == CLASS_ID_THREAD_RESUME &&
@@ -1499,6 +1494,7 @@ hook_task_stop(struct conv *conv, const struct bt_event *event, int class_id)
 	dbg("task_stop: class_id=%d\n", class_id);
 	add_prv_ev(conv, EV_TYPE_RUNTIME_TASKS, RA_END);
 	add_prv_ev(conv, EV_TYPE_RUNNING_TASK_ID, RA_END);
+	hook_task_label_stop(conv, event, class_id);
 
 	/* FIXME: too complex */
 	if(class_id == CLASS_ID_THREAD_SUSPEND ||
