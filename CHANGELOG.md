@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.7, Wed Nov 17, 2021
+The 2.7 release corresponds to the OmpSs-2 2021.11 release. It introduces some performance and code fixes,
+and several fixes for the CTF tracing tools.
+
+### General
+- Set `hybrid` CPU manager policy as default
+- Fix the setting of a floating-point optimization bit in the CSR register (x86) when enabling `turbo` mode
+- Add several fixes to CTF tracing tools
+- Add support for `if(0)` and taskwaits with dependencies in fast CTF converter (`nanos6-ctf2prv-fast`)
+- Remove unnecessary warning at run-time in the NUMA-aware code
+
+
 ## Version 2.6, Wed Jun 30, 2021
 The 2.6 release corresponds to the OmpSs-2 2021.06 release. It introduces several features and fixes that improve
 the general performance and programmability. It introduces a NUMA-aware API to allocate structures in taskified
