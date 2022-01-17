@@ -23,9 +23,11 @@ ConfigVariable<T>::ConfigVariable(const std::string &name) :
 
 template class ConfigVariable<std::string>;
 template class ConfigVariable<StringifiedMemorySize>;
-template class ConfigVariable<int>;
+template class ConfigVariable<int32_t>;
+template class ConfigVariable<uint32_t>;
 template class ConfigVariable<bool>;
 template class ConfigVariable<uint64_t>;
+template class ConfigVariable<int64_t>;
 
 template <typename T>
 ConfigVariableSet<T>::ConfigVariableSet(const std::string &name) :
