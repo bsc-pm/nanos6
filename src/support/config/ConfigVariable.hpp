@@ -13,17 +13,12 @@
 #include <sstream>
 #include <string>
 #include <unordered_set>
-
-#include "ConfigCentral.hpp"
-#include "ConfigParser.hpp"
-
+#include <support/StringSupport.hpp>
 
 //! Class representing a configuration variable
 template <typename T>
 class ConfigVariable {
 private:
-	typedef typename ConfigOptionType::type<T> option_type_t;
-
 	std::string _name;
 	T _value;
 	bool _isPresent;
@@ -32,15 +27,7 @@ public:
 	//! \brief Constructor
 	//!
 	//! \param[in] name the name of the config variable
-	ConfigVariable(const std::string &name) :
-		_name(name),
-		_value(),
-		_isPresent(false)
-	{
-		option_type_t value;
-		_isPresent = ConfigCentral::getOptionValue<option_type_t>(_name, value);
-		_value = (T) value;
-	}
+	ConfigVariable(const std::string &name);
 
 	//! \brief Indicate if the config variable has actually been defined
 	inline bool isPresent() const
@@ -70,6 +57,7 @@ public:
 	{
 		_value = value;
 	}
+
 };
 
 
@@ -82,7 +70,6 @@ public:
 	typedef typename contents_t::const_iterator const_iterator;
 
 private:
-	typedef typename ConfigOptionType::type<T> option_type_t;
 
 	std::string _name;
 	contents_t _contents;
@@ -92,20 +79,7 @@ public:
 	//! \brief Constructor
 	//!
 	//! \param[in] name The name of the config variable
-	ConfigVariableSet(const std::string &name) :
-		_name(name),
-		_contents(),
-		_isPresent(false)
-	{
-		std::vector<option_type_t> values;
-		_isPresent = ConfigCentral::getOptionValue<option_type_t>(_name, values);
-
-		if (!values.empty()) {
-			_contents.clear();
-			for (T &item : values)
-				_contents.emplace((T) item);
-		}
-	}
+	ConfigVariableSet(const std::string &name);
 
 	//! \brief Indicate if the config variable has actually been defined
 	inline bool isPresent() const

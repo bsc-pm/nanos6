@@ -414,6 +414,7 @@ common_sources = \
 	src/support/config/ConfigCentral.cpp \
 	src/support/config/ConfigChecker.cpp \
 	src/support/config/ConfigParser.cpp \
+	src/support/config/ConfigVariable.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
