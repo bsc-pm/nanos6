@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_LOOP_H
@@ -16,7 +16,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_loop_api
-enum nanos6_loop_api_t { nanos6_loop_api = 3 };
+enum nanos6_loop_api_t { nanos6_loop_api = 4 };
 
 
 #ifdef __cplusplus

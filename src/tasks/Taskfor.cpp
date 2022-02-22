@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Taskfor.hpp"
@@ -36,8 +36,6 @@ void Taskfor::run(Taskfor &source, nanos6_address_translation_entry_t *translati
 
 	do {
 		taskInfo.implementations[0].run(argsBlock, &_bounds, translationTable);
-		// Prevent translating twice the addresses because the argsBlock is overwritten
-		translationTable = nullptr;
 
 		completedIterations += myIterations;
 
