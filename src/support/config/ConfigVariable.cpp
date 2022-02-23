@@ -1,3 +1,8 @@
+/*
+	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+
+	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+*/
 
 #include "ConfigVariable.hpp"
 
@@ -21,14 +26,6 @@ ConfigVariable<T>::ConfigVariable(const std::string &name) :
 	_value = (T) value;
 }
 
-template class ConfigVariable<std::string>;
-template class ConfigVariable<StringifiedMemorySize>;
-template class ConfigVariable<int32_t>;
-template class ConfigVariable<uint32_t>;
-template class ConfigVariable<bool>;
-template class ConfigVariable<uint64_t>;
-template class ConfigVariable<int64_t>;
-
 template <typename T>
 ConfigVariableSet<T>::ConfigVariableSet(const std::string &name) :
 	_name(name),
@@ -46,5 +43,16 @@ ConfigVariableSet<T>::ConfigVariableSet(const std::string &name) :
 			_contents.emplace((T) item);
 	}
 }
+
+//! ConfigVariable and ConfigVariableSet types must be declared here. They
+//! are templates but we define them in this source file to cut compilation
+//! times. Processing the header of ConfigCentral and toml is very expensive
+
+template class ConfigVariable<bool>;
+template class ConfigVariable<int>;
+template class ConfigVariable<size_t>;
+template class ConfigVariable<unsigned int>;
+template class ConfigVariable<std::string>;
+template class ConfigVariable<StringifiedMemorySize>;
 
 template class ConfigVariableSet<std::string>;
