@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/blocking.h>
@@ -14,6 +14,7 @@
 #include <cstring>
 #include <stdint.h>
 #include <unistd.h>
+#include <vector>
 
 #include "TestAnyProtocolProducer.hpp"
 
@@ -26,37 +27,47 @@
 
 TestAnyProtocolProducer tap;
 
-bool checkTimeouts(uint64_t theoric, uint64_t *timeouts, int numTimeouts, bool checkOutliers)
+bool checkTimeouts(double theoretical, std::vector<uint64_t> &timeouts, int numTimeouts, bool checkOutliers)
 {
+	assert(timeouts.size() == numTimeouts);
+
+	// Sort the timeouts to get the median later
+	std::sort(timeouts.begin(), timeouts.end());
+
 	int numOutliers = 0;
 	double sum = 0.0;
 	double max = timeouts[0];
 	double min = timeouts[0];
 
 	for (int t = 0; t < numTimeouts; ++t) {
-		if (max < timeouts[t])
-			max = (double) timeouts[t];
-		if (min > timeouts[t])
-			min = (double) timeouts[t];
-		sum += timeouts[t];
+		double timeout = (double) timeouts[t];
+		if (max < timeout)
+			max = timeout;
+		if (min > timeout)
+			min = timeout;
+		sum += timeout;
 	}
 
+	double median = (double) timeouts[numTimeouts / 2];
 	double mean = sum / numTimeouts;
 	double stdev = 0.0;
 	for (int t = 0; t < numTimeouts; ++t) {
-		stdev += std::pow(timeouts[t] - mean, 2);
-		if (timeouts[t] > 1.5*theoric)
+		double timeout = (double) timeouts[t];
+		stdev += std::pow(timeout - mean, 2);
+		if (timeout > 1.5 * theoretical)
 			++numOutliers;
 	}
 	stdev = std::sqrt(stdev / numTimeouts);
 
 	tap.emitDiagnostic("Task wait-for stats: mean ", mean,
-		", min ", min, ", max ", max, ", stdev ", stdev,
+		", median ", median, ", min ", min, ", max ", max, ", stdev ", stdev,
 		", outliers ", numOutliers);
 
 	if (checkOutliers && numOutliers > numTimeouts * 0.1) {
 		return false;
-	} else if (mean < theoric * 0.8 || mean > theoric * 1.4) {
+	} else if (mean < theoretical * 0.8 || mean > theoretical * 1.6) {
+		return false;
+	} else if (median < theoretical * 0.8 || median > theoretical * 1.2) {
 		return false;
 	}
 	return true;
@@ -69,14 +80,10 @@ int main(int argc, char **argv)
 	const int numTasks = std::min(NUM_TASKS, numCPUs);
 	const int numRegularTasks = NUM_REGULAR_TASKS;
 	const int numWaits = NUM_WAITS;
-	const int timeout = TIMEOUT;
-	assert(numTasks > 0 && numWaits > 0 && timeout > 0);
+	const int theoreticalTimeout = TIMEOUT;
+	assert(numTasks > 0 && numWaits > 0 && theoreticalTimeout > 0);
 
-	const size_t timeoutsSize = numTasks * numWaits * sizeof(uint64_t);
-	uint64_t *const allTimeouts = (uint64_t *) std::malloc(timeoutsSize);
-	assert(allTimeouts != NULL);
-
-	std::memset(allTimeouts, 0, timeoutsSize);
+	std::vector<std::vector<uint64_t> > timeouts(numTasks, std::vector<uint64_t>(numWaits, 0));
 
 	tap.registerNewTests(
 		/* Phase 1 */ numTasks
@@ -84,7 +91,7 @@ int main(int argc, char **argv)
 	);
 	tap.begin();
 
-	tap.emitDiagnostic("Wait-for input: theoric timeout ", timeout,
+	tap.emitDiagnostic("Wait-for input: theoretical timeout ", theoreticalTimeout,
 		", tasks ", numTasks, ", waits x task ", numWaits);
 
 	/***********/
@@ -97,28 +104,26 @@ int main(int argc, char **argv)
 	tap.emitDiagnostic("***  ", numTasks * 2, " tests ***");
 	tap.emitDiagnostic("*****************");
 
-	uint64_t *timeouts = allTimeouts;
 	for (int t = 0; t < numTasks; ++t) {
-		#pragma oss task
+		#pragma oss task shared(timeouts)
 		{
 			for (int i = 0; i < numWaits; ++i) {
-				timeouts[i] = nanos6_wait_for(timeout);
+				timeouts[t][i] = nanos6_wait_for(theoreticalTimeout);
 			}
 		}
-		timeouts += numWaits;
 	}
 	#pragma oss taskwait
 
-	timeouts = allTimeouts;
 	for (int t = 0; t < numTasks; ++t) {
-		bool correct = checkTimeouts(timeout, timeouts, numWaits, true);
+		bool correct = checkTimeouts((double) theoreticalTimeout, timeouts[t], numWaits, true);
 		tap.evaluate(
 			correct,
 			"Check that the task accomplished almost all deadlines without regular tasks"
 		);
-		timeouts += numWaits;
+
+		// Reset task timeouts for the next phase
+		std::fill(timeouts[t].begin(), timeouts[t].end(), 0);
 	}
-	std::memset(allTimeouts, 0, timeoutsSize);
 
 	/***********/
 	/* PHASE 2 */
@@ -130,15 +135,13 @@ int main(int argc, char **argv)
 	tap.emitDiagnostic("***  ", numTasks * 2, " tests ***");
 	tap.emitDiagnostic("*****************");
 
-	timeouts = allTimeouts;
 	for (int t = 0; t < numTasks; ++t) {
-		#pragma oss task
+		#pragma oss task shared(timeouts)
 		{
 			for (int i = 0; i < numWaits; ++i) {
-				timeouts[i] = nanos6_wait_for(timeout);
+				timeouts[t][i] = nanos6_wait_for(theoreticalTimeout);
 			}
 		}
-		timeouts += numWaits;
 	}
 
 	for (int t = 0; t < numRegularTasks; ++t) {
@@ -149,18 +152,17 @@ int main(int argc, char **argv)
 	}
 	#pragma oss taskwait
 
-	timeouts = allTimeouts;
 	for (int t = 0; t < numTasks; ++t) {
-		bool correct = checkTimeouts(timeout, timeouts, numWaits, false);
+		bool correct = checkTimeouts((double) theoreticalTimeout, timeouts[t], numWaits, false);
 		tap.evaluateWeak(
 			correct,
 			"Check that the task accomplished almost all deadlines with other regular tasks",
 			"Cannot guarantee that this test works in all machines"
 		);
-		timeouts += numWaits;
-	}
 
-	std::free(allTimeouts);
+		// Reset task timeouts for the next phase
+		std::fill(timeouts[t].begin(), timeouts[t].end(), 0);
+	}
 
 	tap.end();
 }
