@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 // This is for posix_memalign
@@ -134,6 +134,8 @@ Task *AddTask::createTask(
 	} else if (isTaskfor) {
 		// Taskfors are always final
 		flags |= nanos6_final_task;
+		// Taskfors already feature the wait property
+		flags &= ~nanos6_waiting_task;
 
 		new (task) Taskfor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,

@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
@@ -52,17 +52,20 @@ base_tests += \
 	task-for-dep-multiaxpy.clang.test \
 	task-for-nonpod.clang.test \
 	task-for-nqueens.clang.test \
+	task-for-wait.clang.test \
 	taskloop-multiaxpy.clang.test \
 	taskloop-dep-multiaxpy.clang.test \
 	taskloop-nested-dep-multiaxpy.clang.test \
 	taskloop-nonpod.clang.test \
 	taskloop-nqueens.clang.test \
+	taskloop-wait.clang.test \
 	taskloop-for-multiaxpy.clang.test \
 	taskloop-for-dep-multiaxpy.clang.test \
 	taskloop-for-nested-dep-multiaxpy.clang.test \
 	taskloop-for-nonpod.clang.test \
 	taskloop-for-nqueens.clang.test \
-	taskloop-for-reduction.clang.test
+	taskloop-for-reduction.clang.test \
+	taskloop-for-wait.clang.test
 
 
 # Ignore CPU Activation test if we have DLB
@@ -144,17 +147,20 @@ base_tests +=  \
 	task-for-dep-multiaxpy.clang.debug.test \
 	task-for-nonpod.clang.debug.test \
 	task-for-nqueens.clang.debug.test \
+	task-for-wait.clang.debug.test \
 	taskloop-multiaxpy.clang.debug.test \
 	taskloop-dep-multiaxpy.clang.debug.test \
 	taskloop-nested-dep-multiaxpy.clang.debug.test \
 	taskloop-nonpod.clang.debug.test \
 	taskloop-nqueens.clang.debug.test \
+	taskloop-wait.clang.debug.test \
 	taskloop-for-multiaxpy.clang.debug.test \
 	taskloop-for-dep-multiaxpy.clang.debug.test \
 	taskloop-for-nested-dep-multiaxpy.clang.debug.test \
 	taskloop-for-nonpod.clang.debug.test \
 	taskloop-for-nqueens.clang.debug.test \
-	taskloop-for-reduction.clang.debug.test
+	taskloop-for-reduction.clang.debug.test \
+	taskloop-for-wait.clang.debug.test
 
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
@@ -442,6 +448,15 @@ task_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
 task_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 task_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
 
+task_for_wait_clang_debug_test_SOURCES = ../task-for/task-for-wait.cpp
+task_for_wait_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_wait_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+task_for_wait_clang_test_SOURCES = ../task-for/task-for-wait.cpp
+task_for_wait_clang_test_CPPFLAGS = -DNDEBUG
+task_for_wait_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_wait_clang_test_LDFLAGS = $(test_common_ldflags)
+
 taskloop_multiaxpy_clang_debug_test_SOURCES = ../taskloop/taskloop-multiaxpy.cpp
 taskloop_multiaxpy_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -486,6 +501,15 @@ taskloop_nqueens_clang_test_SOURCES = ../taskloop/taskloop-nqueens.cpp
 taskloop_nqueens_clang_test_CPPFLAGS = -DNDEBUG
 taskloop_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_wait_clang_debug_test_SOURCES = ../taskloop/taskloop-wait.cpp
+taskloop_wait_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_wait_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_wait_clang_test_SOURCES = ../taskloop/taskloop-wait.cpp
+taskloop_wait_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_wait_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_wait_clang_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_taskloop_multiaxpy_clang_debug_test_SOURCES = ../discrete-taskloop/taskloop-multiaxpy.cpp
 discrete_taskloop_multiaxpy_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -585,6 +609,15 @@ taskloop_for_reduction_clang_test_SOURCES = ../taskloop-for/taskloop-for-reducti
 taskloop_for_reduction_clang_test_CPPFLAGS = -DNDEBUG
 taskloop_for_reduction_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_for_reduction_clang_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_for_wait_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-wait.cpp
+taskloop_for_wait_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_wait_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_for_wait_clang_test_SOURCES = ../taskloop-for/taskloop-for-wait.cpp
+taskloop_for_wait_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_for_wait_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_wait_clang_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_taskloop_for_multiaxpy_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
 discrete_taskloop_for_multiaxpy_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
