@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
@@ -54,17 +54,20 @@ base_tests += \
 	task-for-dep-multiaxpy.mercurium.test \
 	task-for-nonpod.mercurium.test \
 	task-for-nqueens.mercurium.test \
+	task-for-wait.mercurium.test \
 	taskloop-multiaxpy.mercurium.test \
 	taskloop-dep-multiaxpy.mercurium.test \
 	taskloop-nested-dep-multiaxpy.mercurium.test \
 	taskloop-nonpod.mercurium.test \
 	taskloop-nqueens.mercurium.test \
+	taskloop-wait.mercurium.test \
 	taskloop-for-multiaxpy.mercurium.test \
 	taskloop-for-dep-multiaxpy.mercurium.test \
 	taskloop-for-nested-dep-multiaxpy.mercurium.test \
 	taskloop-for-nonpod.mercurium.test \
 	taskloop-for-nqueens.mercurium.test \
-	taskloop-for-reduction.mercurium.test
+	taskloop-for-reduction.mercurium.test \
+	taskloop-for-wait.mercurium.test
 
 
 if USE_CUDA
@@ -152,17 +155,20 @@ base_tests +=  \
 	task-for-dep-multiaxpy.mercurium.debug.test \
 	task-for-nonpod.mercurium.debug.test \
 	task-for-nqueens.mercurium.debug.test \
+	task-for-wait.mercurium.debug.test \
 	taskloop-multiaxpy.mercurium.debug.test \
 	taskloop-dep-multiaxpy.mercurium.debug.test \
 	taskloop-nested-dep-multiaxpy.mercurium.debug.test \
 	taskloop-nonpod.mercurium.debug.test \
 	taskloop-nqueens.mercurium.debug.test \
+	taskloop-wait.mercurium.debug.test \
 	taskloop-for-multiaxpy.mercurium.debug.test \
 	taskloop-for-dep-multiaxpy.mercurium.debug.test \
 	taskloop-for-nested-dep-multiaxpy.mercurium.debug.test \
 	taskloop-for-nonpod.mercurium.debug.test \
 	taskloop-for-nqueens.mercurium.debug.test \
-	taskloop-for-reduction.mercurium.debug.test
+	taskloop-for-reduction.mercurium.debug.test \
+	taskloop-for-wait.mercurium.debug.test
 
 if USE_CUDA
 base_tests += cuda-saxpy.mercurium.debug.test
@@ -483,6 +489,15 @@ task_for_nqueens_mercurium_test_CPPFLAGS = -DNDEBUG
 task_for_nqueens_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 task_for_nqueens_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
+task_for_wait_mercurium_debug_test_SOURCES = ../task-for/task-for-wait.cpp
+task_for_wait_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_wait_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+task_for_wait_mercurium_test_SOURCES = ../task-for/task-for-wait.cpp
+task_for_wait_mercurium_test_CPPFLAGS = -DNDEBUG
+task_for_wait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_wait_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
 taskloop_multiaxpy_mercurium_debug_test_SOURCES = ../taskloop/taskloop-multiaxpy.cpp
 taskloop_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_multiaxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -527,6 +542,15 @@ taskloop_nqueens_mercurium_test_SOURCES = ../taskloop/taskloop-nqueens.cpp
 taskloop_nqueens_mercurium_test_CPPFLAGS = -DNDEBUG
 taskloop_nqueens_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_nqueens_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_wait_mercurium_debug_test_SOURCES = ../taskloop/taskloop-wait.cpp
+taskloop_wait_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_wait_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_wait_mercurium_test_SOURCES = ../taskloop/taskloop-wait.cpp
+taskloop_wait_mercurium_test_CPPFLAGS = -DNDEBUG
+taskloop_wait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_wait_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_taskloop_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop/taskloop-multiaxpy.cpp
 discrete_taskloop_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -626,6 +650,15 @@ taskloop_for_reduction_mercurium_test_SOURCES = ../taskloop-for/taskloop-for-red
 taskloop_for_reduction_mercurium_test_CPPFLAGS = -DNDEBUG
 taskloop_for_reduction_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_for_reduction_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_for_wait_mercurium_debug_test_SOURCES = ../taskloop-for/taskloop-for-wait.cpp
+taskloop_for_wait_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_wait_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_for_wait_mercurium_test_SOURCES = ../taskloop-for/taskloop-for-wait.cpp
+taskloop_for_wait_mercurium_test_CPPFLAGS = -DNDEBUG
+taskloop_for_wait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_wait_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_taskloop_for_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
 discrete_taskloop_for_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
