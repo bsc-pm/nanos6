@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "config-parser.h"
@@ -270,9 +270,9 @@ static void _nanos6_loader_check_envars(void)
 	const char *prefix = "NANOS6";
 	const int plen = strlen(prefix);
 
-	const int nsuffixes = 3;
-	const char *suffix[3] = { "_CONFIG=", "_CONFIG_OVERRIDE=", "_HOME=" };
-	int suffixlen[3];
+	const int nsuffixes = 4;
+	const char *suffix[4] = { "_CONFIG=", "_CONFIG_OVERRIDE=", "_HOME=", "_JE_MALLOC_CONF=" };
+	int suffixlen[4];
 
 	for (int s = 0; s < nsuffixes; ++s) {
 		suffixlen[s] = strlen(suffix[s]);
