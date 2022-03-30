@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef STREAM_MANAGER_HPP
@@ -74,7 +74,7 @@ private:
 			executorInfo->implementation_count = 1;
 			executorInfo->implementations[0].run = &(StreamExecutor::bodyWrapper);
 			executorInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
-			executorInfo->implementations[0].task_label = "StreamExecutor";
+			executorInfo->implementations[0].task_type_label = "StreamExecutor";
 			executorInfo->implementations[0].declaration_source = "Stream Executor spawned within the runtime";
 			executorInfo->implementations[0].get_constraints = nullptr;
 			executorInfo->num_symbols = 0;

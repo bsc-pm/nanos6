@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_CTF_ADD_TASK_HPP
@@ -130,7 +130,7 @@ namespace Instrument {
 
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
 	{
-		const char *label = taskInfo->implementations[0].task_label;
+		const char *label = taskInfo->implementations[0].task_type_label;
 		const char *source = taskInfo->implementations[0].declaration_source;
 		ctf_tasktype_id_t taskTypeId = ctfAutoSetTaskTypeId(taskInfo);
 		tp_task_label(label, source, taskTypeId);

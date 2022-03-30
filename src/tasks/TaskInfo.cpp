@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <string>
@@ -21,8 +21,8 @@ bool TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
 	assert(taskInfo->implementations->declaration_source != nullptr);
 
 	std::string label;
-	if (taskInfo->implementations->task_label != nullptr) {
-		label = std::string(taskInfo->implementations->task_label);
+	if (taskInfo->implementations->task_type_label != nullptr) {
+		label = std::string(taskInfo->implementations->task_type_label);
 	} else {
 		// Avoid comparing empty strings and identify them separately
 		size_t unlabeledId = _numUnlabeledTasktypes++;

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
@@ -12,6 +12,7 @@
 void nanos6_create_loop(
 	nanos6_task_info_t *task_info,
 	nanos6_task_invocation_info_t *task_invocation_info,
+	char const *task_label,
 	size_t args_block_size,
 	void **args_block_pointer,
 	void **task_pointer,
@@ -25,6 +26,7 @@ void nanos6_create_loop(
 	typedef void nanos6_create_loop_t(
 		nanos6_task_info_t *task_info,
 		nanos6_task_invocation_info_t *task_invocation_info,
+		char const *task_label,
 		size_t args_block_size,
 		void **args_block_pointer,
 		void **task_pointer,
@@ -42,9 +44,10 @@ void nanos6_create_loop(
 		symbol = (nanos6_create_loop_t *) _nanos6_resolve_symbol("nanos6_create_loop", "essential", NULL);
 	}
 
-	(*symbol)(task_info, task_invocation_info, args_block_size,
-		args_block_pointer, task_pointer, flags, num_deps,
-		lower_bound, upper_bound, grainsize, chunksize);
+	(*symbol)(task_info, task_invocation_info, task_label,
+		args_block_size, args_block_pointer, task_pointer,
+		flags, num_deps, lower_bound, upper_bound, grainsize,
+		chunksize);
 }
 
 #pragma GCC visibility pop
