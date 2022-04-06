@@ -73,6 +73,8 @@ protected:
 	{
 	}
 
+	virtual void callTaskBody(Task *task,nanos6_address_translation_entry_t*);
+
 	virtual void finishTask(Task *task);
 
 public:

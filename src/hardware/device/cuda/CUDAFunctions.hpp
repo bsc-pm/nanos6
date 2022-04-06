@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_FUNCTIONS_HPP
@@ -9,28 +9,62 @@
 
 #include <cuda_runtime_api.h>
 
+#include "CUDARuntimeLoader.hpp"
+
 #include "lowlevel/cuda/CUDAErrorHandler.hpp"
 #include "support/config/ConfigVariable.hpp"
+
 
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
 class CUDAFunctions {
 
+	static std::vector<CUdevice>& getCudaDevices(int num = -1)
+	{
+		static std::vector<CUdevice> cdvs(num);
+		return cdvs;
+	}
+	static std::vector<CUcontext>& getCudaPrimaryContexts(int num = -1)
+	{
+		static std::vector<CUcontext> pctx(num);
+		return pctx;
+	}
+
+	static CUDARuntimeLoader& getCudaRuntimeLoader()
+	{
+		static CUDARuntimeLoader loader(getCudaPrimaryContexts());
+		return loader;
+	}
+
 public:
 	static bool initialize()
 	{
-		// Dummy setDevice operation to initialize CUDA runtime;
-		// if even 1 GPU is present setting to 0 should always
-		// be succesful.
-		cudaError_t err = cudaSetDevice(0);
-		if (err != cudaErrorNoDevice) {
-			CUDAErrorHandler::warn(err, " received during CUDA initialization. ",
-				"Nanos6 was compiled with CUDA support but the driver returned error.",
-				"\nRunning CUDA tasks is disabled");
+		CUresult st = cuInit(0);
+		if(st != CUDA_SUCCESS) {
+			return false;
 		}
-		return err == cudaSuccess;
+
+		int devNum = getDeviceCount();
+		auto& cDevices = getCudaDevices(devNum);
+		auto& cPrimaryCtx = getCudaPrimaryContexts(devNum);
+        //Initialize the primary context, this context is special and shared with the runtime api
+        for(int i = 0; i < devNum; ++i)
+        {
+            FatalErrorHandler::failIf(cuDeviceGet(&cDevices[i], i) != CUDA_SUCCESS,
+								     "Failed to get device " + std::to_string(i)); 	
+            FatalErrorHandler::failIf(cuDevicePrimaryCtxRetain(&cPrimaryCtx[i], cDevices[i]) != CUDA_SUCCESS,
+									 "Failed to retain primary context for device " + std::to_string(i)); 
+        }
+
+		//this will initialize the runtimeloader (if not done here, lazy-loaded)
+		std::ignore = getCudaRuntimeLoader();
+		return true;
 	}
 
+	static CUfunction loadFunction(const char* str)
+	{
+		return getCudaRuntimeLoader().loadFunction(str);
+	}
 
 	static size_t getDeviceCount()
 	{

@@ -18,18 +18,18 @@ AC_DEFUN([AC_CHECK_CUDA],
 				AC_MSG_RESULT([${ac_cv_use_cuda_prefix}])
 				# hacky way to obtain the quoted string for rpath
 				cuda_lib_path_q=`echo \"${ac_cv_use_cuda_prefix}/lib64\"`
-				CUDA_LIBS="-L${ac_cv_use_cuda_prefix}/lib64 -lcudart"
+				CUDA_LIBS="-L${ac_cv_use_cuda_prefix}/lib64 -lcudart -lcuda -lnvrtc"
 				CUDA_LIBS="${CUDA_LIBS} -Wl,-rpath,${cuda_lib_path_q}"
 				CUDA_CFLAGS="-I${ac_cv_use_cuda_prefix}/include"
 				ac_use_cuda=yes
 			else
-				PKG_CHECK_MODULES([CUDA], [cudart-10.2], [ac_use_cuda=yes], [
-				PKG_CHECK_MODULES([CUDA], [cudart-10.1], [ac_use_cuda=yes], [
-				PKG_CHECK_MODULES([CUDA], [cudart-10.0], [ac_use_cuda=yes], [
-				PKG_CHECK_MODULES([CUDA],  [cudart-9.2], [ac_use_cuda=yes], [
-				PKG_CHECK_MODULES([CUDA],  [cudart-9.1], [ac_use_cuda=yes], [
-				PKG_CHECK_MODULES([CUDA],  [cudart-9.0], [ac_use_cuda=yes], [
-				PKG_CHECK_MODULES([CUDA],  [cudart-8.0], [ac_use_cuda=yes], [ac_use_cuda=no]
+				PKG_CHECK_MODULES([CUDA], [cuda-10.2 cudart-10.2 nvrtc-10.2], [ac_use_cuda=yes], [
+				PKG_CHECK_MODULES([CUDA], [cuda-10.1 cudart-10.1 nvrtc-10.1], [ac_use_cuda=yes], [
+				PKG_CHECK_MODULES([CUDA], [cuda-10.0 cudart-10.0 nvrtc-10.0], [ac_use_cuda=yes], [
+				PKG_CHECK_MODULES([CUDA],  [cuda-9.2 cudart-9.2 nvrtc-9.2], [ac_use_cuda=yes], [
+				PKG_CHECK_MODULES([CUDA],  [cuda-9.1 cudart-9.1 nvrtc-9.1], [ac_use_cuda=yes], [
+				PKG_CHECK_MODULES([CUDA],  [cuda-9.0 cudart-9.0 nvrtc-9.0], [ac_use_cuda=yes], [
+				PKG_CHECK_MODULES([CUDA],  [cuda-8.0 cudart-8.0 nvrtc-8.0], [ac_use_cuda=yes], [ac_use_cuda=no]
 					)])])])])])])
 			fi
 
@@ -58,7 +58,7 @@ AC_DEFUN([AC_CHECK_CUDA],
 	     cudaEventRecord,
 	     cudaEventQuery],
 					[
-						CUDA_LIBS="-lcudart"
+						CUDA_LIBS="-lcudart -lcuda -lnvrtc"
 						ac_use_cuda=yes
 					],
 					[

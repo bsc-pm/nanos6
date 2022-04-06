@@ -61,6 +61,8 @@ private:
 
 	void postRunTask(Task *task) override;
 
+	void callTaskBody(Task* task, nanos6_address_translation_entry_t* translation);
+
 public:
 	CUDAAccelerator(int cudaDeviceIndex) :
 		Accelerator(cudaDeviceIndex, nanos6_cuda_device),

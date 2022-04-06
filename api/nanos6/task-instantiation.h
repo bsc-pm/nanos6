@@ -8,7 +8,7 @@
 #define NANOS6_TASK_INSTANTIATION_H
 
 #include <stddef.h>
-
+#include <unistd.h>
 #include "major.h"
 
 
@@ -51,6 +51,11 @@ typedef enum
 	nanos6_device_type_num=6
 } nanos6_device_t;
 
+typedef struct {
+	size_t sizes[6];
+	size_t shm;
+} nanos6_device_info_t;
+
 
 typedef struct
 {
@@ -85,7 +90,7 @@ typedef struct
 	char const *declaration_source;
 
 	//! \brief Similar to run but initially set to null and initialized by the runtime if needed
-	void (*run_wrapper)(void *args_block, void *device_env, nanos6_address_translation_entry_t *address_translation_table);
+	const char *dev_func;     
 } nanos6_task_implementation_info_t;
 
 
@@ -163,7 +168,20 @@ typedef struct __attribute__((aligned(64)))
 	void (**reduction_combiners)(void *oss_out, void *oss_in, size_t size);
 
 	//! \brief A pointer to data structures related to this type of task
-	void *task_type_data;
+ 	void *task_type_data;
+
+	//! \brief Number of task arguments
+	int num_args;
+
+	//! \brief Table of sizeofs for all num_args arguments of the task
+	int *sizeof_table;
+
+	//! \brief Table of offsets for all num_args arguments of the task
+	int *offset_table;
+
+	//! \brief list of indexes to map a symbol  into arg 
+	int *arg_idx_table;
+
 } nanos6_task_info_t;
 
 

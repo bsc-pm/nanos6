@@ -147,6 +147,10 @@ __!require_PQOS
 __require_CUDA
 	# OmpSs-2 @ CUDA
 	[devices.cuda]
+		# Disable warning when trying to load incompatible cuda code embedded into the binary
+		warning_on_incompatible_binary = true
+		# CUDA default kernels folder
+		kernels_folder = "nanos6-cuda-kernels"
 		# CUDA device page size. Default is 0x8000
 		page_size = 0x8000
 		# Maximum CUDA streams per GPU. Default is 16

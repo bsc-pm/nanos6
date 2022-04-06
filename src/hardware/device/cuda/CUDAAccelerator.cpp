@@ -10,7 +10,7 @@
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/BlockingAPI.hpp"
-
+#include <array>
 #include <DataAccessRegistration.hpp>
 #include <DataAccessRegistrationImplementation.hpp>
 
@@ -110,4 +110,79 @@ void CUDAAccelerator::processCUDAEvents()
 		}
 	}
 }
+
+
+void CUDAAccelerator::callTaskBody(Task* task, nanos6_address_translation_entry_t* translationTable)
+{
+	if(task->getTaskInfo()->implementations[0].dev_func == nullptr)
+	{
+		task->body(translationTable);
+	}
+	else
+	{
+		nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+
+		void *args = task->getArgsBlock();
+		nanos6_device_info_t& deviceInfo = *((nanos6_device_info_t *)args);
+		
+		const auto loadNDRange = [&](int idx) -> size_t
+		{
+			int64_t value = deviceInfo.sizes[idx];
+			if(value > 0) return value;
+			return 1;
+		};
+
+		//NDRANGE is used to define the work elements of the kernel
+		//This can be 1D, 2D or 3D.
+		//A grid contains blocks, which are the basic unit of parallelism.
+		//If the parameters given by the user are invalid for our cuda capabilities,
+		//we COULD perform some math to express the same working units in a supported way.
+		//Right now we expect the user to provide valid parameters.
+
+		size_t gridDim1 = loadNDRange(0);
+		size_t gridDim2 = loadNDRange(1);
+		size_t gridDim3 = loadNDRange(2);
+		
+		size_t blockDim1 = loadNDRange(3);
+		size_t blockDim2 = loadNDRange(4);
+		size_t blockDim3 = loadNDRange(5);
+
+
+		std::array<void*,16> stack_params;
+		void** params = &stack_params[0];
+		int num_args = task->getTaskInfo()->num_args;
+
+		if(num_args > 16) params = (void**) MemoryAllocator::alloc(num_args * sizeof(void*));
+		
+		for(int i = 0; i < num_args; i++)
+		{
+			params[i] = (void*)((char*)args + task->getTaskInfo()->offset_table[i]);
+		}
+
+		CUresult execution_result = cuLaunchKernel(
+				CUDAFunctions::loadFunction(task->getTaskInfo()->implementations[0].dev_func),
+				gridDim1,  gridDim2 ,gridDim3,
+				blockDim1, blockDim2,blockDim3,
+				deviceInfo.shm,
+				env.stream,
+				params,
+				nullptr
+		);
+
+		if(execution_result != CUDA_SUCCESS)
+		{
+			const char* err_str = nullptr;
+			cuGetErrorString(execution_result, &err_str);
+
+			fprintf(stderr, "Error launching kernel: %s with error: %s \n launch config is: block[%zu %zu %zu] grid[%zu %zu %zu] shmem[%zu]\n", 
+				task->getTaskInfo()->implementations[0].dev_func, err_str, 
+				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm);
+			assert(false);
+		}
+
+		if(num_args > 16) MemoryAllocator::free((void*) params, num_args * sizeof(void*));
+
+	}
+}
+
 

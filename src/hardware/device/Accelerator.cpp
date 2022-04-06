@@ -14,6 +14,11 @@
 
 #include <DataAccessRegistration.hpp>
 
+void Accelerator::callTaskBody(Task* task, nanos6_address_translation_entry_t* translationTable)
+{
+	task->body(translationTable);
+}
+
 void Accelerator::runTask(Task *task)
 {
 	nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
@@ -32,7 +37,7 @@ void Accelerator::runTask(Task *task)
 			task, _computePlace, stackTranslationTable,
 			tableSize);
 
-	task->body(translationTable);
+	callTaskBody(task, translationTable);
 
 	if (tableSize > 0)
 		MemoryAllocator::free(translationTable, tableSize);
