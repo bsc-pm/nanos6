@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_ACCELERATOR_HPP
@@ -36,19 +36,19 @@ private:
 	static ConfigVariable<size_t> _usPollingPeriod;
 
 	// To be used in order to obtain the current task in nanos6_get_current_cuda_stream() call
-	thread_local static Task* _currentTask;
+	thread_local static Task *_currentTask;
 
 	inline void generateDeviceEvironment(Task *task) override
 	{
 		// The Accelerator::runTask() function has already set the device so it's safe to proceed
-		nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+		nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 		env.stream = _streamPool.getCUDAStream();
 		env.event = _streamPool.getCUDAEvent();
 	}
 
 	inline void finishTaskCleanup(Task *task) override
 	{
-		nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+		nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 		_streamPool.releaseCUDAEvent(env.event);
 		_streamPool.releaseCUDAStream(env.stream);
 	}
@@ -61,7 +61,7 @@ private:
 
 	void postRunTask(Task *task) override;
 
-	void callTaskBody(Task* task, nanos6_address_translation_entry_t* translation);
+	void callTaskBody(Task *task, nanos6_address_translation_entry_t *translation);
 
 public:
 	CUDAAccelerator(int cudaDeviceIndex) :
@@ -96,7 +96,6 @@ public:
 	{
 		return _currentTask;
 	}
-
 };
 
 #endif // CUDA_ACCELERATOR_HPP

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Accelerator.hpp"
@@ -14,7 +14,7 @@
 
 #include <DataAccessRegistration.hpp>
 
-void Accelerator::callTaskBody(Task* task, nanos6_address_translation_entry_t* translationTable)
+void Accelerator::callTaskBody(Task *task, nanos6_address_translation_entry_t *translationTable)
 {
 	task->body(translationTable);
 }
@@ -86,8 +86,7 @@ void Accelerator::initializeService()
 	SpawnFunction::spawnFunction(
 		serviceFunction, this,
 		serviceCompleted, this,
-		"Device service", false
-	);
+		"Device service", false);
 }
 
 void Accelerator::shutdownService()
@@ -96,12 +95,13 @@ void Accelerator::shutdownService()
 	_stopService = true;
 
 	// Wait until the service completes
-	while (!_finishedService);
+	while (!_finishedService)
+		;
 }
 
 void Accelerator::serviceFunction(void *data)
 {
-	Accelerator *accel = (Accelerator *) data;
+	Accelerator *accel = (Accelerator *)data;
 	assert(accel != nullptr);
 
 	// Execute the service loop
@@ -110,7 +110,7 @@ void Accelerator::serviceFunction(void *data)
 
 void Accelerator::serviceCompleted(void *data)
 {
-	Accelerator *accel = (Accelerator *) data;
+	Accelerator *accel = (Accelerator *)data;
 	assert(accel != nullptr);
 	assert(accel->_stopService);
 

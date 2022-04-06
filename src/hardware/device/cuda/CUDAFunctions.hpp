@@ -18,19 +18,18 @@
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
 class CUDAFunctions {
-
-	static std::vector<CUdevice>& getCudaDevices(int num = -1)
+	static std::vector<CUdevice> &getCudaDevices(int num = -1)
 	{
 		static std::vector<CUdevice> cdvs(num);
 		return cdvs;
 	}
-	static std::vector<CUcontext>& getCudaPrimaryContexts(int num = -1)
+	static std::vector<CUcontext> &getCudaPrimaryContexts(int num = -1)
 	{
 		static std::vector<CUcontext> pctx(num);
 		return pctx;
 	}
 
-	static CUDARuntimeLoader& getCudaRuntimeLoader()
+	static CUDARuntimeLoader &getCudaRuntimeLoader()
 	{
 		static CUDARuntimeLoader loader(getCudaPrimaryContexts());
 		return loader;
@@ -40,28 +39,27 @@ public:
 	static bool initialize()
 	{
 		CUresult st = cuInit(0);
-		if(st != CUDA_SUCCESS) {
+		if (st != CUDA_SUCCESS) {
 			return false;
 		}
 
 		int devNum = getDeviceCount();
-		auto& cDevices = getCudaDevices(devNum);
-		auto& cPrimaryCtx = getCudaPrimaryContexts(devNum);
-        //Initialize the primary context, this context is special and shared with the runtime api
-        for(int i = 0; i < devNum; ++i)
-        {
-            FatalErrorHandler::failIf(cuDeviceGet(&cDevices[i], i) != CUDA_SUCCESS,
-								     "Failed to get device " + std::to_string(i)); 	
-            FatalErrorHandler::failIf(cuDevicePrimaryCtxRetain(&cPrimaryCtx[i], cDevices[i]) != CUDA_SUCCESS,
-									 "Failed to retain primary context for device " + std::to_string(i)); 
-        }
+		auto &cDevices = getCudaDevices(devNum);
+		auto &cPrimaryCtx = getCudaPrimaryContexts(devNum);
+		// Initialize the primary context, this context is special and shared with the runtime api
+		for (int i = 0; i < devNum; ++i) {
+			FatalErrorHandler::failIf(cuDeviceGet(&cDevices[i], i) != CUDA_SUCCESS,
+				"Failed to get device " + std::to_string(i));
+			FatalErrorHandler::failIf(cuDevicePrimaryCtxRetain(&cPrimaryCtx[i], cDevices[i]) != CUDA_SUCCESS,
+				"Failed to retain primary context for device " + std::to_string(i));
+		}
 
-		//this will initialize the runtimeloader (if not done here, lazy-loaded)
+		// this will initialize the runtimeloader (if not done here, lazy-loaded)
 		std::ignore = getCudaRuntimeLoader();
 		return true;
 	}
 
-	static CUfunction loadFunction(const char* str)
+	static CUfunction loadFunction(const char *str)
 	{
 		return getCudaRuntimeLoader().loadFunction(str);
 	}

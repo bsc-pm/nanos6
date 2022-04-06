@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "CUDAAccelerator.hpp"
@@ -18,7 +18,7 @@
 ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned");
 ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us");
 
-thread_local Task* CUDAAccelerator::_currentTask;
+thread_local Task *CUDAAccelerator::_currentTask;
 
 
 void CUDAAccelerator::acceleratorServiceLoop()
@@ -69,7 +69,7 @@ void CUDAAccelerator::acceleratorServiceLoop()
 // Get a new CUDA event and queue it in the stream the task has launched
 void CUDAAccelerator::postRunTask(Task *task)
 {
-	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 	CUDAFunctions::recordEvent(env.event, env.stream);
 	_activeEvents.push_back({env.event, task});
 }
@@ -80,7 +80,7 @@ void CUDAAccelerator::preRunTask(Task *task)
 	CUDAAccelerator::_currentTask = task;
 
 	// Prefetch available memory locations to the GPU
-	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 
 	DataAccessRegistration::processAllDataAccesses(task,
 		[&](const DataAccess *access) -> bool {
@@ -92,8 +92,7 @@ void CUDAAccelerator::preRunTask(Task *task)
 					access->getType() == READ_ACCESS_TYPE);
 			}
 			return true;
-		}
-	);
+		});
 }
 
 // Query the events issued to detect task completion
@@ -112,77 +111,70 @@ void CUDAAccelerator::processCUDAEvents()
 }
 
 
-void CUDAAccelerator::callTaskBody(Task* task, nanos6_address_translation_entry_t* translationTable)
+void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_t *translationTable)
 {
-	if(task->getTaskInfo()->implementations[0].dev_func == nullptr)
-	{
+	if (task->getTaskInfo()->implementations[0].dev_func == nullptr) {
 		task->body(translationTable);
-	}
-	else
-	{
-		nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+	} else {
+		nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 
 		void *args = task->getArgsBlock();
-		nanos6_device_info_t& deviceInfo = *((nanos6_device_info_t *)args);
-		
-		const auto loadNDRange = [&](int idx) -> size_t
-		{
+		nanos6_device_info_t &deviceInfo = *((nanos6_device_info_t *)args);
+
+		const auto loadNDRange = [&](int idx) -> size_t {
 			int64_t value = deviceInfo.sizes[idx];
-			if(value > 0) return value;
+			if (value > 0)
+				return value;
 			return 1;
 		};
 
-		//NDRANGE is used to define the work elements of the kernel
-		//This can be 1D, 2D or 3D.
-		//A grid contains blocks, which are the basic unit of parallelism.
-		//If the parameters given by the user are invalid for our cuda capabilities,
-		//we COULD perform some math to express the same working units in a supported way.
-		//Right now we expect the user to provide valid parameters.
+		// NDRANGE is used to define the work elements of the kernel
+		// This can be 1D, 2D or 3D.
+		// A grid contains blocks, which are the basic unit of parallelism.
+		// If the parameters given by the user are invalid for our cuda capabilities,
+		// we COULD perform some math to express the same working units in a supported way.
+		// Right now we expect the user to provide valid parameters.
 
 		size_t gridDim1 = loadNDRange(0);
 		size_t gridDim2 = loadNDRange(1);
 		size_t gridDim3 = loadNDRange(2);
-		
+
 		size_t blockDim1 = loadNDRange(3);
 		size_t blockDim2 = loadNDRange(4);
 		size_t blockDim3 = loadNDRange(5);
 
 
-		std::array<void*,16> stack_params;
-		void** params = &stack_params[0];
-		int num_args = task->getTaskInfo()->num_args;
+		std::array<void *, 16> stack_params;
+		void **params = &stack_params[0];
+		int numArgs = task->getTaskInfo()->num_args;
 
-		if(num_args > 16) params = (void**) MemoryAllocator::alloc(num_args * sizeof(void*));
-		
-		for(int i = 0; i < num_args; i++)
-		{
-			params[i] = (void*)((char*)args + task->getTaskInfo()->offset_table[i]);
+		if (numArgs > 16)
+			params = (void **)MemoryAllocator::alloc(numArgs * sizeof(void *));
+
+		for (int i = 0; i < numArgs; i++) {
+			params[i] = (void *)((char *)args + task->getTaskInfo()->offset_table[i]);
 		}
 
 		CUresult execution_result = cuLaunchKernel(
-				CUDAFunctions::loadFunction(task->getTaskInfo()->implementations[0].dev_func),
-				gridDim1,  gridDim2 ,gridDim3,
-				blockDim1, blockDim2,blockDim3,
-				deviceInfo.shm,
-				env.stream,
-				params,
-				nullptr
-		);
+			CUDAFunctions::loadFunction(task->getTaskInfo()->implementations[0].dev_func),
+			gridDim1, gridDim2, gridDim3,
+			blockDim1, blockDim2, blockDim3,
+			deviceInfo.shm,
+			env.stream,
+			params,
+			nullptr);
 
-		if(execution_result != CUDA_SUCCESS)
-		{
-			const char* err_str = nullptr;
+		if (execution_result != CUDA_SUCCESS) {
+			const char *err_str = nullptr;
 			cuGetErrorString(execution_result, &err_str);
 
-			fprintf(stderr, "Error launching kernel: %s with error: %s \n launch config is: block[%zu %zu %zu] grid[%zu %zu %zu] shmem[%zu]\n", 
-				task->getTaskInfo()->implementations[0].dev_func, err_str, 
+			fprintf(stderr, "Error launching kernel: %s with error: %s \n launch config is: block[%zu %zu %zu] grid[%zu %zu %zu] shmem[%zu]\n",
+				task->getTaskInfo()->implementations[0].dev_func, err_str,
 				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm);
 			assert(false);
 		}
 
-		if(num_args > 16) MemoryAllocator::free((void*) params, num_args * sizeof(void*));
-
+		if (numArgs > 16)
+			MemoryAllocator::free((void *)params, numArgs * sizeof(void *));
 	}
 }
-
-
