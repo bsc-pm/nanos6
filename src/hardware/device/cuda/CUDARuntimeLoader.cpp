@@ -124,7 +124,7 @@ CUDARuntimeLoader::compileAllClKernels(const std::vector<nameData> &sourcefiles)
 
 	if (allDevices.size() == 0) {
 		FatalErrorHandler::warn("Failed to find  CL-capable devices");
-		exit(1);
+		return {};
 	}
 
 
