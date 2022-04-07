@@ -253,7 +253,7 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts) {
               "Please, make sure that those implementations are compiled using "
               "the correct capabilities of your CUDA-Capable device.");
 
-          fprintf(stderr, green);
+          fprintf(stderr, "%s", green);
           FatalErrorHandler::warn("On CLANG you probably want to add the "
                                   "compilation flag --cuda-gpu-arch=sm_",
                                   capabilityNumber);
@@ -263,16 +263,16 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts) {
               std::to_string(capabilityNumber) + ",code=sm_" +
               std::to_string(capabilityNumber);
           FatalErrorHandler::warn(nvcc_string);
-          fprintf(stderr, reset);
+          fprintf(stderr, "%s", reset);
 
           FatalErrorHandler::warn(
               "If you have more than one GPUs with different capabilities, try "
               "to compile the cuda code for all the needed capabilities.");
-          fprintf(stderr, red);
+          fprintf(stderr, "%s", red);
           FatalErrorHandler::warn(
               "If you want to silence this warning, go to the nanos6 config "
               "file and set warning_on_incompatible_binary to false");
-          fprintf(stderr, reset);
+          fprintf(stderr, "%s", reset);
 
         } else
           FatalErrorHandler::warn("Could not load ptx file: ", cuObj.filename);
