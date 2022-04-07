@@ -346,6 +346,11 @@ else
 	AC_MSG_RESULT([no])
 fi
 
+if test x"${ac_use_cuda_cl}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   CUDA OpenCL Support detected.])
+fi 
+
 _AS_ECHO([])
 _AS_ECHO_N([   OpenACC is enabled... ])
 if test x"${ac_use_openacc}" = x"yes" ; then

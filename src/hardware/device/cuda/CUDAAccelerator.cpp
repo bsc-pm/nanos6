@@ -171,7 +171,7 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 			fprintf(stderr, "Error launching kernel: %s with error: %s \n launch config is: block[%zu %zu %zu] grid[%zu %zu %zu] shmem[%zu]\n",
 				task->getTaskInfo()->implementations[0].dev_func, err_str,
 				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm);
-			assert(false);
+			FatalErrorHandler::fail("Failed to execute cuda kernel: ", task->getTaskInfo()->implementations[0].dev_func);
 		}
 
 		if (numArgs > 16)

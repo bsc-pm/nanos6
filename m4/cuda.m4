@@ -18,7 +18,13 @@ AC_DEFUN([AC_CHECK_CUDA],
 				AC_MSG_RESULT([${ac_cv_use_cuda_prefix}])
 				# hacky way to obtain the quoted string for rpath
 				cuda_lib_path_q=`echo \"${ac_cv_use_cuda_prefix}/lib64\"`
-				CUDA_LIBS="-L${ac_cv_use_cuda_prefix}/lib64 -lcudart -lcuda -lnvrtc"
+				
+				if test x"${cuda_lib_path_q}/libOpenCL.so)" != x"yes"; then
+					opencl_libs=-lOpenCL
+					ac_use_cuda_cl="yes"
+				fi
+
+				CUDA_LIBS="-L${ac_cv_use_cuda_prefix}/lib64 -lcudart -lcuda -lnvrtc ${opencl_libs}" 
 				CUDA_LIBS="${CUDA_LIBS} -Wl,-rpath,${cuda_lib_path_q}"
 				CUDA_CFLAGS="-I${ac_cv_use_cuda_prefix}/include"
 				ac_use_cuda=yes
@@ -71,6 +77,11 @@ AC_DEFUN([AC_CHECK_CUDA],
 		AM_CONDITIONAL([USE_CUDA], [test x"${ac_use_cuda}" = x"yes"])
 		if test x"${ac_use_cuda}" = x"yes" ; then
 			AC_DEFINE([USE_CUDA], [1], [Define if CUDA is enabled.])
+		fi
+
+		AM_CONDITIONAL([USE_CUDA_CL], [test x"${ac_use_cuda_cl}" = x"yes"])
+		if test x"${ac_use_cuda_cl}" = x"yes" ; then
+			AC_DEFINE([USE_CUDA_CL], [1], [Define if CUDA OpenCL is enabled.])
 		fi
 
 		AC_SUBST([CUDA_LIBS])
