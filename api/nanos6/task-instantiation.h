@@ -52,7 +52,7 @@ typedef enum {
 
 typedef struct {
 	size_t sizes[6];
-	size_t shm;
+	size_t shm_size;
 } nanos6_device_info_t;
 
 
@@ -88,7 +88,7 @@ typedef struct
 	char const *declaration_source;
 
 	//! \brief Similar to run but initially set to null and initialized by the runtime if needed
-	const char *dev_func;
+	const char *device_function_name;
 } nanos6_task_implementation_info_t;
 
 

@@ -4,10 +4,15 @@
 	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
+#include <config.h>
 #include <string>
 
 #include "TaskInfo.hpp"
 
+
+#ifdef USE_CUDA
+#include "hardware/device/cuda/CUDAFunctions.hpp"
+#endif
 
 TaskInfo::task_type_map_t TaskInfo::_tasktypes;
 SpinLock TaskInfo::_lock;
@@ -19,6 +24,17 @@ bool TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
 	assert(taskInfo != nullptr);
 	assert(taskInfo->implementations != nullptr);
 	assert(taskInfo->implementations->declaration_source != nullptr);
+
+#ifdef USE_CUDA
+	// Check that all cuda tasks have a valid implementation on the GPU
+	if (CUDAFunctions::initialize()) {
+		if (taskInfo->implementations[0].device_type_id == nanos6_cuda_device && taskInfo->implementations[0].device_function_name != nullptr) {
+			for (size_t gpu = 0; gpu < CUDAFunctions::getDeviceCount(); ++gpu) {
+				CUDAFunctions::loadFunction(taskInfo->implementations[0].device_function_name);
+			}
+		}
+	}
+#endif
 
 	std::string label;
 	if (taskInfo->implementations->task_type_label != nullptr) {
@@ -43,8 +59,7 @@ bool TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
 	emplacedElement = _tasktypes.emplace(
 		std::piecewise_construct,
 		std::forward_as_tuple(label, declarationSource),
-		std::forward_as_tuple()
-	);
+		std::forward_as_tuple());
 
 	_lock.unlock();
 

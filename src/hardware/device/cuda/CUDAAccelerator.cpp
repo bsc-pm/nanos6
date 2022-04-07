@@ -113,7 +113,7 @@ void CUDAAccelerator::processCUDAEvents()
 
 void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_t *translationTable)
 {
-	if (task->getTaskInfo()->implementations[0].dev_func == nullptr) {
+	if (task->getTaskInfo()->implementations[0].device_function_name == nullptr) {
 		task->body(translationTable);
 	} else {
 		nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
@@ -156,10 +156,10 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 		}
 
 		CUresult execution_result = cuLaunchKernel(
-			CUDAFunctions::loadFunction(task->getTaskInfo()->implementations[0].dev_func),
+			CUDAFunctions::loadFunction(task->getTaskInfo()->implementations[0].device_function_name),
 			gridDim1, gridDim2, gridDim3,
 			blockDim1, blockDim2, blockDim3,
-			deviceInfo.shm,
+			deviceInfo.shm_size,
 			env.stream,
 			params,
 			nullptr);
@@ -169,9 +169,9 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 			cuGetErrorString(execution_result, &err_str);
 
 			fprintf(stderr, "Error launching kernel: %s with error: %s \n launch config is: block[%zu %zu %zu] grid[%zu %zu %zu] shmem[%zu]\n",
-				task->getTaskInfo()->implementations[0].dev_func, err_str,
-				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm);
-			FatalErrorHandler::fail("Failed to execute cuda kernel: ", task->getTaskInfo()->implementations[0].dev_func);
+				task->getTaskInfo()->implementations[0].device_function_name, err_str,
+				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm_size);
+			FatalErrorHandler::fail("Failed to execute cuda kernel: ", task->getTaskInfo()->implementations[0].device_function_name);
 		}
 
 		if (numArgs > 16)

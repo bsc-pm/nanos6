@@ -38,9 +38,14 @@ class CUDAFunctions {
 public:
 	static bool initialize()
 	{
+		static bool initialized = false;
+		static bool initializedStatus = false;
+		if (initialized)
+			return initializedStatus;
+
 		CUresult st = cuInit(0);
 		if (st != CUDA_SUCCESS) {
-			return false;
+			return initializedStatus;
 		}
 
 		int devNum = getDeviceCount();
@@ -54,9 +59,9 @@ public:
 				"Failed to retain primary context for device " + std::to_string(i));
 		}
 
-		// this will initialize the runtimeloader (if not done here, lazy-loaded)
-		std::ignore = getCudaRuntimeLoader();
-		return true;
+		initializedStatus = true;
+		initialized = true;
+		return initializedStatus;
 	}
 
 	static CUfunction loadFunction(const char *str)
