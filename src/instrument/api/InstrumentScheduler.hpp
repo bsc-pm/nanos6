@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
@@ -42,6 +42,10 @@ namespace Instrument {
 
 	//! \brief The current worker exits the subscription lock after having had the "server" role.
 	void exitSchedulerLockAsServer();
+
+	//! \brief The current worker exits the subscription lock after having had the "server" role.
+	//! \param[in] taskId the identifier of the task that the server assigned itself
+	void exitSchedulerLockAsServer(task_id_t taskId);
 
 }
 

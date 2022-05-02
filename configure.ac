@@ -92,6 +92,7 @@ AC_CHECK_PQOS
 AC_CHECK_DLB
 AC_CHECK_JEMALLOC
 AC_CHECK_BABELTRACE2
+AC_CHECK_OVNI
 
 # Build ctf2prv fast converter if Babeltrace2 is available
 AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])

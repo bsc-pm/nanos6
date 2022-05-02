@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_NULL_SCHEDULER_HPP
@@ -38,6 +38,10 @@ namespace Instrument {
 
 	inline void exitSchedulerLockAsServer() {}
 
+	inline void exitSchedulerLockAsServer(
+		__attribute__((unused)) task_id_t taskId
+	) {
+	}
 }
 
 #endif // INSTRUMENT_NULL_SCHEDULER_HPP

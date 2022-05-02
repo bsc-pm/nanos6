@@ -93,6 +93,8 @@ lib_LTLIBRARIES = \
 	libnanos6-debug-regions-graph.la \
 	libnanos6-debug-discrete-lint.la \
 	libnanos6-debug-regions-lint.la \
+	libnanos6-debug-discrete-ovni.la \
+	libnanos6-debug-regions-ovni.la \
 	libnanos6-debug-discrete-stats.la \
 	libnanos6-debug-regions-stats.la \
 	libnanos6-debug-discrete-verbose.la \
@@ -106,6 +108,8 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized-regions-graph.la \
 	libnanos6-optimized-discrete-lint.la \
 	libnanos6-optimized-regions-lint.la \
+	libnanos6-optimized-discrete-ovni.la \
+	libnanos6-optimized-regions-ovni.la \
 	libnanos6-optimized-discrete-stats.la \
 	libnanos6-optimized-regions-stats.la \
 	libnanos6-optimized-discrete-verbose.la \
@@ -588,6 +592,15 @@ instrument_graph_sources = \
 instrument_lint_sources = \
 	src/instrument/lint/Callbacks.cpp
 
+instrument_ovni_sources = \
+	src/instrument/ovni/InstrumentExternalThreadLocalData.cpp \
+	src/instrument/ovni/InstrumentInitAndShutdown.cpp \
+	src/instrument/ovni/InstrumentTaskId.cpp \
+	src/instrument/ovni/InstrumentTasktypeData.cpp \
+	src/instrument/ovni/InstrumentThreadManagement.cpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
+
 instrument_stats_sources = \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentStats.cpp \
@@ -629,6 +642,7 @@ dist_instrument_sources = \
 	$(instrument_extrae_sources) \
 	$(instrument_graph_sources) \
 	$(instrument_lint_sources) \
+	$(instrument_ovni_sources) \
 	$(instrument_stats_sources) \
 	$(instrument_verbose_sources) \
 	$(noinstrument_sources)
@@ -1013,6 +1027,39 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
 	src/instrument/null/InstrumentWorkerThread.hpp \
+	src/instrument/ovni/OVNITrace.hpp \
+	src/instrument/ovni/InstrumentAddTask.hpp \
+	src/instrument/ovni/InstrumentBlockingAPI.hpp \
+	src/instrument/ovni/InstrumentComputePlaceId.hpp \
+	src/instrument/ovni/InstrumentComputePlaceManagement.hpp \
+	src/instrument/ovni/InstrumentCPULocalData.hpp \
+	src/instrument/ovni/InstrumentDataAccessId.hpp \
+	src/instrument/ovni/InstrumentDebug.hpp \
+	src/instrument/ovni/InstrumentDependenciesByAccess.hpp \
+	src/instrument/ovni/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/ovni/InstrumentDependenciesByGroup.hpp \
+	src/instrument/ovni/InstrumentDependencySubsystemEntryPoints.hpp \
+	src/instrument/ovni/InstrumentDistributedMemory.hpp \
+	src/instrument/ovni/InstrumentExternalThreadId.hpp \
+	src/instrument/ovni/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/ovni/InstrumentInitAndShutdown.hpp \
+	src/instrument/ovni/InstrumentInstrumentationContext.hpp \
+	src/instrument/ovni/InstrumentLeaderThread.hpp \
+	src/instrument/ovni/InstrumentLogMessage.hpp \
+	src/instrument/ovni/InstrumentReductions.hpp \
+	src/instrument/ovni/InstrumentScheduler.hpp \
+	src/instrument/ovni/InstrumentTaskExecution.hpp \
+	src/instrument/ovni/InstrumentTaskId.hpp \
+	src/instrument/ovni/InstrumentTaskStatus.hpp \
+	src/instrument/ovni/InstrumentTasktypeData.hpp \
+	src/instrument/ovni/InstrumentTaskWait.hpp \
+	src/instrument/ovni/InstrumentThreadId.hpp \
+	src/instrument/ovni/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/ovni/InstrumentThreadLocalData.hpp \
+	src/instrument/ovni/InstrumentThreadManagement.hpp \
+	src/instrument/ovni/InstrumentTracingPointTypes.hpp\
+	src/instrument/ovni/InstrumentTracingPoints.hpp \
+	src/instrument/ovni/InstrumentUserMutex.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlockingAPI.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
@@ -1361,6 +1408,31 @@ else
 nodist_libnanos6_debug_regions_lint_la_SOURCES += loader/disabled_variant.c
 endif
 
+# Debug ovni variants
+libnanos6_debug_discrete_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_debug_discrete_ovni_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_debug_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES =
+
+libnanos6_debug_regions_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_debug_regions_ovni_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
+libnanos6_debug_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_debug_regions_ovni_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if BUILD_OVNI_INSTRUMENTATION
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+if BUILD_OVNI_INSTRUMENTATION
+nodist_libnanos6_debug_regions_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+
 
 # Debug stats variants
 libnanos6_debug_discrete_stats_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
@@ -1540,6 +1612,33 @@ nodist_libnanos6_optimized_regions_lint_la_SOURCES += $(common_sources) $(instru
 else
 disabled_variants += lint
 nodist_libnanos6_optimized_regions_lint_la_SOURCES += loader/disabled_variant.c
+endif
+
+# Optimized ovni variants
+libnanos6_optimized_discrete_ovni_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_optimized_discrete_ovni_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_optimized_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES =
+
+libnanos6_optimized_regions_ovni_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_optimized_regions_ovni_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
+libnanos6_optimized_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if BUILD_OVNI_INSTRUMENTATION
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+if BUILD_OVNI_INSTRUMENTATION
+enabled_variants += ovni
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
+else
+disabled_variants += ovni
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES += loader/disabled_variant.c
 endif
 
 
