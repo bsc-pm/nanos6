@@ -3,7 +3,7 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 
 # Nanos6 version and copyright
 m4_define([nanos6_version], [2.7])
@@ -33,7 +33,7 @@ AC_SUBST([LIBTOOL_DEPS])
 
 SSS_CHECK_SOURCE_VERSION
 
-# Checks for programs.
+# Checks for programs
 SSS_PREPARE_COMPILER_FLAGS
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11([], [mandatory])
@@ -303,7 +303,7 @@ _AS_ECHO([])
 _AS_ECHO([Configuration summary:])
 _AS_ECHO([   Compiler version... ${CXX_VERSION}])
 _AS_ECHO([   Compiler optimization flags... ${OPT_CXXFLAGS}])
-_AS_ECHO([   Compiler debug flags... ${DEBUG_CXXFLAGS}])
+_AS_ECHO([   Compiler debug flags... ${DBG_CXXFLAGS}])
 _AS_ECHO([])
 _AS_ECHO([   Include linear fragmented dependencies... ${ac_regions_deps}])
 _AS_ECHO([   Include discrete dependencies... ${ac_discrete_deps}])
