@@ -38,14 +38,6 @@ namespace Instrument {
 	void threadHasResumed(external_thread_id_t threadId);
 	void threadWillShutdown();
 	void threadWillShutdown(external_thread_id_t threadId);
-
-	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
-	{
-	}
-
-	inline void threadExitBusyWait()
-	{
-	}
 }
 
 

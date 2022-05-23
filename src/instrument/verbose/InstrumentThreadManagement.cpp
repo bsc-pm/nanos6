@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -209,44 +209,5 @@ namespace Instrument {
 	void threadWillShutdown()
 	{
 		verboseThreadWillShutdown();
-	}
-
-	void threadEnterBusyWait(busy_wait_reason_t reason)
-	{
-		if (!_verboseThreadManagement) {
-			return;
-		}
-
-		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
-
-		LogEntry *logEntry = getLogEntry(context);
-		assert(logEntry != nullptr);
-
-		logEntry->appendLocation(context);
-		logEntry->_contents << " --> BusyWait ";
-		switch (reason) {
-			case scheduling_polling_slot_busy_wait_reason:
-				logEntry->_contents << "(scheduler polling) ";
-				break;
-		}
-
-		addLogEntry(logEntry);
-	}
-
-	void threadExitBusyWait()
-	{
-		if (!_verboseThreadManagement) {
-			return;
-		}
-
-		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
-
-		LogEntry *logEntry = getLogEntry(context);
-		assert(logEntry != nullptr);
-
-		logEntry->appendLocation(context);
-		logEntry->_contents << " <-- BusyWait ";
-
-		addLogEntry(logEntry);
 	}
 }
