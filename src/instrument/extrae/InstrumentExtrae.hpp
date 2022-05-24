@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_HPP
@@ -139,8 +139,8 @@ namespace Instrument {
 
 	inline bool ExtraeTaskInfoCompare::operator()(nanos6_task_info_t *a, nanos6_task_info_t *b) const
 	{
-		std::string labelA(a->implementations[0].task_label != nullptr ? a->implementations[0].task_label : a->implementations[0].declaration_source);
-		std::string labelB(b->implementations[0].task_label != nullptr ? b->implementations[0].task_label : b->implementations[0].declaration_source);
+		std::string labelA(a->implementations[0].task_type_label != nullptr ? a->implementations[0].task_type_label : a->implementations[0].declaration_source);
+		std::string labelB(b->implementations[0].task_type_label != nullptr ? b->implementations[0].task_type_label : b->implementations[0].declaration_source);
 
 		if (labelA != labelB) {
 			return (labelA < labelB);

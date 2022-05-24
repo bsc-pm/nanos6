@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -97,7 +97,7 @@ void SpawnFunction::spawnFunction(
 			taskInfo->destroy_args_block = SpawnFunction::spawnedFunctionDestructor;
 
 			// Use a copy since we do not know the actual lifetime of label
-			taskInfo->implementations[0].task_label = it->first.second.c_str();
+			taskInfo->implementations[0].task_type_label = it->first.second.c_str();
 			taskInfo->implementations[0].declaration_source = "Spawned Task";
 			taskInfo->implementations[0].get_constraints = nullptr;
 		}

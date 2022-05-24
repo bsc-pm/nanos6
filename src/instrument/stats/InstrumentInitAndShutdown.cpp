@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <fstream>
@@ -114,8 +114,8 @@ namespace Instrument {
 
 			assert(userSideTaskInfo != 0);
 			std::string name;
-			if ((userSideTaskInfo->implementations[0].task_label != nullptr) && (userSideTaskInfo->implementations[0].task_label[0] != '\0')) {
-				name = userSideTaskInfo->implementations[0].task_label;
+			if ((userSideTaskInfo->implementations[0].task_type_label != nullptr) && (userSideTaskInfo->implementations[0].task_type_label[0] != '\0')) {
+				name = userSideTaskInfo->implementations[0].task_type_label;
 			} else if (userSideTaskInfo->implementations[0].declaration_source != 0) {
 				name = userSideTaskInfo->implementations[0].declaration_source;
 			} else {
@@ -136,8 +136,8 @@ namespace Instrument {
 
 					assert(userSideTaskInfo != 0);
 					std::string name;
-					if ((userSideTaskInfo->implementations[0].task_label != nullptr) && (userSideTaskInfo->implementations[0].task_label[0] != '\0')) {
-						name = userSideTaskInfo->implementations[0].task_label;
+					if ((userSideTaskInfo->implementations[0].task_type_label != nullptr) && (userSideTaskInfo->implementations[0].task_type_label[0] != '\0')) {
+						name = userSideTaskInfo->implementations[0].task_type_label;
 					} else if (userSideTaskInfo->implementations[0].declaration_source != 0) {
 						name = userSideTaskInfo->implementations[0].declaration_source;
 					} else {

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_HPP
@@ -780,8 +780,8 @@ public:
 	{
 		if (_taskInfo != nullptr) {
 			if (_taskInfo->implementations != nullptr) {
-				if (_taskInfo->implementations->task_label != nullptr) {
-					return std::string(_taskInfo->implementations->task_label);
+				if (_taskInfo->implementations->task_type_label != nullptr) {
+					return std::string(_taskInfo->implementations->task_type_label);
 				} else if (_taskInfo->implementations->declaration_source != nullptr) {
 					return std::string(_taskInfo->implementations->declaration_source);
 				}

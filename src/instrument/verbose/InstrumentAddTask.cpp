@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <atomic>
@@ -37,8 +37,8 @@ namespace Instrument {
 			logEntry->appendLocation(context);
 
 			logEntry->_contents << " --> AddTask " << taskId;
-			if (taskInfo && taskInfo->implementations[0].task_label) {
-				logEntry->_contents << " " << taskInfo->implementations[0].task_label;
+			if (taskInfo && taskInfo->implementations[0].task_type_label) {
+				logEntry->_contents << " " << taskInfo->implementations[0].task_type_label;
 			}
 			if (taskInvokationInfo && taskInvokationInfo->invocation_source) {
 				logEntry->_contents << " " << taskInvokationInfo->invocation_source;

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -16,6 +16,7 @@
 void nanos6_create_loop(
 	nanos6_task_info_t *task_info,
 	nanos6_task_invocation_info_t *task_invocation_info,
+	char const *,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
 	/* OUT */ void **task_pointer,

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -194,8 +194,8 @@ namespace Instrument {
 				codeLocation = codeLocation.substr(0, codeLocation.find_last_of(':'));
 
 				std::string label;
-				if (taskInfo->implementations[0].task_label != nullptr) {
-					label = taskInfo->implementations[0].task_label;
+				if (taskInfo->implementations[0].task_type_label != nullptr) {
+					label = taskInfo->implementations[0].task_type_label;
 				} else {
 					label = codeLocation;
 				}
