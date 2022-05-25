@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 
 bin_PROGRAMS = nanos6-info
 
@@ -10,7 +10,7 @@ auxiliarylib_LTLIBRARIES = libprv.la
 endif
 
 nanos6_info_SOURCES = nanos6-info.cpp
-nanos6_info_CPPFLAGS = -DNDEBUG
+nanos6_info_CPPFLAGS = -DNDEBUG -DNANOS6_LIBDIR='"$(libdir)"' -DNANOS6_INCDIR='"$(includedir)"'
 nanos6_info_CXXFLAGS = $(OPT_CXXFLAGS) $(PTHREAD_CFLAGS) -I$(top_srcdir)/api
 nanos6_info_LDFLAGS = -Wl,-z,lazy $(jemalloc_LIBS)
 nanos6_info_LDADD = $(top_builddir)/nanos6-library-mode.o ../libnanos6.la -ldl

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/bootstrap.h>
@@ -9,11 +9,21 @@
 #include <nanos6/library-mode.h>
 #include <nanos6/runtime-info.h>
 
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <list>
 #include <string>
 #include <utility>
+
+
+#ifndef NANOS6_LIBDIR
+#error "NANOS6_LIBDIR is undefined"
+#endif
+
+#ifndef NANOS6_INCDIR
+#error "NANOS6_INCDIR is undefined"
+#endif
 
 
 struct OptionHelper {
@@ -30,6 +40,9 @@ struct OptionHelper {
 		runtime_patches,
 		runtime_path,
 		runtime_version,
+		compile_flags,
+		link_flags,
+		compile_link_flags,
 		no_retriever
 	};
 
@@ -90,13 +103,23 @@ static std::list<OptionHelper> optionHelpers;
 
 static char const *emitHelp()
 {
+	size_t maxLength = 0;
+	for (const OptionHelper &optionHelper : optionHelpers) {
+		if (optionHelper._parameter.size() > maxLength)
+			maxLength = optionHelper._parameter.size();
+	}
+	assert(maxLength > 0);
+	maxLength += 4;
+
 	std::cout << "Usage: " << commandName << " <options>" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Options:" << std::endl;
-	for (std::list<OptionHelper>::const_iterator it = optionHelpers.begin(); it != optionHelpers.end(); it++) {
-		OptionHelper const &optionHelper = *it;
+
+	for (const OptionHelper &optionHelper : optionHelpers) {
 		if (!optionHelper.empty()) {
-			std::cout << "\t" << optionHelper._parameter << "\t" << optionHelper._helpMessage << std::endl;
+			std::string separator(maxLength - optionHelper._parameter.size(), ' ');
+
+			std::cout << "\t" << optionHelper._parameter << separator << optionHelper._helpMessage << std::endl;
 		} else {
 			std::cout << std::endl;
 		}
@@ -148,6 +171,38 @@ static char const *dumpPatches()
 	return "";
 }
 
+static char const *dumpCompileFlags(bool endline = true)
+{
+	std::string path(NANOS6_INCDIR);
+
+	std::cout << "-I" << path;
+	if (endline)
+		std::cout << std::endl;
+	else
+		std::cout << " ";
+
+	return "";
+}
+
+static char const *dumpLinkFlags(bool endline = true)
+{
+	std::string path(NANOS6_LIBDIR);
+
+	std::cout << path << "/nanos6-main-wrapper.o -L" << path << " -lnanos6 -Wl,-rpath=" << path;
+	if (endline)
+		std::cout << std::endl;
+	else
+		std::cout << " ";
+
+	return "";
+}
+
+static char const *dumpCompileLinkFlags()
+{
+	dumpCompileFlags(false);
+	dumpLinkFlags();
+	return "";
+}
 
 static char const *dumpRuntimeDetailedInfo()
 {
@@ -212,6 +267,12 @@ char const *OptionHelper::retrieve(retriever_t retriever)
 			return nanos6_get_runtime_path();
 		case runtime_version:
 			return nanos6_get_runtime_version();
+		case compile_flags:
+			return dumpCompileFlags();
+		case link_flags:
+			return dumpLinkFlags();
+		case compile_link_flags:
+			return dumpCompileLinkFlags();
 		default:
 			abort();
 	}
@@ -244,6 +305,10 @@ int main(int argc, char **argv)
 	optionHelpers.push_back(OptionHelper("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", OptionHelper::runtime_compiler_flags));
 	optionHelpers.push_back(OptionHelper("--runtime-path", "display the path of the loaded runtime", "Runtime path", OptionHelper::runtime_path));
 	optionHelpers.push_back(OptionHelper());
+	optionHelpers.push_back(OptionHelper("--compile-flags", "display the compile flags for this runtime", "", OptionHelper::compile_flags));
+	optionHelpers.push_back(OptionHelper("--link-flags", "display the linking flags to link to this runtime", "", OptionHelper::link_flags));
+	optionHelpers.push_back(OptionHelper("--full-flags", "display the compile and linking flags for this runtime", "", OptionHelper::compile_link_flags));
+	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--runtime-details", "display detailed runtime and execution environment information", "", OptionHelper::runtime_detailed_info));
 	optionHelpers.push_back(OptionHelper("--dump-patches", "display code changes over the reported version", "", OptionHelper::runtime_patches));
 
@@ -265,8 +330,7 @@ int main(int argc, char **argv)
 		}
 	} else {
 		// Default output
-		for (std::list<OptionHelper>::const_iterator it = optionHelpers.begin(); it != optionHelpers.end(); it++) {
-			OptionHelper const &optionHelper = *it;
+		for (const OptionHelper &optionHelper : optionHelpers) {
 			if (optionHelper._enabledByDefault) {
 				optionHelper.emit();
 			}
