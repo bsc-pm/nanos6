@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.7.1, Fri May 27, 2022
+The 2.7.1 release corresponds to the OmpSs-2 2021.11.1 release. It introduces some bug and code fixes,
+and some minor improvements
+
+### General
+- Adapt taskfor to avoid overwriting task args in compiler-generated code
+- Improve support for custom CXXFLAGS at configure time
+- Add `--disable-all-instrumentations` configure option
+- Modify API to allow setting task labels
+- Provide `nanos6-info` with new options to show compile/link runtime flags
+
+
 ## Version 2.7, Wed Nov 17, 2021
 The 2.7 release corresponds to the OmpSs-2 2021.11 release. It introduces some performance and code fixes,
 and several fixes for the CTF tracing tools.
