@@ -37,7 +37,7 @@ void Instrument::threadSynchronizationCompleted(__attribute__((unused)) thread_i
 	// TODO: We should use the thread_id_t to store and retrieve the TID
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != nullptr);
-	int cpu = currentWorkerThread->getCpuId();
+	int cpu = currentWorkerThread->getComputePlace()->getIndex();
 	OVNI::threadExecute(cpu, 0, 0);
 
 	// Mark as paused since it will be immediately resumed

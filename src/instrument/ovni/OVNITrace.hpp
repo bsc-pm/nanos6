@@ -233,6 +233,7 @@ namespace Instrument {
 		static void procInit()
 		{
 			char hostname[HOST_NAME_MAX + 1];
+			char loomName[HOST_NAME_MAX + 64];
 
 			if (gethostname(hostname, HOST_NAME_MAX) != 0) {
 				FatalErrorHandler::fail("Could not get hostname while initializing instrumentation");
@@ -241,8 +242,11 @@ namespace Instrument {
 			// gethostname() may not null-terminate the buffer
 			hostname[HOST_NAME_MAX] = '\0';
 
+			pid_t pid = getpid();
+			sprintf(loomName, "%s$%d", hostname, pid);
+
 			// Initialize OVNI with APPID = 1, as there is only one application in this runtime
-			ovni_proc_init(1, hostname, getpid());
+			ovni_proc_init(1, loomName, pid);
 		}
 
 		static void procFini()
@@ -273,6 +277,19 @@ namespace Instrument {
 		{
 			emitGeneric("VHA");
 			// Flush the events to disk before detaching the thread
+			ovni_flush();
+		}
+
+		static void threadMaybeInit()
+		{
+			if (!ovni_thread_isready()) {
+				threadInit();
+				threadExecute(-1, -1, -1);
+			}
+		}
+
+		static void flush()
+		{
 			ovni_flush();
 		}
 	};

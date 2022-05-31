@@ -124,12 +124,14 @@ namespace Instrument {
 
 	inline void enterSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)
 	{
+		OVNI::threadMaybeInit();
 		OVNI::spawnFunctionEnter();
 	}
 
 	inline void exitSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)
 	{
 		OVNI::spawnFunctionExit();
+		OVNI::flush();
 	}
 }
 
