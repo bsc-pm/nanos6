@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <dlfcn.h>
 #include <iostream>
 #include <list>
 #include <string>
@@ -30,19 +31,21 @@ struct OptionHelper {
 	enum retriever_t {
 		command_help = 0,
 		runtime_branch,
+		runtime_compile_flags,
+		runtime_config_current,
+		runtime_config_default,
 		runtime_compiler_version,
 		runtime_compiler_flags,
 		runtime_copyright,
 		runtime_detailed_info,
+		runtime_full_flags,
 		runtime_full_license,
 		runtime_full_version,
 		runtime_license,
+		runtime_link_flags,
 		runtime_patches,
 		runtime_path,
 		runtime_version,
-		compile_flags,
-		link_flags,
-		compile_link_flags,
 		no_retriever
 	};
 
@@ -171,6 +174,34 @@ static char const *dumpPatches()
 	return "";
 }
 
+static const char *dumpCurrentConfigfilePath()
+{
+	// Get the current config file path computed by the loader
+	const char *currentConfigPath = (const char *) dlsym(nullptr, "_nanos6_config_path");
+	if (currentConfigPath == nullptr) {
+		std::cerr << "Error: current config file path not available" << std::endl;
+		exit(1);
+	}
+
+	std::cout << currentConfigPath << std::endl;
+
+	return "";
+}
+
+static const char *dumpDefaultConfigfilePath()
+{
+	// Get the default config file path computed by the loader
+	const char *defaultConfigPath = (const char *) dlsym(nullptr, "_nanos6_default_config_path");
+	if (defaultConfigPath == nullptr) {
+		std::cerr << "Error: default config file path not available" << std::endl;
+		exit(1);
+	}
+
+	std::cout << defaultConfigPath << std::endl;
+
+	return "";
+}
+
 static char const *dumpCompileFlags(bool endline = true)
 {
 	std::string path(NANOS6_INCDIR);
@@ -247,6 +278,10 @@ char const *OptionHelper::retrieve(retriever_t retriever)
 			return emitHelp();
 		case runtime_branch:
 			return nanos6_get_runtime_branch();
+		case runtime_config_current:
+			return dumpCurrentConfigfilePath();
+		case runtime_config_default:
+			return dumpDefaultConfigfilePath();
 		case runtime_compiler_version:
 			return nanos6_get_runtime_compiler_version();
 		case runtime_compiler_flags:
@@ -267,12 +302,12 @@ char const *OptionHelper::retrieve(retriever_t retriever)
 			return nanos6_get_runtime_path();
 		case runtime_version:
 			return nanos6_get_runtime_version();
-		case compile_flags:
+		case runtime_compile_flags:
 			return dumpCompileFlags();
-		case link_flags:
-			return dumpLinkFlags();
-		case compile_link_flags:
+		case runtime_full_flags:
 			return dumpCompileLinkFlags();
+		case runtime_link_flags:
+			return dumpLinkFlags();
 		default:
 			abort();
 	}
@@ -292,6 +327,9 @@ int main(int argc, char **argv)
 
 	optionHelpers.push_back(OptionHelper("--help", "display this help message", "", OptionHelper::command_help));
 	optionHelpers.push_back(OptionHelper());
+	optionHelpers.push_back(OptionHelper("--current-config", "display the path to the current Nanos6 config file", "", OptionHelper::runtime_config_current));
+	optionHelpers.push_back(OptionHelper("--default-config", "display the path to the default Nanos6 config file", "", OptionHelper::runtime_config_default));
+	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--full-version", "display the full runtime version", "", OptionHelper::runtime_full_version, true));
 	optionHelpers.push_back(OptionHelper("--copyright", "display the copyright notice", "Copyright (C)", OptionHelper::runtime_copyright, true));
 	optionHelpers.push_back(OptionHelper());
@@ -305,9 +343,9 @@ int main(int argc, char **argv)
 	optionHelpers.push_back(OptionHelper("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", OptionHelper::runtime_compiler_flags));
 	optionHelpers.push_back(OptionHelper("--runtime-path", "display the path of the loaded runtime", "Runtime path", OptionHelper::runtime_path));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--compile-flags", "display the compile flags for this runtime", "", OptionHelper::compile_flags));
-	optionHelpers.push_back(OptionHelper("--link-flags", "display the linking flags to link to this runtime", "", OptionHelper::link_flags));
-	optionHelpers.push_back(OptionHelper("--full-flags", "display the compile and linking flags for this runtime", "", OptionHelper::compile_link_flags));
+	optionHelpers.push_back(OptionHelper("--runtime-compile-flags", "display the compile flags for compiling against this runtime", "", OptionHelper::runtime_compile_flags));
+	optionHelpers.push_back(OptionHelper("--runtime-link-flags", "display the linking flags for linking against this runtime", "", OptionHelper::runtime_link_flags));
+	optionHelpers.push_back(OptionHelper("--runtime-full-flags", "display the full flags for compiling and linking against this runtime", "", OptionHelper::runtime_full_flags));
 	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--runtime-details", "display detailed runtime and execution environment information", "", OptionHelper::runtime_detailed_info));
 	optionHelpers.push_back(OptionHelper("--dump-patches", "display code changes over the reported version", "", OptionHelper::runtime_patches));
