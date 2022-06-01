@@ -12,6 +12,7 @@ and some minor improvements
 - Add `--disable-all-instrumentations` configure option
 - Modify API to allow setting task labels
 - Provide `nanos6-info` with new options to show compile/link runtime flags
+- Provide `nanos6-info` with new options to show current and default config files
 
 
 ## Version 2.7, Wed Nov 17, 2021
