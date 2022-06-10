@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "ComputePlace.hpp"
@@ -9,6 +9,7 @@
 #include "MemoryPlace.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
+#include "support/BitManipulation.hpp"
 #include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
@@ -56,7 +57,10 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 	// Allocate space for monitoring statistics and hardware counters in different
 	// calls to avoid the free by getPreallocatedArgsBlock
 	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
+	taskCountersSize += BitManipulation::fixAlignment(taskCountersSize, DATA_ALIGNMENT_SIZE);
+
 	size_t taskStatisticsSize = Monitoring::getAllocationSize();
+	taskStatisticsSize += BitManipulation::fixAlignment(taskStatisticsSize, DATA_ALIGNMENT_SIZE);
 
 	void *taskCountersAddress = (taskCountersSize > 0) ? malloc(taskCountersSize) : nullptr;
 	void *taskStatisticsAddress = (taskStatisticsSize > 0) ? malloc(taskStatisticsSize) : nullptr;
