@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TICKET_ARRAY_SPIN_LOCK_HPP
@@ -18,19 +18,23 @@
 class TicketArraySpinLock {
 	typedef std::atomic<uint64_t> atomic_t;
 
-	//! These are aligned on a cache line boundary in order to avoid false sharing
+	//! Keep these fields on the same cacheline since they are not modified
 	alignas(CACHELINE_SIZE) Padded<atomic_t> *_buffer;
-	alignas(CACHELINE_SIZE) atomic_t _head;
-	alignas(CACHELINE_SIZE) uint64_t _next;
-	alignas(CACHELINE_SIZE) uint64_t _size;
+	const uint64_t _size;
+
+	//! Keep these fields occupying two cachelines to prevent false sharing and
+	//! undesired conflicts due to prefetching
+	alignas(CACHELINE_SIZE * 2) atomic_t _head;
+	alignas(CACHELINE_SIZE * 2) uint64_t _next;
 
 public:
 	TicketArraySpinLock(size_t size) :
+		_buffer(nullptr),
+		_size(size),
 		_head(0),
-		_next(0),
-		_size(size)
+		_next(0)
 	{
-		_buffer = (Padded<atomic_t> *) MemoryAllocator::alloc(_size * sizeof(Padded<atomic_t>));
+		_buffer = (Padded<atomic_t> *) MemoryAllocator::allocAligned(_size * sizeof(Padded<atomic_t>));
 		for (size_t i = 0; i < _size; i++) {
 			new (&_buffer[i]) Padded<atomic_t>(0);
 		}
@@ -38,7 +42,7 @@ public:
 
 	~TicketArraySpinLock()
 	{
-		MemoryAllocator::free(_buffer, _size * sizeof(Padded<atomic_t>));
+		MemoryAllocator::freeAligned(_buffer, _size * sizeof(Padded<atomic_t>));
 	}
 
 	inline void lock()

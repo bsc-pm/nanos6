@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef PADDING_HPP
@@ -10,9 +10,9 @@
 #include <cstddef>
 #include <config.h>
 
-// CACHELINE_SIZE is defined by the Nanos6 configure step.
+// CACHELINE_SIZE is defined by the Nanos6 configure step
 #ifndef CACHELINE_SIZE
-#warning "Cacheline size is not specified. Falling back to safe default."
+#warning "Cacheline size is not specified... falling back to safe default (128)"
 #define CACHELINE_SIZE 128
 #endif
 

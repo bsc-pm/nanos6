@@ -1,12 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MEMORY_ALLOCATOR_HPP
 #define MEMORY_ALLOCATOR_HPP
 
+#include <cstdint>
 #include <cstdlib>
 #include <malloc.h>
 #include <memory>
@@ -36,20 +37,38 @@ public:
 
 	static inline void *alloc(size_t size)
 	{
-		void *ptr;
+		void *ptr = nullptr;
 
-		if (size < CACHELINE_SIZE / 2) {
-			ptr = malloc(size);
-			FatalErrorHandler::failIf(ptr == nullptr, " when trying to allocate memory");
+		if (size >= CACHELINE_SIZE / 2) {
+			ptr = allocAligned(size);
 		} else {
-			int rc = posix_memalign(&ptr, CACHELINE_SIZE, size);
-			FatalErrorHandler::handle(rc, " when trying to allocate memory");
+			ptr = malloc(size);
+			if (ptr == nullptr)
+				FatalErrorHandler::fail("malloc failed to allocate memory");
 		}
 
 		return ptr;
 	}
 
+	static inline void *allocAligned(size_t size)
+	{
+		void *ptr = nullptr;
+
+		int rc = posix_memalign(&ptr, CACHELINE_SIZE, size);
+		FatalErrorHandler::handle(rc, " when allocating with posix_memalign");
+
+		if ((uintptr_t) ptr % CACHELINE_SIZE != 0)
+			FatalErrorHandler::fail("posix_memalign failed to allocate cache aligned memory");
+
+		return ptr;
+	}
+
 	static inline void free(void *chunk, __attribute__((unused)) size_t size)
+	{
+		std::free(chunk);
+	}
+
+	static inline void freeAligned(void *chunk, size_t size)
 	{
 		std::free(chunk);
 	}
