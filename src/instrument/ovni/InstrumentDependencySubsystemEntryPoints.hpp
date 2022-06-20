@@ -8,28 +8,28 @@
 #define INSTRUMENT_OVNI_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 
 #include "instrument/api/InstrumentDependencySubsystemEntryPoints.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 
 	inline void enterRegisterTaskDataAcesses()
 	{
-		OVNI::registerAccessesEnter();
+		Ovni::registerAccessesEnter();
 	}
 
 	inline void exitRegisterTaskDataAcesses()
 	{
-		OVNI::registerAccessesExit();
+		Ovni::registerAccessesExit();
 	}
 
 	inline void enterUnregisterTaskDataAcesses()
 	{
-		OVNI::unregisterAccessesEnter();
+		Ovni::unregisterAccessesEnter();
 	}
 
 	inline void exitUnregisterTaskDataAcesses()
 	{
-		OVNI::unregisterAccessesExit();
+		Ovni::unregisterAccessesExit();
 	}
 }
 

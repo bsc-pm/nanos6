@@ -1027,7 +1027,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
 	src/instrument/null/InstrumentWorkerThread.hpp \
-	src/instrument/ovni/OVNITrace.hpp \
+	src/instrument/ovni/OvniTrace.hpp \
 	src/instrument/ovni/InstrumentAddTask.hpp \
 	src/instrument/ovni/InstrumentBlockingAPI.hpp \
 	src/instrument/ovni/InstrumentComputePlaceId.hpp \
@@ -1142,6 +1142,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentVerbose.hpp \
 	src/instrument/verbose/InstrumentWorkerThread.hpp \
 	src/lowlevel/BacktraceRecording.hpp \
+	src/lowlevel/CompatSyscalls.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \

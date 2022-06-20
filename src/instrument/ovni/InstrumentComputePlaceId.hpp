@@ -14,13 +14,13 @@ namespace Instrument {
 	public:
 		int32_t _id;
 
-		compute_place_id_t()
-			: _id(~0)
+		compute_place_id_t() :
+			_id(~0)
 		{
 		}
 
-		compute_place_id_t(int32_t id)
-			: _id(id)
+		compute_place_id_t(int32_t id) :
+			_id(id)
 		{
 		}
 

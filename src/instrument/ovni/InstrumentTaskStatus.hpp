@@ -8,7 +8,7 @@
 #define INSTRUMENT_OVNI_TASK_STATUS_HPP
 
 #include "instrument/api/InstrumentTaskStatus.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 	inline void taskIsPending(
@@ -29,7 +29,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		if (wasBlocked)
-			OVNI::taskResume(taskId._taskId);
+			Ovni::taskResume(taskId._taskId);
 	}
 
 	inline void taskIsBlocked(
@@ -37,7 +37,7 @@ namespace Instrument {
 		__attribute__((unused)) task_blocking_reason_t reason,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::taskPause(taskId._taskId);
+		Ovni::taskPause(taskId._taskId);
 	}
 
 	inline void taskIsZombie(

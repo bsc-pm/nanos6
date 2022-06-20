@@ -155,16 +155,16 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATIONS],
 		AC_MSG_RESULT([$ac_build_lint_instrumentation])
 		AM_CONDITIONAL(BUILD_LINT_INSTRUMENTATION, test x"${ac_build_lint_instrumentation}" = x"yes")
 
-		AC_MSG_CHECKING([whether to build the OVNI instrumented variant])
+		AC_MSG_CHECKING([whether to build the ovni instrumented variant])
 		AC_ARG_ENABLE(
 			[ovni-instrumentation],
-			[AS_HELP_STRING([--disable-ovni-instrumentation], [build the OVNI instrumented variant])],
+			[AS_HELP_STRING([--disable-ovni-instrumentation], [build the ovni instrumented variant])],
 			[
 				case "${enableval}" in
 				yes)
 					if test x"${ac_use_ovni}" != x"yes"; then
-						AC_MSG_WARN([OVNI instrumentation selected for build, but OVNI library was not configured])
-						AC_MSG_WARN([Disabling OVNI instrumentation])
+						AC_MSG_WARN([ovni instrumentation selected for build, but ovni library was not configured])
+						AC_MSG_WARN([Disabling ovni instrumentation])
 						ac_build_ovni_instrumentation=no
 					else
 						ac_build_ovni_instrumentation=yes

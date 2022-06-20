@@ -9,7 +9,7 @@
 
 
 #include "instrument/api/InstrumentBlockingAPI.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 	inline void enterBlockCurrentTask(
@@ -48,14 +48,14 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::waitforEnter();
+		Ovni::waitforEnter();
 	}
 
 	inline void exitWaitFor(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::waitforExit();
+		Ovni::waitforExit();
 	}
 }
 

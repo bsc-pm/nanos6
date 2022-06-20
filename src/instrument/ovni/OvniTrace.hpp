@@ -12,18 +12,9 @@
 #include <cstdlib>
 #include <ovni.h>
 #include <string>
-#include <sys/syscall.h>
-#include <unistd.h>
 
+#include "lowlevel/CompatSyscalls.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-
-// Define gettid for older glibc versions (below 2.30)
-#if !__GLIBC_PREREQ(2, 30)
-static inline pid_t gettid(void)
-{
-	return (pid_t)syscall(SYS_gettid);
-}
-#endif
 
 #define ALIAS_TRACEPOINT(name, str) \
 	static void name()              \
@@ -33,31 +24,37 @@ static inline pid_t gettid(void)
 
 namespace Instrument {
 
-	class OVNIJumboEvent {
-		static constexpr size_t jumboBufferSize = 1024;
-		uint8_t buffer[jumboBufferSize];
-		size_t currentOffset = 0;
-		size_t sizeLeft = jumboBufferSize;
+	class OvniJumboEvent {
+		static constexpr size_t _jumboBufferSize = 1024;
+		uint8_t _buffer[_jumboBufferSize];
+		size_t _currentOffset;
+		size_t _sizeLeft;
 
 	public:
+		OvniJumboEvent() :
+			_currentOffset(0),
+			_sizeLeft(_jumboBufferSize)
+		{
+		}
+
 		void emit(const char *mcv)
 		{
-			struct ovni_ev ev = {};
+			struct ovni_ev ev;
 			memset(&ev, 0, sizeof(struct ovni_ev));
 			ovni_ev_set_clock(&ev, ovni_clock_now());
 			ovni_ev_set_mcv(&ev, mcv);
-			ovni_ev_jumbo_emit(&ev, buffer, jumboBufferSize - sizeLeft);
+			ovni_ev_jumbo_emit(&ev, _buffer, _jumboBufferSize - _sizeLeft);
 		}
 
 		template<typename T>
 		void addScalarPayload(T payload)
 		{
 			// We cannot safely truncate these payloads
-			assert(sizeLeft >= sizeof(T));
+			assert(_sizeLeft >= sizeof(T));
 
-			memcpy(&buffer[currentOffset], &payload, sizeof(T));
-			currentOffset += sizeof(T);
-			sizeLeft -= sizeof(T);
+			memcpy(&_buffer[_currentOffset], &payload, sizeof(T));
+			_currentOffset += sizeof(T);
+			_sizeLeft -= sizeof(T);
 		}
 
 		void addString(const char *str)
@@ -67,20 +64,20 @@ namespace Instrument {
 				str = "";
 
 			// Copy everything except the null-termination
-			size_t len = std::min(strlen(str), sizeLeft - 1);
-			memcpy(&buffer[currentOffset], str, len);
+			size_t len = std::min(strlen(str), _sizeLeft - 1);
+			memcpy(&_buffer[_currentOffset], str, len);
 
-			currentOffset += len;
-			sizeLeft -= len;
+			_currentOffset += len;
+			_sizeLeft -= len;
 
 			// NULL-terminate the string
-			assert(sizeLeft >= 1);
-			buffer[currentOffset++] = '\0';
-			sizeLeft--;
+			assert(_sizeLeft >= 1);
+			_buffer[_currentOffset++] = '\0';
+			_sizeLeft--;
 		}
 	};
 
-	class OVNI {
+	class Ovni {
 		template <typename T, typename... Ts>
 		static void addPayload(ovni_ev *ev, T first, Ts... args)
 		{
@@ -95,7 +92,7 @@ namespace Instrument {
 		template <typename... Ts>
 		static void emitGeneric(const char *eventCode, Ts... args)
 		{
-			struct ovni_ev ev = {};
+			struct ovni_ev ev;
 			memset(&ev, 0, sizeof(struct ovni_ev));
 			ovni_ev_set_clock(&ev, ovni_clock_now());
 			ovni_ev_set_mcv(&ev, eventCode);
@@ -109,9 +106,9 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(workerExit, "VHW")
 		ALIAS_TRACEPOINT(delegateEnter, "VHd")
 		ALIAS_TRACEPOINT(delegateExit, "VHD")
-		ALIAS_TRACEPOINT(schedRecv, "VSr")
-		ALIAS_TRACEPOINT(schedSend, "VSs")
-		ALIAS_TRACEPOINT(schedSelfAssign, "VS@")
+		ALIAS_TRACEPOINT(schedReceiveTask, "VSr")
+		ALIAS_TRACEPOINT(schedAssignTask, "VSs")
+		ALIAS_TRACEPOINT(schedSelfAssignTask, "VS@")
 		ALIAS_TRACEPOINT(schedHungry, "VSh")
 		ALIAS_TRACEPOINT(schedFill, "VSf")
 		ALIAS_TRACEPOINT(schedServerEnter, "VS[")
@@ -122,8 +119,8 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(sallocExit, "VMA")
 		ALIAS_TRACEPOINT(sfreeEnter, "VMf")
 		ALIAS_TRACEPOINT(sfreeExit, "VMF")
-		ALIAS_TRACEPOINT(submitEnter, "VAs")
-		ALIAS_TRACEPOINT(submitExit, "VAS")
+		ALIAS_TRACEPOINT(enterSubmitTask, "VAs")
+		ALIAS_TRACEPOINT(exitSubmitTask, "VAS")
 		ALIAS_TRACEPOINT(pauseEnter, "VAp")
 		ALIAS_TRACEPOINT(pauseExit, "VAP")
 		ALIAS_TRACEPOINT(yieldEnter, "VAy")
@@ -162,7 +159,7 @@ namespace Instrument {
 		// Large things like strings need to be sent using jumbo events
 		static inline void typeCreate(uint32_t typeId, const char *label)
 		{
-			OVNIJumboEvent event;
+			OvniJumboEvent event;
 			event.addScalarPayload(typeId);
 			event.addString(label);
 			event.emit("VYc");
@@ -179,8 +176,8 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(inlineIf0Exit, "DI]")
 		ALIAS_TRACEPOINT(taskWaitEnter, "DT[")
 		ALIAS_TRACEPOINT(taskWaitExit, "DT]")
-		ALIAS_TRACEPOINT(createTaskEnter, "DC[")
-		ALIAS_TRACEPOINT(createTaskExit, "DC]")
+		ALIAS_TRACEPOINT(enterCreateTask, "DC[")
+		ALIAS_TRACEPOINT(exitCreateTask, "DC]")
 		ALIAS_TRACEPOINT(submitTaskEnter, "DS[")
 		ALIAS_TRACEPOINT(submitTaskExit, "DS]")
 		ALIAS_TRACEPOINT(spawnFunctionEnter, "DP[")
@@ -218,7 +215,7 @@ namespace Instrument {
 			emitGeneric("OHx", cpu, creatorTid, tag);
 		}
 
-		static void cpuId(int index, int phyid)
+		static void addCPU(int index, int phyid)
 		{
 			ovni_add_cpu(index, phyid);
 		}
@@ -230,7 +227,7 @@ namespace Instrument {
 			ovni_flush();
 		}
 
-		static void procInit()
+		static void initialize()
 		{
 			char hostname[HOST_NAME_MAX + 1];
 			char loomName[HOST_NAME_MAX + 64];
@@ -249,7 +246,7 @@ namespace Instrument {
 			ovni_proc_init(1, loomName, pid);
 		}
 
-		static void procFini()
+		static void finalize()
 		{
 			ovni_proc_fini();
 		}

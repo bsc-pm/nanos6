@@ -15,22 +15,22 @@ namespace Instrument {
 	private:
 		static std::atomic<uint32_t> _nextTaskTypeId;
 	public:
-		uint32_t id;
+		uint32_t _taskTypeId;
 
-		TasktypeInstrument()
+		TasktypeInstrument() :
+			_taskTypeId(0)
 		{
-			id = 0;
 		}
 
-		uint32_t autoAssingId()
+		uint32_t assignNewId()
 		{
-			id = _nextTaskTypeId++;
-			return id;
+			_taskTypeId = _nextTaskTypeId.fetch_add(1, std::memory_order_relaxed);
+			return _taskTypeId;
 		}
 
 		bool operator==(TasktypeInstrument const &other) const
 		{
-			return id == other.id;
+			return _taskTypeId == other._taskTypeId;
 		}
 	};
 }

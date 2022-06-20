@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 #include "InstrumentTaskId.hpp"
 #include "tasks/TasktypeData.hpp"
 
@@ -19,10 +19,11 @@ namespace Instrument {
 
 	inline uint32_t getTaskTypeId(nanos6_task_info_t *taskInfo)
 	{
+		assert(taskInfo != nullptr);
 		assert(taskInfo->task_type_data);
 		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
 		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
-		return instrumentId.id;
+		return instrumentId._taskTypeId;
 	}
 
 	inline uint32_t autoSetTaskTypeId(nanos6_task_info_t *taskInfo)
@@ -30,7 +31,7 @@ namespace Instrument {
 		assert(taskInfo->task_type_data);
 		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
 		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
-		return instrumentId.autoAssingId();
+		return instrumentId.assignNewId();
 	}
 
 	inline task_id_t enterCreateTask(
@@ -43,19 +44,19 @@ namespace Instrument {
 		uint32_t taskId;
 		uint32_t taskTypeId;
 
-		task_id_t task_id(true);
-		taskId = task_id._taskId;
+		task_id_t task_id;
+		taskId = task_id.assignNewId();
 		taskTypeId = getTaskTypeId(taskInfo);
 
-		OVNI::createTaskEnter();
-		OVNI::taskCreate(taskId, taskTypeId);
+		Ovni::enterCreateTask();
+		Ovni::taskCreate(taskId, taskTypeId);
 
 		return task_id;
 	}
 
 	inline void exitCreateTask(__attribute__((unused)) bool taskRuntimeTransition)
 	{
-		OVNI::createTaskExit();
+		Ovni::exitCreateTask();
 	}
 
 	inline void createdArgsBlock(
@@ -76,7 +77,7 @@ namespace Instrument {
 
 	inline void enterSubmitTask(__attribute__((unused)) bool taskRuntimeTransition)
 	{
-		OVNI::submitEnter();
+		Ovni::enterSubmitTask();
 	}
 
 	inline void exitSubmitTask(
@@ -84,7 +85,7 @@ namespace Instrument {
 		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::submitExit();
+		Ovni::exitSubmitTask();
 	}
 
 	inline task_id_t enterInitTaskforCollaborator(
@@ -97,12 +98,12 @@ namespace Instrument {
 		uint32_t taskId;
 		uint32_t taskTypeId;
 
-		task_id_t task_id(true);
-		taskId = task_id._taskId;
+		task_id_t task_id;
+		taskId = task_id.assignNewId();
 		taskTypeId = getTaskTypeId(taskInfo);
 
-		OVNI::createTaskEnter();
-		OVNI::taskCreate(taskId, taskTypeId);
+		Ovni::enterCreateTask();
+		Ovni::taskCreate(taskId, taskTypeId);
 
 		return task_id;
 	}
@@ -112,26 +113,27 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::createTaskExit();
+		Ovni::exitCreateTask();
 	}
 
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
 	{
+		assert(taskInfo != nullptr);
 		uint32_t taskTypeId = autoSetTaskTypeId(taskInfo);
 		const char *label = taskInfo->implementations[0].task_type_label;
-		OVNI::typeCreate(taskTypeId, label);
+		Ovni::typeCreate(taskTypeId, label);
 	}
 
 	inline void enterSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)
 	{
-		OVNI::threadMaybeInit();
-		OVNI::spawnFunctionEnter();
+		Ovni::threadMaybeInit();
+		Ovni::spawnFunctionEnter();
 	}
 
 	inline void exitSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)
 	{
-		OVNI::spawnFunctionExit();
-		OVNI::flush();
+		Ovni::spawnFunctionExit();
+		Ovni::flush();
 	}
 }
 

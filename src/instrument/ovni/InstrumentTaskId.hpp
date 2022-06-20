@@ -17,16 +17,14 @@ namespace Instrument {
 		static std::atomic<uint32_t> _nextTaskId;
 	public:
 		uint32_t _taskId;
-		task_id_t() {}
-
-		// task_id_t are created in other parts of the runtime apart
-		// from when adding tasks. We want the numeric task ID to be
-		// assigned only to tasks, and to do so we use the dummy bool
-		// arguemnt to distinguish when a numeric task id must be
-		// generated.
-		task_id_t(bool)
+		task_id_t()
 		{
-			_taskId = _nextTaskId++;
+		}
+
+		uint32_t assignNewId()
+		{
+			_taskId = _nextTaskId.fetch_add(1, std::memory_order_relaxed);
+			return _taskId;
 		}
 	};
 }

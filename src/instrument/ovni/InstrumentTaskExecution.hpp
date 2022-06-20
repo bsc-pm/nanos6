@@ -12,21 +12,21 @@
 #include <InstrumentInstrumentationContext.hpp>
 
 #include "instrument/api/InstrumentTaskExecution.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 	inline void startTask(
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::taskExecute(taskId._taskId);
+		Ovni::taskExecute(taskId._taskId);
 	}
 
 	inline void endTask(
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::taskEnd(taskId._taskId);
+		Ovni::taskEnd(taskId._taskId);
 	}
 
 	inline void destroyTask(
@@ -41,7 +41,7 @@ namespace Instrument {
 		__attribute__((unused)) bool first,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::taskExecute(taskforId._taskId);
+		Ovni::taskExecute(taskforId._taskId);
 	}
 
 	inline void endTaskforCollaborator(
@@ -50,7 +50,7 @@ namespace Instrument {
 		__attribute__((unused)) bool last,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		OVNI::taskEnd(taskforId._taskId);
+		Ovni::taskEnd(taskforId._taskId);
 	}
 }
 

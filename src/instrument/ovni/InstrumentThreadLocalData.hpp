@@ -10,12 +10,15 @@
 #include <InstrumentInstrumentationContext.hpp>
 
 namespace Instrument {
-	// TODO can I remove this context?
-	struct InstrumentationContext;
-
 	struct ThreadLocalData {
 		InstrumentationContext _context;
-		bool hungry;
+		bool _hungry;
+
+		ThreadLocalData() :
+			_context(),
+			_hungry(false)
+		{
+		}
 	};
 }
 

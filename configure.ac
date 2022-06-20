@@ -334,6 +334,16 @@ else
 fi
 
 _AS_ECHO([])
+_AS_ECHO_N([   Ovni is enabled... ])
+if test x"${ac_use_ovni}" = x"yes" ; then
+    AC_MSG_RESULT([yes])
+    _AS_ECHO([   Ovni CPPFLAGS... ${ovni_CPPFLAGS}])
+    _AS_ECHO([   Ovni LIBS... ${ovni_LIBS}])
+else
+    AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
 _AS_ECHO([   elfutils CPPFLAGS... ${elfutils_CFLAGS}])
 _AS_ECHO([   elfutils LIBS... ${elfutils_LIBS}])
 

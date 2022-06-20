@@ -13,23 +13,23 @@
 
 #include "executors/threads/WorkerThread.hpp"
 #include "InstrumentThreadManagement.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 
 void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 {
-	OVNI::threadInit();
-	OVNI::threadCreate(computePlaceId._id, 0);
+	Ovni::threadInit();
+	Ovni::threadCreate(computePlaceId._id, 0);
 }
 
 void Instrument::precreatedExternalThread(/* OUT */__attribute__((unused)) external_thread_id_t &threadId)
 {
-	OVNI::threadInit();
-	OVNI::threadExecute(-1, -1, 0);
-	OVNI::threadAttach();
+	Ovni::threadInit();
+	Ovni::threadExecute(-1, -1, 0);
+	Ovni::threadAttach();
 
 	// External threads are assumed to be "paused" when precreated
-	OVNI::threadPause();
+	Ovni::threadPause();
 }
 
 void Instrument::threadSynchronizationCompleted(__attribute__((unused)) thread_id_t threadId)
@@ -38,10 +38,10 @@ void Instrument::threadSynchronizationCompleted(__attribute__((unused)) thread_i
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != nullptr);
 	int cpu = currentWorkerThread->getComputePlace()->getIndex();
-	OVNI::threadExecute(cpu, 0, 0);
+	Ovni::threadExecute(cpu, 0, 0);
 
 	// Mark as paused since it will be immediately resumed
-	OVNI::threadPause();
+	Ovni::threadPause();
 }
 
 void Instrument::threadWillSuspend(
@@ -50,7 +50,7 @@ void Instrument::threadWillSuspend(
 	bool afterSynchronization
 ) {
 	if (afterSynchronization) {
-		OVNI::threadPause();
+		Ovni::threadPause();
 	}
 }
 
@@ -60,28 +60,28 @@ void Instrument::threadHasResumed(
 	bool afterSynchronization
 ) {
 	if (afterSynchronization) {
-		OVNI::threadResume();
-		OVNI::affinitySet(cpu._id);
+		Ovni::threadResume();
+		Ovni::affinitySet(cpu._id);
 	}
 }
 
 void Instrument::threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
 {
-	OVNI::threadPause();
+	Ovni::threadPause();
 }
 
 void Instrument::threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
 {
-	OVNI::threadResume();
+	Ovni::threadResume();
 }
 
 void Instrument::threadWillShutdown()
 {
-	OVNI::threadEnd();
+	Ovni::threadEnd();
 }
 
 void Instrument::threadWillShutdown(__attribute__((unused)) external_thread_id_t threadId)
 {
-	OVNI::threadDetach();
-	OVNI::threadEnd();
+	Ovni::threadDetach();
+	Ovni::threadEnd();
 }

@@ -15,7 +15,7 @@
 namespace Instrument {
 	inline int isDistributedInstrumentEnabled()
 	{
-		return true;
+		return false;
 	}
 
 	inline void setupDistributedMemoryEnvironment(

@@ -4,40 +4,40 @@
 	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_CTF_SCHEDULER_HPP
-#define INSTRUMENT_CTF_SCHEDULER_HPP
+#ifndef INSTRUMENT_OVNI_SCHEDULER_HPP
+#define INSTRUMENT_OVNI_SCHEDULER_HPP
 
 #include "../api/InstrumentScheduler.hpp"
 #include "InstrumentTaskId.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 
 	//! \brief Enters the scheduler addReadyTask method
 	inline void enterAddReadyTask()
 	{
-		OVNI::schedSubmitEnter();
+		Ovni::schedSubmitEnter();
 	}
 
 	//! \brief Exits the scheduler addReadyTask method
 	inline void exitAddReadyTask()
 	{
-		OVNI::schedSubmitExit();
+		Ovni::schedSubmitExit();
 	}
 
 	//! \brief Enters the scheduler addReadyTask method
 	inline void enterGetReadyTask()
 	{
-		// while busy waiting, the worker is continuously requesting
-		// tasks. This will quicly fill the ctf buffer, so we disable
+		// While busy waiting, the worker is continuously requesting
+		// tasks. This will quickly fill the event buffer, so we disable
 		// both the enter and exit while busywaing.
 
 		ThreadLocalData &tld = getThreadLocalData();
-		if (tld.hungry)
+		if (tld._hungry)
 			return;
 
-		tld.hungry = true;
-		OVNI::schedHungry();
+		tld._hungry = true;
+		Ovni::schedHungry();
 	}
 
 	//! \brief Exits the scheduler addReadyTask method
@@ -51,17 +51,17 @@ namespace Instrument {
 
 	inline void schedulerLockBecomesServer()
 	{
-		OVNI::schedServerEnter();
+		Ovni::schedServerEnter();
 	}
 
 	inline void exitSchedulerLockAsClient(
 		__attribute__((unused)) task_id_t taskId
 	) {
-		OVNI::schedRecv();
-		OVNI::schedFill();
+		Ovni::schedReceiveTask();
+		Ovni::schedFill();
 
 		ThreadLocalData &tld = getThreadLocalData();
-		tld.hungry = false;
+		tld._hungry = false;
 	}
 
 	inline void exitSchedulerLockAsClient()
@@ -71,25 +71,25 @@ namespace Instrument {
 	inline void schedulerLockServesTask(
 		__attribute__((unused)) task_id_t taskId
 	) {
-		OVNI::schedSend();
+		Ovni::schedAssignTask();
 	}
 
 	inline void exitSchedulerLockAsServer()
 	{
-		OVNI::schedServerExit();
+		Ovni::schedServerExit();
 	}
 
 	inline void exitSchedulerLockAsServer(
 		__attribute__((unused)) task_id_t taskId
 	)
 	{
-		OVNI::schedSelfAssign();
-		OVNI::schedServerExit();
-		OVNI::schedFill();
+		Ovni::schedSelfAssignTask();
+		Ovni::schedServerExit();
+		Ovni::schedFill();
 
 		ThreadLocalData &tld = getThreadLocalData();
-		tld.hungry = false;
+		tld._hungry = false;
 	}
 }
 
-#endif // INSTRUMENT_CTF_SCHEDULER_HPP
+#endif // INSTRUMENT_OVNI_SCHEDULER_HPP

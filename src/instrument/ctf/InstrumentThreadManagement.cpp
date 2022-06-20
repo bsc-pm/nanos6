@@ -1,20 +1,18 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
-#include <unistd.h>
-#include <sys/syscall.h>
-
 #include "CTFTracepoints.hpp"
 #include "InstrumentThreadManagement.hpp"
 #include "ctfapi/CTFTypes.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/CompatSyscalls.hpp"
 
 
 void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
@@ -34,7 +32,7 @@ void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __a
 void Instrument::precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 {
 	// TODO: We should retrieve the thread id in a cleaner way
-	ctf_thread_id_t tid = syscall(SYS_gettid);
+	ctf_thread_id_t tid = gettid();
 	threadId.tid = tid;
 	Instrument::tp_external_thread_create(tid);
 }

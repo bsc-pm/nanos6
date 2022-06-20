@@ -9,7 +9,7 @@
 
 
 #include "instrument/api/InstrumentTaskWait.hpp"
-#include "OVNITrace.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 	inline void enterTaskWait(
@@ -20,7 +20,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		if (taskRuntimeTransition)
-			OVNI::taskWaitEnter();
+			Ovni::taskWaitEnter();
 	}
 
 	inline void exitTaskWait(
@@ -29,7 +29,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		if (taskRuntimeTransition)
-			OVNI::taskWaitExit();
+			Ovni::taskWaitExit();
 	}
 }
 
