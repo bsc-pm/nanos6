@@ -240,7 +240,7 @@ namespace Instrument {
 			hostname[HOST_NAME_MAX] = '\0';
 
 			pid_t pid = getpid();
-			sprintf(loomName, "%s$%d", hostname, pid);
+			sprintf(loomName, "%s.%d", hostname, pid);
 
 			// Initialize OVNI with APPID = 1, as there is only one application in this runtime
 			ovni_proc_init(1, loomName, pid);
