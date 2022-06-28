@@ -101,59 +101,65 @@ namespace Instrument {
 		}
 
 	public:
-		// nOS-V events
-		ALIAS_TRACEPOINT(workerEnter, "VHw")
-		ALIAS_TRACEPOINT(workerExit, "VHW")
-		ALIAS_TRACEPOINT(delegateEnter, "VHd")
-		ALIAS_TRACEPOINT(delegateExit, "VHD")
-		ALIAS_TRACEPOINT(schedReceiveTask, "VSr")
-		ALIAS_TRACEPOINT(schedAssignTask, "VSs")
-		ALIAS_TRACEPOINT(schedSelfAssignTask, "VS@")
-		ALIAS_TRACEPOINT(schedHungry, "VSh")
-		ALIAS_TRACEPOINT(schedFill, "VSf")
-		ALIAS_TRACEPOINT(schedServerEnter, "VS[")
-		ALIAS_TRACEPOINT(schedServerExit, "VS]")
-		ALIAS_TRACEPOINT(schedSubmitEnter, "VU[")
-		ALIAS_TRACEPOINT(schedSubmitExit, "VU]")
-		ALIAS_TRACEPOINT(sallocEnter, "VMa")
-		ALIAS_TRACEPOINT(sallocExit, "VMA")
-		ALIAS_TRACEPOINT(sfreeEnter, "VMf")
-		ALIAS_TRACEPOINT(sfreeExit, "VMF")
-		ALIAS_TRACEPOINT(enterSubmitTask, "VAs")
-		ALIAS_TRACEPOINT(exitSubmitTask, "VAS")
-		ALIAS_TRACEPOINT(pauseEnter, "VAp")
-		ALIAS_TRACEPOINT(pauseExit, "VAP")
-		ALIAS_TRACEPOINT(yieldEnter, "VAy")
-		ALIAS_TRACEPOINT(yieldExit, "VAY")
-		ALIAS_TRACEPOINT(waitforEnter, "VAw")
-		ALIAS_TRACEPOINT(waitforExit, "VAW")
-		ALIAS_TRACEPOINT(schedpointEnter, "VAc")
-		ALIAS_TRACEPOINT(schedpointExit, "VAC")
+		// Nanos6 events
+		ALIAS_TRACEPOINT(schedReceiveTask, "6Sr")
+		ALIAS_TRACEPOINT(schedAssignTask, "6Ss")
+		ALIAS_TRACEPOINT(schedSelfAssignTask, "6S@")
+		ALIAS_TRACEPOINT(schedHungry, "6Sh")
+		ALIAS_TRACEPOINT(schedFill, "6Sf")
+		ALIAS_TRACEPOINT(schedServerEnter, "6S[")
+		ALIAS_TRACEPOINT(schedServerExit, "6S]")
+		ALIAS_TRACEPOINT(schedSubmitEnter, "6Su")
+		ALIAS_TRACEPOINT(schedSubmitExit, "6SU")
+		ALIAS_TRACEPOINT(enterSubmitTask, "6U[")
+		ALIAS_TRACEPOINT(exitSubmitTask, "6U]")
+		ALIAS_TRACEPOINT(blockEnter, "6Bb")
+		ALIAS_TRACEPOINT(blockExit, "6BB")
+		ALIAS_TRACEPOINT(waitforEnter, "6Bw")
+		ALIAS_TRACEPOINT(waitforExit, "6BW")
+		ALIAS_TRACEPOINT(registerAccessesEnter, "6Dr")
+		ALIAS_TRACEPOINT(registerAccessesExit, "6DR")
+		ALIAS_TRACEPOINT(unregisterAccessesEnter, "6Du")
+		ALIAS_TRACEPOINT(unregisterAccessesExit, "6DU")
+		ALIAS_TRACEPOINT(taskWaitEnter, "6Wt")
+		ALIAS_TRACEPOINT(taskWaitExit, "6WT")
+		ALIAS_TRACEPOINT(exitCreateTask, "6TC")
+		ALIAS_TRACEPOINT(spawnFunctionEnter, "6Hs")
+		ALIAS_TRACEPOINT(spawnFunctionExit, "6HS")
 
-		// nOS-V events
 		static void taskCreate(uint32_t taskId, uint32_t typeId)
 		{
-			emitGeneric("VTc", taskId, typeId);
+			emitGeneric("6Tc", taskId, typeId);
 		}
 
 		static void taskExecute(uint32_t taskId)
 		{
-			emitGeneric("VTx", taskId);
+			emitGeneric("6Tx", taskId);
 		}
 
 		static void taskPause(uint32_t taskId)
 		{
-			emitGeneric("VTp", taskId);
+			emitGeneric("6Tp", taskId);
 		}
 
 		static void taskResume(uint32_t taskId)
 		{
-			emitGeneric("VTr", taskId);
+			emitGeneric("6Tr", taskId);
 		}
 
 		static void taskEnd(uint32_t taskId)
 		{
-			emitGeneric("VTe", taskId);
+			emitGeneric("6Te", taskId);
+		}
+
+		static void unblockEnter(uint32_t taskId)
+		{
+			emitGeneric("6Bu", taskId);
+		}
+
+		static void unblockExit(uint32_t taskId)
+		{
+			emitGeneric("6BU", taskId);
 		}
 
 		// Large things like strings need to be sent using jumbo events
@@ -162,26 +168,8 @@ namespace Instrument {
 			OvniJumboEvent event;
 			event.addScalarPayload(typeId);
 			event.addString(label);
-			event.emit("VYc");
+			event.emit("6Yc");
 		}
-
-		// NODES events
-		ALIAS_TRACEPOINT(registerAccessesEnter, "DR[")
-		ALIAS_TRACEPOINT(registerAccessesExit, "DR]")
-		ALIAS_TRACEPOINT(unregisterAccessesEnter, "DU[")
-		ALIAS_TRACEPOINT(unregisterAccessesExit, "DU]")
-		ALIAS_TRACEPOINT(waitIf0Enter, "DW[")
-		ALIAS_TRACEPOINT(waitIf0Exit, "DW]")
-		ALIAS_TRACEPOINT(inlineIf0Enter, "DI[")
-		ALIAS_TRACEPOINT(inlineIf0Exit, "DI]")
-		ALIAS_TRACEPOINT(taskWaitEnter, "DT[")
-		ALIAS_TRACEPOINT(taskWaitExit, "DT]")
-		ALIAS_TRACEPOINT(enterCreateTask, "DC[")
-		ALIAS_TRACEPOINT(exitCreateTask, "DC]")
-		ALIAS_TRACEPOINT(submitTaskEnter, "DS[")
-		ALIAS_TRACEPOINT(submitTaskExit, "DS]")
-		ALIAS_TRACEPOINT(spawnFunctionEnter, "DP[")
-		ALIAS_TRACEPOINT(spawnFunctionExit, "DP]")
 
 		// Generic OVNI events
 		ALIAS_TRACEPOINT(burst, "OB.")
@@ -267,12 +255,12 @@ namespace Instrument {
 			if (!ovni_thread_isready())
 				FatalErrorHandler::fail("The current thread is not instrumented correctly");
 
-			emitGeneric("VHa");
+			emitGeneric("6Ha");
 		}
 
 		static void threadDetach()
 		{
-			emitGeneric("VHA");
+			emitGeneric("6HA");
 			// Flush the events to disk before detaching the thread
 			ovni_flush();
 		}

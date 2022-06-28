@@ -48,7 +48,6 @@ namespace Instrument {
 		taskId = task_id.assignNewId();
 		taskTypeId = getTaskTypeId(taskInfo);
 
-		Ovni::enterCreateTask();
 		Ovni::taskCreate(taskId, taskTypeId);
 
 		return task_id;
@@ -102,7 +101,6 @@ namespace Instrument {
 		taskId = task_id.assignNewId();
 		taskTypeId = getTaskTypeId(taskInfo);
 
-		Ovni::enterCreateTask();
 		Ovni::taskCreate(taskId, taskTypeId);
 
 		return task_id;
