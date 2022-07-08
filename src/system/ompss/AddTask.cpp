@@ -23,6 +23,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "support/BitManipulation.hpp"
 #include "system/If0Task.hpp"
 #include "system/Throttle.hpp"
 #include "system/TrackingPoints.hpp"
@@ -39,9 +40,6 @@
 #include <MemoryAllocator.hpp>
 #include <TaskDataAccesses.hpp>
 #include <TaskDataAccessesInfo.hpp>
-
-
-#define DATA_ALIGNMENT_SIZE sizeof(void *)
 
 Task *AddTask::createTask(
 	nanos6_task_info_t *taskInfo,
@@ -96,6 +94,11 @@ Task *AddTask::createTask(
 	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
 	size_t taskStatisticsSize = Monitoring::getAllocationSize();
 
+	taskSize += BitManipulation::fixAlignment(taskSize, DATA_ALIGNMENT_SIZE);
+	taskAccessesSize += BitManipulation::fixAlignment(taskAccessesSize, DATA_ALIGNMENT_SIZE);
+	taskCountersSize += BitManipulation::fixAlignment(taskCountersSize, DATA_ALIGNMENT_SIZE);
+	taskStatisticsSize += BitManipulation::fixAlignment(taskStatisticsSize, DATA_ALIGNMENT_SIZE);
+
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	if (hasPreallocatedArgsBlock) {
 		assert(argsBlock != nullptr);
@@ -105,9 +108,7 @@ Task *AddTask::createTask(
 			+ taskStatisticsSize);
 	} else {
 		// Alignment fixup
-		size_t missalignment = argsBlockSize & (DATA_ALIGNMENT_SIZE - 1);
-		size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
-		argsBlockSize += correction;
+		argsBlockSize += BitManipulation::fixAlignment(argsBlockSize, DATA_ALIGNMENT_SIZE);
 
 		// Allocation and layout
 		argsBlock = MemoryAllocator::alloc(argsBlockSize + taskSize

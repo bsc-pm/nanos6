@@ -14,6 +14,7 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "support/BitManipulation.hpp"
 #include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
@@ -23,7 +24,6 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadId.hpp>
-
 
 void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
@@ -150,20 +150,26 @@ void TaskFinalization::disposeTask(Task *task)
 			// which is a taskloop that generates taskfors. Thus, we must treat
 			// the task as a taskloop. It is important to check taskloop condition
 			// before taskfor one, to dispose a taskloop in the case of taskloop for.
+			size_t taskSize;
 			if (isTaskloop) {
-				disposableBlockSize += sizeof(Taskloop);
+				taskSize = sizeof(Taskloop);
 			} else if (isTaskfor) {
-				disposableBlockSize += sizeof(Taskfor);
+				taskSize = sizeof(Taskfor);
 			} else if (isStreamExecutor) {
-				disposableBlockSize += sizeof(StreamExecutor);
+				taskSize = sizeof(StreamExecutor);
 			} else {
-				disposableBlockSize += sizeof(Task);
+				taskSize = sizeof(Task);
 			}
 
 			const TaskDataAccesses &taskAccesses = task->getDataAccesses();
-			disposableBlockSize += taskAccesses.getAdditionalMemorySize();
-			disposableBlockSize += TaskHardwareCounters::getAllocationSize();
-			disposableBlockSize += Monitoring::getAllocationSize();
+			size_t taskAccessesSize = taskAccesses.getAdditionalMemorySize();
+			size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
+			size_t taskStatisticsSize = Monitoring::getAllocationSize();
+
+			disposableBlockSize += taskSize + BitManipulation::fixAlignment(taskSize, DATA_ALIGNMENT_SIZE);
+			disposableBlockSize += taskAccessesSize + BitManipulation::fixAlignment(taskAccessesSize, DATA_ALIGNMENT_SIZE);
+			disposableBlockSize += taskCountersSize + BitManipulation::fixAlignment(taskCountersSize, DATA_ALIGNMENT_SIZE);
+			disposableBlockSize += taskStatisticsSize + BitManipulation::fixAlignment(taskStatisticsSize, DATA_ALIGNMENT_SIZE);
 
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 

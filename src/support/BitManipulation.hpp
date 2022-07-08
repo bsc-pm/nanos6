@@ -1,15 +1,17 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 
 #ifndef BIT_MANIPULATION_HPP
 #define BIT_MANIPULATION_HPP
 
+#include <cstddef>
 #include <cstdint>
 
+#define DATA_ALIGNMENT_SIZE sizeof(void *)
 
 class BitManipulation {
 public:
@@ -39,6 +41,14 @@ public:
 	static inline uint64_t countEnabledBits(const uint64_t *x)
 	{
 		return __builtin_popcountll(*x);
+	}
+
+	//! \brief Return the number of bytes necessary so that "currentSize"
+	//! is aligned to "alignment"
+	static inline size_t fixAlignment(size_t currentSize, size_t alignment)
+	{
+		size_t missalignment = currentSize & (alignment - 1);
+		return (alignment - missalignment) & (alignment - 1);
 	}
 };
 
