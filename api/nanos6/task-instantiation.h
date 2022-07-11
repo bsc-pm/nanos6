@@ -9,8 +9,8 @@
 
 #include <stddef.h>
 #include <unistd.h>
-#include "major.h"
 
+#include "major.h"
 
 #pragma GCC visibility push(default)
 
@@ -87,7 +87,7 @@ typedef struct
 	//! \brief A string that identifies the source location of the definition of the task
 	char const *declaration_source;
 
-	//! \brief Similar to run but initially set to null and initialized by the runtime if needed
+	//! \brief In device tasks, name of the kernel to be loaded and executed
 	const char *device_function_name;
 } nanos6_task_implementation_info_t;
 

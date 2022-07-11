@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([AC_CHECK_CUDA],
 	[
@@ -18,13 +18,15 @@ AC_DEFUN([AC_CHECK_CUDA],
 				AC_MSG_RESULT([${ac_cv_use_cuda_prefix}])
 				# hacky way to obtain the quoted string for rpath
 				cuda_lib_path_q=`echo \"${ac_cv_use_cuda_prefix}/lib64\"`
-				
-				if test x"${cuda_lib_path_q}/libOpenCL.so)" != x"yes"; then
+
+				AC_CHECK_FILE([${cuda_lib_path_q}/libOpenCL.so], [
 					opencl_libs=-lOpenCL
 					ac_use_cuda_cl="yes"
-				fi
+				], [
+					ac_use_cuda_cl="no"
+				])
 
-				CUDA_LIBS="-L${ac_cv_use_cuda_prefix}/lib64 -lcudart -lcuda -lnvrtc ${opencl_libs}" 
+				CUDA_LIBS="-L${ac_cv_use_cuda_prefix}/lib64 -lcudart -lcuda -lnvrtc ${opencl_libs}"
 				CUDA_LIBS="${CUDA_LIBS} -Wl,-rpath,${cuda_lib_path_q}"
 				CUDA_CFLAGS="-I${ac_cv_use_cuda_prefix}/include"
 				ac_use_cuda=yes

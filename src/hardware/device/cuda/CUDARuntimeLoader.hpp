@@ -17,8 +17,16 @@
 #include <unordered_map>
 #include <vector>
 
+/*
+ * This file interprets and parses CUDA binaries to load kernels
+ * For PTX that is incrusted in the binary, there is a very small amount of information available:
+ * 	- https://zenodo.org/record/2339027/files/decoding-cuda-binary-file-format.pdf
+ *  - And whatever the LLVM implementation does to build the binaries
+ */
+
 class CUDARuntimeLoader {
 	static const uint32_t NV_FATBIN_DESC_MAGIC = 0xba55ed50; // 50ed55ba
+	static const uint32_t NV_FATBIN_SEGMENT_MAGIC = 0x466243b1; // 50ed55ba
 
 	struct nvFatbinDetailed {
 		uint16_t deviceType; // 2 FOR GPU
@@ -34,14 +42,14 @@ class CUDARuntimeLoader {
 		uint32_t magic;
 		uint32_t version;
 		uint64_t size;
-		nvFatbinDetailed detailed_header;
+		// nvFatbinDetailed detailed_header;
 	};
 
-	struct nvCudaFatbinDesc {
-		unsigned int type; // 0 = elf, 1 = ptx
-		unsigned int binaryOffset;
-		unsigned long long int size;
-		//... missing parameters
+	struct nvFatbinSegment {
+		uint32_t magic;
+		uint32_t version;
+		uint64_t fatbinOffset;
+		uint64_t _dontCare;
 	};
 
 	struct nameData {

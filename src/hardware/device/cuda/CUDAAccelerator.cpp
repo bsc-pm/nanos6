@@ -1,8 +1,10 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
+
+#include <array>
 
 #include "CUDAAccelerator.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -10,7 +12,7 @@
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/BlockingAPI.hpp"
-#include <array>
+
 #include <DataAccessRegistration.hpp>
 #include <DataAccessRegistrationImplementation.hpp>
 
@@ -121,13 +123,6 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 		void *args = task->getArgsBlock();
 		nanos6_device_info_t &deviceInfo = *((nanos6_device_info_t *)args);
 
-		const auto loadNDRange = [&](int idx) -> size_t {
-			int64_t value = deviceInfo.sizes[idx];
-			if (value > 0)
-				return value;
-			return 1;
-		};
-
 		// NDRANGE is used to define the work elements of the kernel
 		// This can be 1D, 2D or 3D.
 		// A grid contains blocks, which are the basic unit of parallelism.
@@ -135,20 +130,19 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 		// we COULD perform some math to express the same working units in a supported way.
 		// Right now we expect the user to provide valid parameters.
 
-		size_t gridDim1 = loadNDRange(0);
-		size_t gridDim2 = loadNDRange(1);
-		size_t gridDim3 = loadNDRange(2);
+		size_t gridDim1 = std::max(deviceInfo.sizes[0], 1);
+		size_t gridDim2 = std::max(deviceInfo.sizes[1], 1);
+		size_t gridDim3 = std::max(deviceInfo.sizes[2], 1);
 
-		size_t blockDim1 = loadNDRange(3);
-		size_t blockDim2 = loadNDRange(4);
-		size_t blockDim3 = loadNDRange(5);
+		size_t blockDim1 = std::max(deviceInfo.sizes[3], 1);
+		size_t blockDim2 = std::max(deviceInfo.sizes[4], 1);
+		size_t blockDim3 = std::max(deviceInfo.sizes[5], 1);
 
-
-		std::array<void *, 16> stack_params;
+		std::array<void *, MAX_STACK_ARGS> stack_params;
 		void **params = &stack_params[0];
 		int numArgs = task->getTaskInfo()->num_args;
 
-		if (numArgs > 16)
+		if (numArgs > MAX_STACK_ARGS)
 			params = (void **)MemoryAllocator::alloc(numArgs * sizeof(void *));
 
 		for (int i = 0; i < numArgs; i++) {
@@ -174,7 +168,7 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 			FatalErrorHandler::fail("Failed to execute cuda kernel: ", task->getTaskInfo()->implementations[0].device_function_name);
 		}
 
-		if (numArgs > 16)
+		if (numArgs > MAX_STACK_ARGS)
 			MemoryAllocator::free((void *)params, numArgs * sizeof(void *));
 	}
 }

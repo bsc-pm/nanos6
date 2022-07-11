@@ -51,41 +51,75 @@ CUfunction CUDARuntimeLoader::loadFunction(const char *str)
 	return (CUfunction)0;
 }
 
+static char *findElfSection(char *elfFile, std::string search, size_t &size)
+{
+	char *res = NULL;
+
+	// In an ELF file, there is a "header" and then some "section headers" which describe each section
+	// In this section header, the name is a number which corresponds to a string in a special table
+
+	// Map exe to the ELF header
+	Elf64_Ehdr *ehdr = (Elf64_Ehdr *)exe;
+	// Then find where the ELF section headers start
+	Elf64_Shdr *shdr = (Elf64_Shdr *)(exe + ehdr->e_shoff);
+	// Now get the number of sections
+	Elf32_Half shnum = ehdr->e_shnum;
+
+	// e_shstrndx is the index of the string table section's header
+	Elf64_Shdr *shStrtab = &shdr[ehdr->e_shstrndx];
+	// Now we use sh_offset which contains the real location of the section in the executable
+	const char *const shStrtabExe = exe + shStrtab->sh_offset;
+
+	// Now, for each section, check if it matches the name
+	for (Elf32_Half i = 0; i < shnum; ++i) {
+		std::string sectionName = std::string(shStrtabExe[shdr[i].sh_name]);
+		if (sectionName == search) {
+			FatalErrorHandler::failIf(res != NULL, "Duplicate section found: ", search);
+			res = &exe[shdr[i].sh_offset];
+			size = shdr[i].sh_size;
+		}
+	}
+
+	return res;
+}
+
 void CUDARuntimeLoader::getSectionBinaryModules(std::vector<nameData> &cuObjs)
 {
 	const char *selfExe = "/proc/self/exe";
 
 	struct stat st;
 	if (stat(selfExe, &st) != 0) {
-		FatalErrorHandler::fail("Cannot stat file: ", selfExe, "\n");
+		FatalErrorHandler::fail("Cannot stat file: ", selfExe);
 	}
 
 	int fd = open(selfExe, O_RDONLY);
+	FatalErrorHandler::failIf(fd == -1, "Cannot open executable: ", selfExe);
+
 	char *exe = (char *)mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	FatalErrorHandler::failIf(exe == MAP_FAILED, "Cannot mmap executable in read-only mode");
 
-	Elf64_Ehdr *ehdr = (Elf64_Ehdr *)exe;
-	Elf64_Shdr *shdr = (Elf64_Shdr *)(exe + ehdr->e_shoff);
-	Elf32_Half shnum = ehdr->e_shnum;
+	size_t fatbinSegmentSize = 0;
+	nvFatbinSegment *fatbinSegment = (nvFatbinSegment *)findElfSection(selfExe, ".nvFatBinSegment", fatbinSegmentSize);
 
-	Elf64_Shdr *shStrtab = &shdr[ehdr->e_shstrndx];
-	const char *const shStrtabExe = exe + shStrtab->sh_offset;
+	// No kernels found
+	if (!fatbinSegment)
+		return;
 
-	for (Elf32_Half i = 0; i < shnum; ++i) {
-		if (std::string(shStrtabExe + shdr[i].sh_name) == ".nv_fatbin") {
-			nvFatbinDesc *desc = (nvFatbinDesc *)&exe[shdr[i].sh_offset];
+	assert(fatbinSegmentSize > 0);
+	assert(fatbinSegmentSize % sizeof(nvFatbinSegment) == 0);
 
-			while (desc->magic == NV_FATBIN_DESC_MAGIC) {
-				cuObjs.emplace_back(CUDA_BINARY_STRING,
-					std::string((char *)desc, desc->size));
+	for (size_t i = 0; i < (fatbinSegmentSize / sizeof(nvFatbinSegment)); ++i) {
+		nvFatbinSegment *currSegmentInfo = fatbinSegment[i];
+		assert(currSegmentInfo->magic == NV_FATBIN_SEGMENT_MAGIC);
+		nvFatbinDesc *desc = (nvFatbinDesc *)&exe[currSegmentInfo->fatbinOffset];
 
-				desc = (nvFatbinDesc *)((char *)desc + desc->size + 16); // 16 = 4 magic + 4 version + 8 size
-				desc =
-					(nvFatbinDesc *)((((uintptr_t)desc) + 15) & ~15); // align 16 bytes
-			}
-			break;
-		}
+		assert(desc->magic == NV_FATBIN_DESC_MAGIC);
+		// Copy the full fatbin AND its header, which is not included in the size
+		cuObjs.emplace_back(CUDA_BINARY_STRING,
+			std::string((char *)desc, desc->size + sizeof(nvFatbinDesc)));
 	}
 
+	// We don't care if these calls fail
 	munmap(exe, st.st_size);
 	close(fd);
 }

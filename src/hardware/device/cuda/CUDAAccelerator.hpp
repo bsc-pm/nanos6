@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_ACCELERATOR_HPP
@@ -19,6 +19,9 @@
 
 class CUDAAccelerator : public Accelerator {
 private:
+	// Maximum number of kernel args before we allocate extra memory for them
+	const static int MAX_STACK_ARGS = 16;
+
 	// Name to not confuse with other more general events hadled in other portions of the runtime
 	struct CUDAEvent {
 		cudaEvent_t event;

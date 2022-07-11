@@ -10,7 +10,6 @@
 #include <cuda_runtime_api.h>
 
 #include "CUDARuntimeLoader.hpp"
-
 #include "lowlevel/cuda/CUDAErrorHandler.hpp"
 #include "support/config/ConfigVariable.hpp"
 
@@ -18,12 +17,12 @@
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
 class CUDAFunctions {
-	static std::vector<CUdevice> &getCudaDevices(int num = -1)
+	static std::vector<CUdevice> &getCudaDevices(int num)
 	{
 		static std::vector<CUdevice> cdvs(num);
 		return cdvs;
 	}
-	static std::vector<CUcontext> &getCudaPrimaryContexts(int num = -1)
+	static std::vector<CUcontext> &getCudaPrimaryContexts(int num)
 	{
 		static std::vector<CUcontext> pctx(num);
 		return pctx;
