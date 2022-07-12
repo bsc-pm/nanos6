@@ -51,36 +51,32 @@ CUfunction CUDARuntimeLoader::loadFunction(const char *str)
 	return (CUfunction)0;
 }
 
-static char *findElfSection(char *elfFile, std::string search, size_t &size)
+static Elf64_Shdr *findElfSection(char *elfFile, std::string search)
 {
-	char *res = NULL;
-
 	// In an ELF file, there is a "header" and then some "section headers" which describe each section
 	// In this section header, the name is a number which corresponds to a string in a special table
 
 	// Map exe to the ELF header
-	Elf64_Ehdr *ehdr = (Elf64_Ehdr *)exe;
+	Elf64_Ehdr *ehdr = (Elf64_Ehdr *)elfFile;
 	// Then find where the ELF section headers start
-	Elf64_Shdr *shdr = (Elf64_Shdr *)(exe + ehdr->e_shoff);
+	Elf64_Shdr *shdr = (Elf64_Shdr *)(elfFile + ehdr->e_shoff);
 	// Now get the number of sections
 	Elf32_Half shnum = ehdr->e_shnum;
 
 	// e_shstrndx is the index of the string table section's header
 	Elf64_Shdr *shStrtab = &shdr[ehdr->e_shstrndx];
 	// Now we use sh_offset which contains the real location of the section in the executable
-	const char *const shStrtabExe = exe + shStrtab->sh_offset;
+	const char *const shStrtabExe = elfFile + shStrtab->sh_offset;
 
 	// Now, for each section, check if it matches the name
 	for (Elf32_Half i = 0; i < shnum; ++i) {
-		std::string sectionName = std::string(shStrtabExe[shdr[i].sh_name]);
+		std::string sectionName = std::string(&shStrtabExe[shdr[i].sh_name]);
 		if (sectionName == search) {
-			FatalErrorHandler::failIf(res != NULL, "Duplicate section found: ", search);
-			res = &exe[shdr[i].sh_offset];
-			size = shdr[i].sh_size;
+			return &shdr[i];
 		}
 	}
 
-	return res;
+	return NULL;
 }
 
 void CUDARuntimeLoader::getSectionBinaryModules(std::vector<nameData> &cuObjs)
@@ -98,20 +94,27 @@ void CUDARuntimeLoader::getSectionBinaryModules(std::vector<nameData> &cuObjs)
 	char *exe = (char *)mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	FatalErrorHandler::failIf(exe == MAP_FAILED, "Cannot mmap executable in read-only mode");
 
-	size_t fatbinSegmentSize = 0;
-	nvFatbinSegment *fatbinSegment = (nvFatbinSegment *)findElfSection(selfExe, ".nvFatBinSegment", fatbinSegmentSize);
+	Elf64_Shdr *fatbinSegmentHeader = (Elf64_Shdr *)findElfSection(exe, ".nvFatBinSegment");
+	Elf64_Shdr *fatbinSectionHeader = (Elf64_Shdr *)findElfSection(exe, ".nv_fatbin");
 
 	// No kernels found
-	if (!fatbinSegment)
+	if (!fatbinSegmentHeader || !fatbinSectionHeader)
 		return;
 
-	assert(fatbinSegmentSize > 0);
-	assert(fatbinSegmentSize % sizeof(nvFatbinSegment) == 0);
+	nvFatbinSegment *fatbinSegment = (nvFatbinSegment *)&exe[fatbinSegmentHeader->sh_offset];
+	Elf64_Addr fatbinSectionAddress = fatbinSectionHeader->sh_addr;
 
-	for (size_t i = 0; i < (fatbinSegmentSize / sizeof(nvFatbinSegment)); ++i) {
-		nvFatbinSegment *currSegmentInfo = fatbinSegment[i];
+	assert(fatbinSegmentHeader->sh_size > 0);
+	assert(fatbinSegmentHeader->sh_size % sizeof(nvFatbinSegment) == 0);
+
+	for (size_t i = 0; i < (fatbinSegmentHeader->sh_size / sizeof(nvFatbinSegment)); ++i) {
+		nvFatbinSegment *currSegmentInfo = &fatbinSegment[i];
 		assert(currSegmentInfo->magic == NV_FATBIN_SEGMENT_MAGIC);
-		nvFatbinDesc *desc = (nvFatbinDesc *)&exe[currSegmentInfo->fatbinOffset];
+
+		uint64_t currentFatbinOffset = fatbinSectionHeader->sh_offset +
+			(currSegmentInfo->fatbinAddress - fatbinSectionAddress);
+		assert(fatbinSectionAddress <= currSegmentInfo->fatbinAddress);
+		nvFatbinDesc *desc = (nvFatbinDesc *)&exe[currentFatbinOffset];
 
 		assert(desc->magic == NV_FATBIN_DESC_MAGIC);
 		// Copy the full fatbin AND its header, which is not included in the size
@@ -218,11 +221,9 @@ std::vector<std::string> CUDARuntimeLoader::compileSourcesIntoPtxForContext(
 			continue;
 		}
 
-		char *includeOption = (char *)"-I.";
-		char architectureOption[32];
-		snprintf(architectureOption, 32, "--gpu-architecture=compute_%d",
-			capabilityNumber);
-		char *options[] = {includeOption, architectureOption, NULL};
+		const char *includeOption = "-I.";
+		std::string archirectureOption = "--gpu-architecture=compute_" + std::to_string(capabilityNumber);
+		const char *options[] = {includeOption, archirectureOption.c_str(), NULL};
 		rc = nvrtcCompileProgram(prog, 2, options);
 
 		if (rc != NVRTC_SUCCESS) {

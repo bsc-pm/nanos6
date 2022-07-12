@@ -48,8 +48,8 @@ class CUDARuntimeLoader {
 	struct nvFatbinSegment {
 		uint32_t magic;
 		uint32_t version;
-		uint64_t fatbinOffset;
-		uint64_t _dontCare;
+		uint64_t fatbinAddress;
+		uint8_t _dontCare[8];
 	};
 
 	struct nameData {

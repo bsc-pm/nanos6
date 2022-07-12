@@ -30,7 +30,8 @@ class CUDAFunctions {
 
 	static CUDARuntimeLoader &getCudaRuntimeLoader()
 	{
-		static CUDARuntimeLoader loader(getCudaPrimaryContexts());
+		// This assumes that getCudaRuntimeLoader() can never be called before getCudaPrimaryContexts() is called at least once
+		static CUDARuntimeLoader loader(getCudaPrimaryContexts(-1));
 		return loader;
 	}
 
