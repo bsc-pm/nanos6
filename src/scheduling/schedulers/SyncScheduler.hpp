@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYNC_SCHEDULER_HPP
@@ -86,9 +86,9 @@ public:
 		_totalAddQueues = totalNUMANodes + 1;
 
 		_addQueues = (add_queue_t *)
-			MemoryAllocator::alloc(_totalAddQueues * sizeof(add_queue_t));
+			MemoryAllocator::allocAligned(_totalAddQueues * sizeof(add_queue_t));
 		_addQueuesLocks = (TicketArraySpinLock *)
-			MemoryAllocator::alloc(_totalAddQueues * sizeof(TicketArraySpinLock));
+			MemoryAllocator::allocAligned(_totalAddQueues * sizeof(TicketArraySpinLock));
 
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			new (&_addQueues[i]) add_queue_t(totalCPUsPow2*4);
@@ -104,8 +104,8 @@ public:
 			_addQueues[i].~add_queue_t();
 			_addQueuesLocks[i].~TicketArraySpinLock();
 		}
-		MemoryAllocator::free(_addQueues, _totalAddQueues * sizeof(add_queue_t));
-		MemoryAllocator::free(_addQueuesLocks, _totalAddQueues * sizeof(TicketArraySpinLock));
+		MemoryAllocator::freeAligned(_addQueues, _totalAddQueues * sizeof(add_queue_t));
+		MemoryAllocator::freeAligned(_addQueuesLocks, _totalAddQueues * sizeof(TicketArraySpinLock));
 
 		delete _scheduler;
 	}

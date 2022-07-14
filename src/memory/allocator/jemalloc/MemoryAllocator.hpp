@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MEMORY_ALLOCATOR_HPP
@@ -12,6 +12,7 @@
 #include <cstdint>
 
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "lowlevel/Padding.hpp"
 
 class MemoryAllocator {
 private:
@@ -50,17 +51,49 @@ public:
 	static inline void *alloc(size_t size)
 	{
 		assert(size > 0);
-		void *ptr = nanos6_je_mallocx(size, MALLOCX_NONE);
-		FatalErrorHandler::failIf(ptr == nullptr, " when trying to allocate memory");
+
+		void *ptr = nullptr;
+		if (size >= CACHELINE_SIZE / 2) {
+			ptr = allocAligned(size);
+		} else {
+			ptr = nanos6_je_mallocx(size, MALLOCX_NONE);
+			if (ptr == nullptr)
+				FatalErrorHandler::fail("nanos6_je_mallocx failed to allocate memory");
+		}
+
+		return ptr;
+	}
+
+	static inline void *allocAligned(size_t size)
+	{
+		assert(size > 0);
+
+		void *ptr = nanos6_je_mallocx(size, MALLOCX_ALIGN(CACHELINE_SIZE));
+		if (ptr == nullptr)
+			FatalErrorHandler::fail("nanos6_je_mallocx failed to allocate memory");
+
+		if ((uintptr_t) ptr % CACHELINE_SIZE != 0)
+			FatalErrorHandler::fail("nanos6_je_mallocx failed to allocate cache aligned memory");
+
 		return ptr;
 	}
 
 	static inline void free(void *chunk, size_t size)
 	{
 		assert(size > 0);
-		// Failing this assert means the size passed to free does not correspond to the allocated size
-		assert(nanos6_je_sallocx(chunk, MALLOCX_NONE) == nanos6_je_nallocx(size, MALLOCX_NONE));
-		nanos6_je_sdallocx(chunk, size, MALLOCX_NONE);
+
+		if (size >= CACHELINE_SIZE / 2) {
+			freeAligned(chunk, size);
+		} else {
+			nanos6_je_sdallocx(chunk, size, MALLOCX_NONE);
+		}
+	}
+
+	static inline void freeAligned(void *chunk, size_t size)
+	{
+		assert(size > 0);
+
+		nanos6_je_sdallocx(chunk, size, MALLOCX_ALIGN(CACHELINE_SIZE));
 	}
 
 	// Simplifications for using "new" and "delete" with the allocator

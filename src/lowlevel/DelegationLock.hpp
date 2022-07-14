@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DELEGATION_LOCK_HPP
@@ -40,17 +40,22 @@ private:
 	};
 
 #ifndef NDEBUG
-	//! The amount of threads currently waiting in the lock
-	std::atomic<size_t> _subscribedThreads;
+	//! The amount of threads currently waiting in the lock. Align the field
+	//! so that it does not interfere with the rest of fields
+	alignas(CACHELINE_SIZE * 2) std::atomic<size_t> _subscribedThreads;
 #endif
 
 protected:
 
+	//! Keep these fields on the same cacheline since they are not modified
 	alignas(CACHELINE_SIZE) Padded<Node> *_waitQueue;
-	alignas(CACHELINE_SIZE) Padded<Item> *_items;
-	alignas(CACHELINE_SIZE) std::atomic<uint64_t> _head;
-	alignas(CACHELINE_SIZE) uint64_t _size;
-	alignas(CACHELINE_SIZE) uint64_t _next;
+	Padded<Item> *_items;
+	const uint64_t _size;
+
+	//! Keep these fields occupying two cachelines to prevent false sharing and
+	//! undesired conflicts due to prefetching
+	alignas(CACHELINE_SIZE * 2) std::atomic<uint64_t> _head;
+	alignas(CACHELINE_SIZE * 2) uint64_t _next;
 
 public:
 
@@ -62,12 +67,14 @@ public:
 #ifndef NDEBUG
 		_subscribedThreads(0),
 #endif
-		_head(size),
+		_waitQueue(nullptr),
+		_items(nullptr),
 		_size(size),
+		_head(size),
 		_next(size + 1)
 	{
-		_waitQueue = (Padded<Node> *) MemoryAllocator::alloc(size * sizeof(Padded<Node>));
-		_items = (Padded<Item> *) MemoryAllocator::alloc(size * sizeof(Padded<Item>));
+		_waitQueue = (Padded<Node> *) MemoryAllocator::allocAligned(size * sizeof(Padded<Node>));
+		_items = (Padded<Item> *) MemoryAllocator::allocAligned(size * sizeof(Padded<Item>));
 		assert(_waitQueue != nullptr);
 		assert(_items != nullptr);
 
@@ -88,8 +95,8 @@ public:
 			FatalErrorHandler::fail("Destroying a lock with threads inside");
 		}
 #endif
-		MemoryAllocator::free(_waitQueue, _size * sizeof(Padded<Node>));
-		MemoryAllocator::free(_items, _size * sizeof(Padded<Item>));
+		MemoryAllocator::freeAligned(_waitQueue, _size * sizeof(Padded<Node>));
+		MemoryAllocator::freeAligned(_items, _size * sizeof(Padded<Item>));
 	}
 
 	//! \brief Acquire the lock

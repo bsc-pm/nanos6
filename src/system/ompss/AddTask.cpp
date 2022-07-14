@@ -102,7 +102,7 @@ Task *AddTask::createTask(
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	if (hasPreallocatedArgsBlock) {
 		assert(argsBlock != nullptr);
-		task = (Task *) MemoryAllocator::alloc(taskSize
+		task = (Task *) MemoryAllocator::allocAligned(taskSize
 			+ taskAccessesSize
 			+ taskCountersSize
 			+ taskStatisticsSize);
@@ -111,7 +111,7 @@ Task *AddTask::createTask(
 		argsBlockSize += BitManipulation::fixAlignment(argsBlockSize, DATA_ALIGNMENT_SIZE);
 
 		// Allocation and layout
-		argsBlock = MemoryAllocator::alloc(argsBlockSize + taskSize
+		argsBlock = MemoryAllocator::allocAligned(argsBlockSize + taskSize
 			+ taskAccessesSize
 			+ taskCountersSize
 			+ taskStatisticsSize);

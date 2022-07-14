@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
@@ -200,7 +200,7 @@ void TaskFinalization::disposeTask(Task *task)
 			} else {
 				task->~Task();
 			}
-			MemoryAllocator::free(disposableBlock, disposableBlockSize);
+			MemoryAllocator::freeAligned(disposableBlock, disposableBlockSize);
 		} else {
 			// Although collaborators cannot be disposed, they must destroy their
 			// args blocks. The destroy function free the memory of the args block
