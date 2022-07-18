@@ -60,6 +60,10 @@ namespace Instrument {
 		currentPhase._runningTime.continueAt(currentPhase._blockedTime);
 	}
 
+	inline void threadSuspending(__attribute__((unused)) thread_id_t threadId)
+	{
+	}
+
 	inline void threadHasResumed(
 		thread_id_t,
 		compute_place_id_t,

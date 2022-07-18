@@ -50,8 +50,13 @@ void Instrument::threadWillSuspend(
 	bool afterSynchronization
 ) {
 	if (afterSynchronization) {
-		Ovni::threadPause();
+		Ovni::threadCool();
 	}
+}
+
+void Instrument::threadSuspending(thread_id_t threadId)
+{
+	Ovni::threadPause();
 }
 
 void Instrument::threadHasResumed(
@@ -67,7 +72,7 @@ void Instrument::threadHasResumed(
 
 void Instrument::threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
 {
-	Ovni::threadPause();
+	Ovni::threadCool();
 }
 
 void Instrument::threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)

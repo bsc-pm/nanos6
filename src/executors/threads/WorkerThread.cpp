@@ -85,10 +85,10 @@ void WorkerThread::body()
 			if (assignedThread != nullptr) {
 				_task = nullptr;
 
-				ThreadManager::addIdler(this);
-
 				// Runtime Tracking Point - The current thread will suspend
 				TrackingPoints::threadWillSuspend(this, cpu);
+
+				ThreadManager::addIdler(this);
 
 				switchTo(assignedThread);
 			} else {

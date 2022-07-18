@@ -71,6 +71,12 @@ namespace Instrument {
 		bool afterSynchronization = true
 	);
 
+	//! This function is called when the current worker thread suspends AFTER it has woken up replacements.
+	//! param[in] threadId The thread identifier
+	void threadSuspending(
+		thread_id_t threadId
+	);
+
 	//! This function is called when the current worker thread resumes
 	//! param[in] threadId The thread identifier
 	//! param[in] cpu The compute place where the current thread is bound

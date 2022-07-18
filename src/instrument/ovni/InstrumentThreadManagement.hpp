@@ -33,6 +33,7 @@ namespace Instrument {
 
 	void threadSynchronizationCompleted(thread_id_t threadId);
 	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu, bool afterSynchronization);
+	void threadSuspending(thread_id_t threadId);
 	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu, bool afterSynchronization);
 	void threadWillSuspend(external_thread_id_t threadId);
 	void threadHasResumed(external_thread_id_t threadId);

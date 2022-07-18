@@ -195,6 +195,7 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 		// this thread's CPU has been released.
 	}
 
+	Instrument::threadSuspending(_instrumentationId);
 	suspend();
 	// After resuming (if ever blocked), the thread continues here
 
