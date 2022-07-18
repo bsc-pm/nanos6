@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 
@@ -89,9 +89,11 @@ ConfigCentral::ConfigCentral() :
 	registerOption<string_t>("instrument.stats.output_file", "/dev/stderr");
 
 	// Verbose instrumentation
-	registerOption<string_t>("instrument.verbose.areas", {"all", "!ComputePlaceManagement", "!DependenciesByAccess",
-															 "!DependenciesByAccessLinks", "!DependenciesByGroup",
-															 "!LeaderThread", "!TaskStatus", "!ThreadManagement"});
+	registerOption<string_t>("instrument.verbose.areas", {
+			"all", "!ComputePlaceManagement", "!DependenciesByAccess",
+			"!DependenciesByAccessLinks", "!DependenciesByGroup",
+			"!LeaderThread", "!TaskStatus", "!ThreadManagement"
+		});
 	registerOption<bool_t>("instrument.verbose.dump_only_on_exit", false);
 	registerOption<string_t>("instrument.verbose.output_file", "/dev/stderr");
 	registerOption<bool_t>("instrument.verbose.timestamps", true);

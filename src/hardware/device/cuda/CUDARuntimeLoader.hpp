@@ -82,10 +82,10 @@ class CUDARuntimeLoader {
 public:
 	CUfunction loadFunction(const char *str);
 
-	CUDARuntimeLoader(const std::vector<CUcontext> &contexts);
+	CUDARuntimeLoader();
 
 private:
-	std::vector<std::vector<CUmodule>> _perGpuModles;
+	std::vector<std::vector<CUmodule>> _perGpuModules;
 	std::vector<std::unordered_map<const char *, CUfunction>> _functionCache;
 };
 

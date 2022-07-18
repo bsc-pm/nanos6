@@ -40,7 +40,7 @@ CUfunction CUDARuntimeLoader::loadFunction(const char *str)
 		return it->second;
 
 	CUfunction fnc;
-	for (CUmodule mod : _perGpuModles[currentDevice]) {
+	for (CUmodule mod : _perGpuModules[currentDevice]) {
 		if (cuModuleGetFunction(&fnc, mod, str) == CUDA_SUCCESS) {
 			_functionCache[currentDevice][str] = fnc;
 			return fnc;
@@ -200,8 +200,8 @@ std::vector<std::string> CUDARuntimeLoader::compileSourcesIntoPtxForContext(
 	const int capabilityNumber = deviceProp.major * 10 + deviceProp.minor;
 
 	const size_t numHeaders = headers.size();
-	const char *headerFiles[numHeaders];
-	const char *headerNames[numHeaders];
+	std::vector<const char *> headerFiles(numHeaders);
+	std::vector<const char *> headerNames(numHeaders);
 	for (size_t i = 0; i < numHeaders; ++i) {
 		headerNames[i] = (char *)strrchr(headers[i].filename.c_str(), '/') + 1;
 		headerFiles[i] = (char *)headers[i].data.c_str();
@@ -213,7 +213,7 @@ std::vector<std::string> CUDARuntimeLoader::compileSourcesIntoPtxForContext(
 		nvrtcProgram prog;
 		nvrtcResult rc;
 		rc = nvrtcCreateProgram(&prog, sourcefile.c_str(), NULL, numHeaders,
-			headerFiles, headerNames);
+			headerFiles.data(), headerNames.data());
 		if (rc != NVRTC_SUCCESS) {
 			std::string errorMsg = "Failed to create CUDA program: ";
 			errorMsg += nvrtcGetErrorString(rc);
@@ -252,26 +252,18 @@ std::vector<std::string> CUDARuntimeLoader::compileSourcesIntoPtxForContext(
 	return ptxFiles;
 }
 
-// To maintain compatibility with older versions of C++, and to avoid adding
-// runtime dependencies we do it the old way.
 std::vector<std::string>
 CUDARuntimeLoader::getAllCudaUserBinariesPath(const std::string &path)
 {
 	std::vector<std::string> paths;
-	char cwd[1024];
-	bool currentDirOk = getcwd(cwd, sizeof(cwd)) != nullptr;
-	std::string currentDir = currentDirOk ? std::string(cwd) + "/" + path : "";
 
-	if (path[0] == '/')
-		currentDir = path;
-
-	DIR *dir = opendir(currentDir.c_str());
+	DIR *dir = opendir(path.c_str());
 	if (dir) {
 		// add all files path in the directory to paths vector
 		struct dirent *ent;
 		while ((ent = readdir(dir)) != nullptr) {
 			if (ent->d_type == DT_REG) {
-				paths.push_back(currentDir + "/" + ent->d_name);
+				paths.push_back(path + "/" + ent->d_name);
 			}
 		}
 		closedir(dir);
@@ -279,10 +271,26 @@ CUDARuntimeLoader::getAllCudaUserBinariesPath(const std::string &path)
 	return paths;
 }
 
-CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts)
+CUDARuntimeLoader::CUDARuntimeLoader()
 {
-	_functionCache.resize(contexts.size());
-	_perGpuModles.resize(contexts.size());
+	int devNum;
+	cudaError_t err = cudaGetDeviceCount(&devNum);
+	FatalErrorHandler::failIf(err != cudaSuccess, "Failed to get device count");
+
+	std::vector<CUdevice> devices(devNum);
+	std::vector<CUcontext> contexts(devNum);
+
+	// Initialize the primary context, this context is special and shared with the runtime api
+	for (int i = 0; i < devNum; ++i) {
+		FatalErrorHandler::failIf(cuDeviceGet(&devices[i], i) != CUDA_SUCCESS,
+			"Failed to get device " + std::to_string(i));
+		FatalErrorHandler::failIf(cuDevicePrimaryCtxRetain(&contexts[i], devices[i]) != CUDA_SUCCESS,
+			"Failed to retain primary context for device " + std::to_string(i));
+	}
+
+	_functionCache.resize(devNum);
+	_perGpuModules.resize(devNum);
+
 	// load kernels from the kernels folder
 	std::string kernels{
 		ConfigVariable<std::string>("devices.cuda.kernels_folder")};
@@ -294,7 +302,7 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts)
 	std::vector<nameData> clSrcs;
 #endif
 
-	for (auto const &dirEntry : getAllCudaUserBinariesPath(kernels)) {
+	for (const std::string &dirEntry : getAllCudaUserBinariesPath(kernels)) {
 		const auto entryEndsWith = [&](const std::string &ext) -> bool {
 			return dirEntry.size() > ext.size() && dirEntry.substr(dirEntry.size() - ext.size()) == ext;
 		};
@@ -310,8 +318,10 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts)
 			cuHeaders.emplace_back(dirEntry, getFileContent(dirEntry));
 		} else if (entryEndsWith(".cu")) {
 			cuSrcs.emplace_back(dirEntry, getFileContent(dirEntry));
-		} else {
+		} else if (entryEndsWith(".co") || entryEndsWith(".ptx") || entryEndsWith(".o") || entryEndsWith(".cuo")) {
 			cuObjs.emplace_back(dirEntry, getFileContent(dirEntry));
+		} else {
+			FatalErrorHandler::warn("Unknown file type in nanos6 kernels directory: ", dirEntry);
 		}
 	}
 
@@ -320,7 +330,7 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts)
 	getSectionBinaryModules(cuObjs);
 
 #if defined(USE_CUDA_CL)
-	std::vector<std::string> cl_src_ptx_vec = compileAllClKernels(clSrcs);
+	std::vector<std::string> clSourcePtx = compileAllClKernels(clSrcs);
 #endif
 
 	bool warningEnabled =
@@ -328,21 +338,21 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts)
 	for (size_t i = 0; i < contexts.size(); ++i) {
 		cuCtxSetCurrent(contexts[i]);
 
-		std::vector<std::string> cu_src_ptx_vec =
+		std::vector<std::string> cuSourcePtx =
 			compileSourcesIntoPtxForContext(cuSrcs, cuHeaders, i);
-		for (std::string &cu_src_ptx : cu_src_ptx_vec) {
+		for (std::string &currentPtx : cuSourcePtx) {
 			CUmodule tmp;
-			if (cuModuleLoadData(&tmp, &cu_src_ptx[0]) == CUDA_SUCCESS)
-				_perGpuModles[i].push_back(tmp);
+			if (cuModuleLoadData(&tmp, &currentPtx[0]) == CUDA_SUCCESS)
+				_perGpuModules[i].push_back(tmp);
 			else
 				FatalErrorHandler::warn("Could not load compiled ptx");
 		}
 
 #if defined(USE_CUDA_CL)
-		for (std::string &cl_ptx : cl_src_ptx_vec) {
+		for (std::string &currentPtx : clSourcePtx) {
 			CUmodule tmp;
-			if (cuModuleLoadData(&tmp, &cl_ptx[0]) == CUDA_SUCCESS)
-				_perGpuModles[i].push_back(tmp);
+			if (cuModuleLoadData(&tmp, &currentPtx[0]) == CUDA_SUCCESS)
+				_perGpuModules[i].push_back(tmp);
 			else
 				FatalErrorHandler::warn("Could not load Cl compiled ptx");
 		}
@@ -352,7 +362,7 @@ CUDARuntimeLoader::CUDARuntimeLoader(const std::vector<CUcontext> &contexts)
 		for (nameData &cuObj : cuObjs) {
 			CUmodule tmp;
 			if (cuModuleLoadData(&tmp, &cuObj.data[0]) == CUDA_SUCCESS)
-				_perGpuModles[i].push_back(tmp);
+				_perGpuModules[i].push_back(tmp);
 			else {
 				if (cuObj.filename == CUDA_BINARY_STRING) {
 					if (!warningEnabled)

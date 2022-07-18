@@ -67,6 +67,9 @@ base_tests += \
 	taskloop-for-reduction.clang.test \
 	taskloop-for-wait.clang.test
 
+if USE_CUDA
+base_tests += cuda-saxpy.clang.test
+endif
 
 # Ignore CPU Activation test if we have DLB
 # NOTE: The order of this tests should never change, new DLB-related
@@ -161,6 +164,10 @@ base_tests +=  \
 	taskloop-for-nqueens.clang.debug.test \
 	taskloop-for-reduction.clang.debug.test \
 	taskloop-for-wait.clang.debug.test
+
+if USE_CUDA
+base_tests += cuda-saxpy.clang.debug.test
+endif
 
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
@@ -261,8 +268,17 @@ endif
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
-# Inhibit linker optimization flag since it is not supported by Mercurium with CUDA
-test_cuda_flags = --cuda -fno-lto
+.cu.o:
+	$(CXX) -c -o $@ $<
+
+cuda_saxpy_clang_debug_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_saxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags) -fno-lto -lcudart
+
+cuda_saxpy_clang_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_clang_test_CPPFLAGS = -DNDEBUG
+cuda_saxpy_clang_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_saxpy_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto -lcudart
 
 blocking_clang_debug_test_SOURCES = ../blocking/blocking.cpp
 blocking_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)

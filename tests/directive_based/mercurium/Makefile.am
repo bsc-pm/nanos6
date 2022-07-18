@@ -69,10 +69,6 @@ base_tests += \
 	taskloop-for-reduction.mercurium.test \
 	taskloop-for-wait.mercurium.test
 
-
-if USE_CUDA
-base_tests += cuda-saxpy.mercurium.test
-endif
 # Ignore CPU Activation test if we have DLB
 # NOTE: The order of this tests should never change, new DLB-related
 #       tests must be added under these
@@ -170,9 +166,6 @@ base_tests +=  \
 	taskloop-for-reduction.mercurium.debug.test \
 	taskloop-for-wait.mercurium.debug.test
 
-if USE_CUDA
-base_tests += cuda-saxpy.mercurium.debug.test
-endif
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
 dlb_tests += \

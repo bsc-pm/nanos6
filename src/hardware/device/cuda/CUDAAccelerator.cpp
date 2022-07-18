@@ -141,13 +141,21 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 
 		std::array<void *, MAX_STACK_ARGS> stack_params;
 		void **params = &stack_params[0];
-		int numArgs = task->getTaskInfo()->num_args;
+		nanos6_task_info_t *taskInfo = task->getTaskInfo();
+		int numArgs = taskInfo->num_args;
 
 		if (numArgs > MAX_STACK_ARGS)
 			params = (void **)MemoryAllocator::alloc(numArgs * sizeof(void *));
 
 		for (int i = 0; i < numArgs; i++) {
-			params[i] = (void *)((char *)args + task->getTaskInfo()->offset_table[i]);
+			params[i] = (void *)((char *)args + taskInfo->offset_table[i]);
+		}
+
+		for (int i = 0; i < taskInfo->num_symbols; ++i) {
+			int arg = taskInfo->arg_idx_table[i];
+			// Translate corresponding param
+			if (arg >= 0)
+				params[arg] = (void *) (((size_t) params[arg]) - translationTable[i].local_address + translationTable[i].device_address);
 		}
 
 		CUresult execution_result = cuLaunchKernel(

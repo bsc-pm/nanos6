@@ -176,7 +176,7 @@ typedef struct __attribute__((aligned(64))) {
 	//! \brief Table of offsets for all num_args arguments of the task
 	int *offset_table;
 
-	//! \brief list of indexes to map a symbol  into arg
+	//! \brief list of indexes to map a symbol into arg
 	int *arg_idx_table;
 
 } nanos6_task_info_t;

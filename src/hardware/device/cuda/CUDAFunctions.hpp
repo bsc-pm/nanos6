@@ -17,21 +17,9 @@
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
 class CUDAFunctions {
-	static std::vector<CUdevice> &getCudaDevices(int num)
-	{
-		static std::vector<CUdevice> cdvs(num);
-		return cdvs;
-	}
-	static std::vector<CUcontext> &getCudaPrimaryContexts(int num)
-	{
-		static std::vector<CUcontext> pctx(num);
-		return pctx;
-	}
-
 	static CUDARuntimeLoader &getCudaRuntimeLoader()
 	{
-		// This assumes that getCudaRuntimeLoader() can never be called before getCudaPrimaryContexts() is called at least once
-		static CUDARuntimeLoader loader(getCudaPrimaryContexts(-1));
+		static CUDARuntimeLoader loader;
 		return loader;
 	}
 
@@ -43,24 +31,18 @@ public:
 		if (initialized)
 			return initializedStatus;
 
+		initialized = true;
+
 		CUresult st = cuInit(0);
 		if (st != CUDA_SUCCESS) {
+			initializedStatus = false;
 			return initializedStatus;
 		}
 
-		int devNum = getDeviceCount();
-		auto &cDevices = getCudaDevices(devNum);
-		auto &cPrimaryCtx = getCudaPrimaryContexts(devNum);
-		// Initialize the primary context, this context is special and shared with the runtime api
-		for (int i = 0; i < devNum; ++i) {
-			FatalErrorHandler::failIf(cuDeviceGet(&cDevices[i], i) != CUDA_SUCCESS,
-				"Failed to get device " + std::to_string(i));
-			FatalErrorHandler::failIf(cuDevicePrimaryCtxRetain(&cPrimaryCtx[i], cDevices[i]) != CUDA_SUCCESS,
-				"Failed to retain primary context for device " + std::to_string(i));
-		}
+		// Try to load all kernels
+		getCudaRuntimeLoader();
 
 		initializedStatus = true;
-		initialized = true;
 		return initializedStatus;
 	}
 
