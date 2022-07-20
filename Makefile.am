@@ -1411,12 +1411,12 @@ endif
 
 # Debug ovni variants
 libnanos6_debug_discrete_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
-libnanos6_debug_discrete_ovni_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_debug_discrete_ovni_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
 nodist_libnanos6_debug_discrete_ovni_la_SOURCES =
 
 libnanos6_debug_regions_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
-libnanos6_debug_regions_ovni_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
+libnanos6_debug_regions_ovni_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
 nodist_libnanos6_debug_regions_ovni_la_SOURCES =
 

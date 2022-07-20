@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef WORKER_THREAD_BASE_HPP
@@ -144,6 +144,7 @@ void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 	assert(_cpuToBeResumedOn == nullptr);
 	_cpuToBeResumedOn.store(cpu, std::memory_order_release);
 	if (_cpu != cpu) {
+		Instrument::threadBindRemote(getInstrumentationId(), cpu->getInstrumentationId());
 		bind(cpu);
 	}
 

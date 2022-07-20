@@ -120,6 +120,14 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 
+	void threadSuspending(__attribute__((unused)) thread_id_t threadId)
+	{
+	}
+
+	void threadBindRemote(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+	}
+
 	void threadHasResumed(
 		__attribute__((unused)) thread_id_t threadId,
 		__attribute__((unused)) compute_place_id_t computePlaceID,

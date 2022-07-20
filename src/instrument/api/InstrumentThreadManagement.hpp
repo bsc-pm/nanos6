@@ -77,6 +77,14 @@ namespace Instrument {
 		thread_id_t threadId
 	);
 
+	//! This function is called when the current worker thread suspends AFTER it has woken up replacements.
+	//! param[in] threadId The thread identifier
+	//! param[in] cpu The new compute place it is bound to
+	void threadBindRemote(
+		thread_id_t threadId,
+		compute_place_id_t cpu
+	);
+
 	//! This function is called when the current worker thread resumes
 	//! param[in] threadId The thread identifier
 	//! param[in] cpu The compute place where the current thread is bound

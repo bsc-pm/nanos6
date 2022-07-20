@@ -40,6 +40,10 @@ namespace Instrument {
 	{
 	}
 
+	inline void threadBindRemote(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+	}
+
 	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu, bool afterSynchronization);
 	void threadWillSuspend(external_thread_id_t threadId);
 	void threadHasResumed(external_thread_id_t threadId);

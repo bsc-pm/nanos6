@@ -20,6 +20,10 @@ void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __a
 {
 	Ovni::threadInit();
 	Ovni::threadCreate(computePlaceId._id, 0);
+
+	WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
+	if (currentWorker != nullptr)
+		currentWorker->setInstrumentationId(currentWorker->getTid());
 }
 
 void Instrument::precreatedExternalThread(/* OUT */__attribute__((unused)) external_thread_id_t &threadId)
@@ -54,9 +58,14 @@ void Instrument::threadWillSuspend(
 	}
 }
 
-void Instrument::threadSuspending(thread_id_t threadId)
+void Instrument::threadSuspending(__attribute__((unused)) thread_id_t threadId)
 {
 	Ovni::threadPause();
+}
+
+void Instrument::threadBindRemote(thread_id_t threadId,	compute_place_id_t cpu)
+{
+	Ovni::affinityRemote(cpu._id, threadId);
 }
 
 void Instrument::threadHasResumed(
@@ -66,13 +75,14 @@ void Instrument::threadHasResumed(
 ) {
 	if (afterSynchronization) {
 		Ovni::threadResume();
-		Ovni::affinitySet(cpu._id);
 	}
 }
 
 void Instrument::threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
 {
-	Ovni::threadCool();
+	// For the case of external threads, as they do not have to wake up anyone else, they don't have
+	// a cooling state
+	Ovni::threadPause();
 }
 
 void Instrument::threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
