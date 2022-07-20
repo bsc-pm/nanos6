@@ -8,6 +8,7 @@
 #define NANOS6_TASK_INSTANTIATION_H
 
 #include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "major.h"
@@ -166,6 +167,12 @@ typedef struct __attribute__((aligned(64))) {
 
 	//! \brief A pointer to data structures related to this type of task
 	void *task_type_data;
+
+	//! \brief Function that the runtime calls to evaluate taskiter while condition
+	//!
+	//! \param[in] args_block A pointer to the source block of parameters to be copied
+	//! \param[out] result the result of the evaluation
+	void (*iter_condition)(void *args_block, uint8_t *result);
 
 	//! \brief Number of task arguments
 	int num_args;
