@@ -111,13 +111,6 @@ void NUMAManager::checkAllocationCorrectness(
 }
 #endif
 
-bool NUMAManager::isTrackingEnabled()
-{
-	return (_trackingEnabled.load(std::memory_order_relaxed) &&
-		getValidTrackingNodes() > 1 &&
-		DataAccessRegistration::supportsDataTracking());
-}
-
 uint64_t NUMAManager::getTrackingNodes()
 {
 	// This method is called from UnsyncScheduler::UnsyncScheduler()
