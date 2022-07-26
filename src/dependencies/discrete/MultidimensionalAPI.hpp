@@ -141,11 +141,20 @@ static _AI_ void register_data_access(
 	_UU_ long currentDimSize, long currentDimStart, _UU_ long currentDimEnd,
 	TS... otherDimensions)
 {
-	size_t stride = getStride<>(otherDimensions...);
-	char *currentBaseAddress = (char *) baseAddress;
-	currentBaseAddress += currentDimStart * stride;
+	if (currentDimensionIsContinuous(otherDimensions...)) {
+		register_data_access_skip_next<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress,
+			currentDimSize * getCurrentDimensionSize(otherDimensions...),
+			currentDimStart * getCurrentDimensionSize(otherDimensions...),
+			currentDimEnd * getCurrentDimensionSize(otherDimensions...),
+			otherDimensions...
+		);
+	} else {
+		size_t stride = getStride<>(otherDimensions...);
+		char *currentBaseAddress = (char *) baseAddress;
+		currentBaseAddress += currentDimStart * stride;
 
-	register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, otherDimensions...);
+		register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, otherDimensions...);
+	}
 }
 
 
