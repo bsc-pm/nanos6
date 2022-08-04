@@ -101,6 +101,13 @@ namespace Instrument {
 		}
 
 	public:
+
+		enum TaskBlockingReason {
+			BLOCKING_API,
+			TASKWAIT,
+			WAITFOR
+		};
+
 		// Nanos6 events
 		ALIAS_TRACEPOINT(schedReceiveTask, "6Sr")
 		ALIAS_TRACEPOINT(schedAssignTask, "6Ss")
@@ -113,16 +120,10 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(schedSubmitExit, "6SU")
 		ALIAS_TRACEPOINT(enterSubmitTask, "6U[")
 		ALIAS_TRACEPOINT(exitSubmitTask, "6U]")
-		ALIAS_TRACEPOINT(blockEnter, "6Bb")
-		ALIAS_TRACEPOINT(blockExit, "6BB")
-		ALIAS_TRACEPOINT(waitforEnter, "6Bw")
-		ALIAS_TRACEPOINT(waitforExit, "6BW")
 		ALIAS_TRACEPOINT(registerAccessesEnter, "6Dr")
 		ALIAS_TRACEPOINT(registerAccessesExit, "6DR")
 		ALIAS_TRACEPOINT(unregisterAccessesEnter, "6Du")
 		ALIAS_TRACEPOINT(unregisterAccessesExit, "6DU")
-		ALIAS_TRACEPOINT(taskWaitEnter, "6Wt")
-		ALIAS_TRACEPOINT(taskWaitExit, "6WT")
 		ALIAS_TRACEPOINT(exitCreateTask, "6TC")
 		ALIAS_TRACEPOINT(spawnFunctionEnter, "6Hs")
 		ALIAS_TRACEPOINT(spawnFunctionExit, "6HS")
@@ -137,14 +138,14 @@ namespace Instrument {
 			emitGeneric("6Tx", taskId);
 		}
 
-		static void taskPause(uint32_t taskId)
+		static void taskBlock(uint32_t taskId, TaskBlockingReason reason)
 		{
-			emitGeneric("6Tp", taskId);
+			emitGeneric("6Tb", taskId, (int32_t) reason);
 		}
 
-		static void taskResume(uint32_t taskId)
+		static void taskUnblock(uint32_t taskId, TaskBlockingReason reason)
 		{
-			emitGeneric("6Tr", taskId);
+			emitGeneric("6Tu", taskId, (int32_t) reason);
 		}
 
 		static void taskEnd(uint32_t taskId)

@@ -17,8 +17,7 @@ namespace Instrument {
 		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::taskPause(taskId._taskId);
-		Ovni::blockEnter();
+		Ovni::taskBlock(taskId._taskId, Ovni::TaskBlockingReason::BLOCKING_API);
 	}
 
 	inline void exitBlockCurrentTask(
@@ -26,8 +25,7 @@ namespace Instrument {
 		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::blockExit();
-		Ovni::taskResume(taskId._taskId);
+		Ovni::taskUnblock(taskId._taskId, Ovni::TaskBlockingReason::BLOCKING_API);
 	}
 
 	inline void enterUnblockTask(
@@ -47,17 +45,17 @@ namespace Instrument {
 	}
 
 	inline void enterWaitFor(
-		__attribute__((unused)) task_id_t taskId,
+		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::waitforEnter();
+		Ovni::taskBlock(taskId._taskId, Ovni::TaskBlockingReason::WAITFOR);
 	}
 
 	inline void exitWaitFor(
-		__attribute__((unused)) task_id_t taskId,
+		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::waitforExit();
+		Ovni::taskUnblock(taskId._taskId, Ovni::TaskBlockingReason::WAITFOR);
 	}
 }
 
