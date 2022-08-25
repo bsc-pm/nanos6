@@ -92,6 +92,12 @@ void Instrument::threadHasResumed(__attribute__((unused)) external_thread_id_t t
 
 void Instrument::threadWillShutdown()
 {
+	ThreadLocalData &tld = getThreadLocalData();
+	if (tld._hungry) {
+		tld._hungry = false;
+		Ovni::schedFill();
+	}
+
 	Ovni::threadEnd();
 }
 
