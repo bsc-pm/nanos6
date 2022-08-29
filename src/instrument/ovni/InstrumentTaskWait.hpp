@@ -19,8 +19,10 @@ namespace Instrument {
 		bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		Ovni::taskWaitEnter();
+
 		if (taskRuntimeTransition)
-			Ovni::taskBlock(taskId._taskId, Ovni::TaskBlockingReason::TASKWAIT);
+			Ovni::taskPause(taskId._taskId);
 	}
 
 	inline void exitTaskWait(
@@ -29,7 +31,9 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		if (taskRuntimeTransition)
-			Ovni::taskUnblock(taskId._taskId, Ovni::TaskBlockingReason::TASKWAIT);
+			Ovni::taskResume(taskId._taskId);
+
+		Ovni::taskWaitExit();
 	}
 }
 

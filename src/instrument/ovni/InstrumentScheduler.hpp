@@ -13,34 +13,20 @@
 
 namespace Instrument {
 
-	//! \brief Enters the scheduler addReadyTask method
 	inline void enterAddReadyTask()
 	{
-		Ovni::schedSubmitEnter();
+		Ovni::addReadyTaskEnter();
 	}
 
-	//! \brief Exits the scheduler addReadyTask method
 	inline void exitAddReadyTask()
 	{
-		Ovni::schedSubmitExit();
+		Ovni::addReadyTaskExit();
 	}
 
-	//! \brief Enters the scheduler addReadyTask method
 	inline void enterGetReadyTask()
 	{
-		// While busy waiting, the worker is continuously requesting
-		// tasks. This will quickly fill the event buffer, so we disable
-		// both the enter and exit while busywaing.
-
-		ThreadLocalData &tld = getThreadLocalData();
-		if (tld._hungry)
-			return;
-
-		tld._hungry = true;
-		Ovni::schedHungry();
 	}
 
-	//! \brief Exits the scheduler addReadyTask method
 	inline void exitGetReadyTask()
 	{
 	}
@@ -58,10 +44,6 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t taskId
 	) {
 		Ovni::schedReceiveTask();
-		Ovni::schedFill();
-
-		ThreadLocalData &tld = getThreadLocalData();
-		tld._hungry = false;
 	}
 
 	inline void exitSchedulerLockAsClient()
@@ -85,10 +67,16 @@ namespace Instrument {
 	{
 		Ovni::schedSelfAssignTask();
 		Ovni::schedServerExit();
-		Ovni::schedFill();
+	}
 
-		ThreadLocalData &tld = getThreadLocalData();
-		tld._hungry = false;
+	inline void enterProcessReadyTasks()
+	{
+		Ovni::processReadyEnter();
+	}
+
+	inline void exitProcessReadyTasks()
+	{
+		Ovni::processReadyExit();
 	}
 }
 

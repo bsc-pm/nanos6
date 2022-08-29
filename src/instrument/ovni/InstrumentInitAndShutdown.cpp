@@ -5,6 +5,7 @@
 */
 
 #include "InstrumentInitAndShutdown.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "tasks/TaskInfo.hpp"
 #include "tasks/TasktypeData.hpp"
 #include "OvniTrace.hpp"
@@ -12,8 +13,12 @@
 
 void Instrument::initialize()
 {
-	Ovni::initialize();
+	// Too late, we initialize the ovni process and thread earlier at
+	// mainThreadBegin.
+}
 
+void Instrument::addCPUs()
+{
 	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 	size_t totalCPUs = cpus.size();
 
@@ -23,7 +28,7 @@ void Instrument::initialize()
 
 void Instrument::shutdown()
 {
-	Ovni::finalize();
+	// Too early, shutdown done in mainThreadEnd.
 }
 
 void Instrument::preinitFinished()
@@ -40,6 +45,6 @@ void Instrument::preinitFinished()
 
 int64_t Instrument::getInstrumentStartTime()
 {
-	// TODO
+	// No need, the offset is computed by another ovni tool
 	return 0;
 }

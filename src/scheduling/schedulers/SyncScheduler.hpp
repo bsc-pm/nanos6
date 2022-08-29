@@ -20,6 +20,8 @@
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
 
+#include <InstrumentScheduler.hpp>
+
 
 class SyncScheduler {
 protected:
@@ -174,6 +176,7 @@ private:
 	//! of the scheduler acquired
 	inline void processReadyTasks()
 	{
+		Instrument::enterProcessReadyTasks();
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
 				_addQueues[i].consume_all(
@@ -188,6 +191,7 @@ private:
 				);
 			}
 		}
+		Instrument::exitProcessReadyTasks();
 	}
 
 	//! \brief Set serving tasks condition

@@ -41,6 +41,8 @@ namespace Instrument {
 		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		Ovni::enterCreateTask();
+
 		uint32_t taskId;
 		uint32_t taskTypeId;
 
@@ -76,7 +78,7 @@ namespace Instrument {
 
 	inline void enterSubmitTask(__attribute__((unused)) bool taskRuntimeTransition)
 	{
-		Ovni::enterSubmitTask();
+		Ovni::submitTaskEnter();
 	}
 
 	inline void exitSubmitTask(
@@ -84,7 +86,7 @@ namespace Instrument {
 		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::exitSubmitTask();
+		Ovni::submitTaskExit();
 	}
 
 	inline task_id_t enterInitTaskforCollaborator(

@@ -68,6 +68,9 @@ ConfigCentral::ConfigCentral() :
 	registerOption<string_t>("instrument.ctf.events.kernel.presets", {});
 	registerOption<string_t>("instrument.ctf.tmpdir", "");
 
+	// Ovni instrumentation
+	registerOption<integer_t>("instrument.ovni.level", 2);
+
 	// Extrae instrumentation
 	registerOption<bool_t>("instrument.extrae.as_threads", false);
 	registerOption<integer_t>("instrument.extrae.detail_level", 1);

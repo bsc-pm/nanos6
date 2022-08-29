@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include <InstrumentThreadManagement.hpp>
+#include <InstrumentWorkerThread.hpp>
 
 #include "executors/threads/CPU.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
@@ -121,6 +122,7 @@ WorkerThreadBase::WorkerThreadBase(CPU *cpu)
 
 void WorkerThreadBase::suspend()
 {
+	Instrument::enterSuspend();
 	KernelLevelThread::suspend();
 
 	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
@@ -130,11 +132,14 @@ void WorkerThreadBase::suspend()
 #ifndef NDEBUG
 	_cpuToBeResumedOn = nullptr;
 #endif
+	Instrument::exitSuspend();
 }
 
 
 void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 {
+	Instrument::enterResume();
+
 	assert(cpu != nullptr);
 
 	if (!inInitializationOrShutdown) {
@@ -154,11 +159,14 @@ void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 
 	// Resume it
 	KernelLevelThread::resume();
+
+	Instrument::exitResume();
 }
 
 
 void WorkerThreadBase::migrate(CPU *cpu)
 {
+	Instrument::enterMigrate();
 	assert(cpu != nullptr);
 
 	assert(KernelLevelThread::getCurrentKernelLevelThread() == this);
@@ -169,11 +177,13 @@ void WorkerThreadBase::migrate(CPU *cpu)
 	// Since it is the same thread the one that migrates itself, change the CPU directly
 	_cpu = cpu;
 	bind(cpu);
+	Instrument::exitMigrate();
 }
 
 
 void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 {
+	Instrument::enterSwitchTo();
 	assert(KernelLevelThread::getCurrentKernelLevelThread() == this);
 	assert(replacement != this);
 
@@ -201,6 +211,7 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 	// After resuming (if ever blocked), the thread continues here
 
 	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
+	Instrument::exitSwitchTo();
 }
 
 

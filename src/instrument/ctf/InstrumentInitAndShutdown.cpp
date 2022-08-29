@@ -317,3 +317,7 @@ int64_t Instrument::getInstrumentStartTime()
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 	return trace.getAbsoluteStartTimestamp();
 }
+
+void Instrument::addCPUs()
+{
+}

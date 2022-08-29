@@ -14,8 +14,9 @@
 #include <cassert>
 
 #include <pthread.h>
-#include <unistd.h>
 #include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <MemoryAllocator.hpp>
 
@@ -23,6 +24,7 @@
 #include "lowlevel/CompatSyscalls.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "InstrumentPthread.hpp"
 
 
 static void *kernel_level_thread_body_wrapper(void *parameter);
@@ -33,6 +35,7 @@ protected:
 	//! The underlying pthread
 	pthread_t _pthread;
 	pid_t _tid;
+	pid_t _creatorTid; // Who created this thread
 
 	//! This condition variable is used for suspending and resuming the thread
 	ConditionVariable _suspensionConditionVariable;
@@ -83,6 +86,11 @@ public:
 		return _tid;
 	}
 
+	inline pid_t getCreatorTid()
+	{
+		return _creatorTid;
+	}
+
 	inline void start(pthread_attr_t *pthreadAttr);
 
 	inline void bind(CPU *cpu);
@@ -90,14 +98,20 @@ public:
 	//! \brief Suspend the thread
 	inline void suspend()
 	{
+		Instrument::pthreadPause();
 		_suspensionConditionVariable.wait();
+		Instrument::pthreadResume();
 	}
 
 	//! \brief Resume the thread
 	inline void resume()
 	{
+		Instrument::pthreadSignal(_tid);
 		_suspensionConditionVariable.signal();
 	}
+
+	//! \brief Pauses the thread for the given time in nanoseconds
+	inline int nsleep(const struct timespec *rqtp, struct timespec *rmtp);
 
 	//! \brief Wait for the thread to finish and join it
 	inline void join();
@@ -134,7 +148,12 @@ void *kernel_level_thread_body_wrapper(void *parameter)
 
 	KernelLevelThread::_currentKernelLevelThread = thread;
 
+	int cpu = -1; // The CPU is not set initially
+	Instrument::pthreadBegin(thread->getCreatorTid(), cpu, parameter);
+
 	thread->body();
+
+	Instrument::pthreadEnd();
 
 	return nullptr;
 }
@@ -159,6 +178,9 @@ void KernelLevelThread::start(pthread_attr_t *pthreadAttr)
 		FatalErrorHandler::handle(rc, " when setting pthread's stack");
 	}
 
+	_creatorTid = getpid();
+	int cpu = -1; // No affinity to one specific CPU
+	Instrument::pthreadCreate(cpu, this);
 	rc = pthread_create(&_pthread, pthreadAttr, &kernel_level_thread_body_wrapper, this);
 	if (rc == EAGAIN) {
 		FatalErrorHandler::failIf(true, " Insufficient resources when creating a pthread. This may happen due to:\n",
@@ -169,14 +191,22 @@ void KernelLevelThread::start(pthread_attr_t *pthreadAttr)
 	}
 }
 
-
 void KernelLevelThread::bind(CPU *cpu)
 {
 	assert(cpu != nullptr);
+	Instrument::pthreadBind(_tid, cpu->getIndex());
 	int rc = sched_setaffinity(_tid, CPU_ALLOC_SIZE(cpu->getSystemCPUId()+1), cpu->getCpuMask());
 	FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", _tid, " to CPU ", cpu->getSystemCPUId());
 }
 
+int KernelLevelThread::nsleep(const struct timespec *rqtp, struct timespec *rmtp)
+{
+	Instrument::pthreadPause();
+	int ret = nanosleep(rqtp, rmtp);
+	Instrument::pthreadResume();
+
+	return ret;
+}
 
 void KernelLevelThread::join()
 {

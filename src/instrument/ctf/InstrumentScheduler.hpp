@@ -95,6 +95,9 @@ namespace Instrument {
 		tp_scheduler_lock_server_exit();
 	}
 
+	inline void enterProcessReadyTasks() {}
+	inline void exitProcessReadyTasks() {}
+
 }
 
 #endif // INSTRUMENT_CTF_SCHEDULER_HPP

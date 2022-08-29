@@ -15,14 +15,24 @@
 
 #include "lowlevel/CompatSyscalls.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 
-#define ALIAS_TRACEPOINT(name, str) \
-	static void name()              \
-	{                               \
-		emitGeneric(str);           \
+#define ALIAS_TRACEPOINT(level, name, str) \
+	static void name()\
+	{\
+		emitGeneric(level, str);\
+	}
+
+#define ALIAS_TRACEPOINT_MAYBE(level, name, str) \
+	static void name()\
+	{\
+		if (ovni_thread_isready()) {\
+			emitGeneric(level, str);\
+		}\
 	}
 
 namespace Instrument {
+	const ConfigVariable<unsigned int> _level("instrument.ovni.level");
 
 	class OvniJumboEvent {
 		static constexpr size_t _jumboBufferSize = 1024;
@@ -90,8 +100,11 @@ namespace Instrument {
 		}
 
 		template <typename... Ts>
-		static void emitGeneric(const char *eventCode, Ts... args)
+		static void emitGeneric(unsigned level, const char *eventCode, Ts... args)
 		{
+			if (level > _level)
+				return;
+
 			struct ovni_ev ev;
 			memset(&ev, 0, sizeof(struct ovni_ev));
 			ovni_ev_set_clock(&ev, ovni_clock_now());
@@ -102,106 +115,143 @@ namespace Instrument {
 
 	public:
 
-		enum TaskBlockingReason {
-			BLOCKING_API,
-			TASKWAIT,
-			WAITFOR
-		};
+		// Nanos6 events divided in categories
 
-		// Nanos6 events
-		ALIAS_TRACEPOINT(schedReceiveTask, "6Sr")
-		ALIAS_TRACEPOINT(schedAssignTask, "6Ss")
-		ALIAS_TRACEPOINT(schedSelfAssignTask, "6S@")
-		ALIAS_TRACEPOINT(schedHungry, "6Sh")
-		ALIAS_TRACEPOINT(schedFill, "6Sf")
-		ALIAS_TRACEPOINT(schedServerEnter, "6S[")
-		ALIAS_TRACEPOINT(schedServerExit, "6S]")
-		ALIAS_TRACEPOINT(schedSubmitEnter, "6Su")
-		ALIAS_TRACEPOINT(schedSubmitExit, "6SU")
-		ALIAS_TRACEPOINT(enterSubmitTask, "6U[")
-		ALIAS_TRACEPOINT(exitSubmitTask, "6U]")
-		ALIAS_TRACEPOINT(registerAccessesEnter, "6Dr")
-		ALIAS_TRACEPOINT(registerAccessesExit, "6DR")
-		ALIAS_TRACEPOINT(unregisterAccessesEnter, "6Du")
-		ALIAS_TRACEPOINT(unregisterAccessesExit, "6DU")
-		ALIAS_TRACEPOINT(exitCreateTask, "6TC")
-		ALIAS_TRACEPOINT(spawnFunctionEnter, "6Hs")
-		ALIAS_TRACEPOINT(spawnFunctionExit, "6HS")
+		// Scheduler
+		ALIAS_TRACEPOINT(2, schedServerEnter, "6S[")
+		ALIAS_TRACEPOINT(2, schedServerExit, "6S]")
+		ALIAS_TRACEPOINT(2, processReadyEnter, "6Sp")
+		ALIAS_TRACEPOINT(2, processReadyExit, "6SP")
+		ALIAS_TRACEPOINT(2, schedReceiveTask, "6Sr")
+		ALIAS_TRACEPOINT(2, schedAssignTask, "6Ss")
+		ALIAS_TRACEPOINT(2, schedSelfAssignTask, "6S@")
+		ALIAS_TRACEPOINT(3, addReadyTaskEnter, "6Sa")
+		ALIAS_TRACEPOINT(3, addReadyTaskExit, "6SA")
+		// Worker
+		ALIAS_TRACEPOINT(2, workerLoopEnter, "6W[")
+		ALIAS_TRACEPOINT(2, workerLoopExit, "6W]")
+		ALIAS_TRACEPOINT(2, handleTaskEnter, "6Wt")
+		ALIAS_TRACEPOINT(2, handleTaskExit, "6WT")
+		ALIAS_TRACEPOINT(2, switchToEnter, "6Ww")
+		ALIAS_TRACEPOINT(2, switchToExit, "6WW")
+		ALIAS_TRACEPOINT(2, migrateEnter, "6Wm")
+		ALIAS_TRACEPOINT(2, migrateExit, "6WM")
+		ALIAS_TRACEPOINT(2, suspendEnter, "6Ws")
+		ALIAS_TRACEPOINT(2, suspendExit, "6WS")
+		ALIAS_TRACEPOINT(2, resumeEnter, "6Wr")
+		ALIAS_TRACEPOINT(2, resumeExit, "6WR")
+		// Submit
+		ALIAS_TRACEPOINT(2, submitTaskEnter, "6U[")
+		ALIAS_TRACEPOINT(2, submitTaskExit, "6U]")
+		// Spawn
+		ALIAS_TRACEPOINT(2, spawnFunctionEnter, "6F[")
+		ALIAS_TRACEPOINT(2, spawnFunctionExit, "6F]")
+		// Dependencies
+		ALIAS_TRACEPOINT(2, registerAccessesEnter, "6Dr")
+		ALIAS_TRACEPOINT(2, registerAccessesExit, "6DR")
+		ALIAS_TRACEPOINT(2, unregisterAccessesEnter, "6Du")
+		ALIAS_TRACEPOINT(2, unregisterAccessesExit, "6DU")
+		// Memory
+		ALIAS_TRACEPOINT(3, memoryAllocEnter, "6Ma")
+		ALIAS_TRACEPOINT(3, memoryAllocExit, "6MA")
+		ALIAS_TRACEPOINT(3, memoryFreeEnter, "6Mf")
+		ALIAS_TRACEPOINT(3, memoryFreeExit, "6MF")
+		// Blocking
+		ALIAS_TRACEPOINT(2, blockEnter, "6Bb")
+		ALIAS_TRACEPOINT(2, blockExit, "6BB")
+		ALIAS_TRACEPOINT(2, unblockEnter, "6Bu")
+		ALIAS_TRACEPOINT(2, unblockExit, "6BU")
+		ALIAS_TRACEPOINT(2, taskWaitEnter, "6Bw")
+		ALIAS_TRACEPOINT(2, taskWaitExit, "6BW")
+		ALIAS_TRACEPOINT(2, waitForEnter, "6Bf")
+		ALIAS_TRACEPOINT(2, waitForExit, "6BF")
+		// Task creation
+		ALIAS_TRACEPOINT(2, enterCreateTask, "6C[")
+		ALIAS_TRACEPOINT(2, exitCreateTask, "6C]")
 
+		// Task lifecycle (these track the state of tasks)
 		static void taskCreate(uint32_t taskId, uint32_t typeId)
 		{
-			emitGeneric("6Tc", taskId, typeId);
+			emitGeneric(1, "6Tc", taskId, typeId);
 		}
 
 		static void taskExecute(uint32_t taskId)
 		{
-			emitGeneric("6Tx", taskId);
+			emitGeneric(1, "6Tx", taskId);
 		}
 
-		static void taskBlock(uint32_t taskId, TaskBlockingReason reason)
+		static void taskPause(uint32_t taskId)
 		{
-			emitGeneric("6Tb", taskId, (int32_t) reason);
+			emitGeneric(1, "6Tp", taskId);
 		}
 
-		static void taskUnblock(uint32_t taskId, TaskBlockingReason reason)
+		static void taskResume(uint32_t taskId)
 		{
-			emitGeneric("6Tu", taskId, (int32_t) reason);
+			emitGeneric(1, "6Tr", taskId);
 		}
 
 		static void taskEnd(uint32_t taskId)
 		{
-			emitGeneric("6Te", taskId);
-		}
-
-		static void unblockEnter(uint32_t taskId)
-		{
-			emitGeneric("6Bu", taskId);
-		}
-
-		static void unblockExit(uint32_t taskId)
-		{
-			emitGeneric("6BU", taskId);
+			emitGeneric(1, "6Te", taskId);
 		}
 
 		// Large things like strings need to be sent using jumbo events
 		static inline void typeCreate(uint32_t typeId, const char *label)
 		{
-			OvniJumboEvent event;
-			event.addScalarPayload(typeId);
-			event.addString(label);
-			event.emit("6Yc");
+			if (_level >= 1) {
+				OvniJumboEvent event;
+				event.addScalarPayload(typeId);
+				event.addString(label);
+				event.emit("6Yc");
+			}
 		}
 
-		// Generic OVNI events
-		ALIAS_TRACEPOINT(burst, "OB.")
-		ALIAS_TRACEPOINT(threadPause, "OHp")
-		ALIAS_TRACEPOINT(threadResume, "OHr")
-		ALIAS_TRACEPOINT(threadCool, "OHc")
-		ALIAS_TRACEPOINT(threadWarm, "OHw")
+		// Generic ovni events
+		ALIAS_TRACEPOINT(1, burst, "OB.")
+		ALIAS_TRACEPOINT(1, threadPause, "OHp")
+		ALIAS_TRACEPOINT(1, threadResume, "OHr")
+		ALIAS_TRACEPOINT(1, threadCool, "OHc")
+		ALIAS_TRACEPOINT(1, threadWarm, "OHw")
 
 		static void affinitySet(int32_t cpu)
 		{
-			emitGeneric("OAs", cpu);
+			emitGeneric(1, "OAs", cpu);
 		}
 
 		static void affinityRemote(int32_t cpu, int32_t tid)
 		{
-			emitGeneric("OAr", cpu, tid);
+			emitGeneric(1, "OAr", cpu, tid);
 		}
 
 		static void cpuCount(int32_t count, int32_t maxcpu)
 		{
-			emitGeneric("OCn", count, maxcpu);
+			emitGeneric(1, "OCn", count, maxcpu);
 		}
 
 		static void threadCreate(int32_t cpu, uint64_t tag)
 		{
-			emitGeneric("OHC", cpu, tag);
+			emitGeneric(1, "OHC", cpu, tag);
 		}
 
 		static void threadExecute(int32_t cpu, int32_t creatorTid, uint64_t tag)
 		{
-			emitGeneric("OHx", cpu, creatorTid, tag);
+			emitGeneric(1, "OHx", cpu, creatorTid, tag);
+		}
+
+		static void threadTypeBegin(char type)
+		{
+			// 6HW 6HL 6HM
+			char mcv[] = {'6', 'H', '?', '\0'};
+			mcv[2] = tolower(type);
+			emitGeneric(1, mcv);
+		}
+
+		static void threadTypeEnd(char type)
+		{
+			// 6Hw 6Hl 6Hm
+			char mcv[] = {'6', 'H', '?', '\0'};
+			mcv[2] = toupper(type);
+			emitGeneric(1, mcv);
 		}
 
 		static void addCPU(int index, int phyid)
@@ -211,12 +261,17 @@ namespace Instrument {
 
 		static void threadEnd()
 		{
-			emitGeneric("OHe");
+			emitGeneric(1, "OHe");
 			// Flush the events to disk before killing the thread
 			ovni_flush();
 		}
 
-		static void initialize()
+		static void threadSignal(int32_t tid)
+		{
+			emitGeneric(2, "6W*", tid);
+		}
+
+		static void procInit()
 		{
 			char hostname[HOST_NAME_MAX + 1];
 			char loomName[HOST_NAME_MAX + 64];
@@ -231,11 +286,11 @@ namespace Instrument {
 			pid_t pid = getpid();
 			sprintf(loomName, "%s.%d", hostname, pid);
 
-			// Initialize OVNI with APPID = 1, as there is only one application in this runtime
+			// Initialize ovni with APPID = 1, as there is only one application in this runtime
 			ovni_proc_init(1, loomName, pid);
 		}
 
-		static void finalize()
+		static void procFini()
 		{
 			ovni_proc_fini();
 		}
@@ -249,21 +304,6 @@ namespace Instrument {
 		static void threadInit()
 		{
 			ovni_thread_init(gettid());
-		}
-
-		static void threadAttach()
-		{
-			if (!ovni_thread_isready())
-				FatalErrorHandler::fail("The current thread is not instrumented correctly");
-
-			emitGeneric("6Ha");
-		}
-
-		static void threadDetach()
-		{
-			emitGeneric("6HA");
-			// Flush the events to disk before detaching the thread
-			ovni_flush();
 		}
 
 		static void threadMaybeInit()

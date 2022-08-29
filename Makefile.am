@@ -1998,6 +1998,10 @@ if !BUILD_CTF_INSTRUMENTATION
 disabled_config_features += "CTF"
 endif
 
+if !BUILD_OVNI_INSTRUMENTATION
+disabled_config_features += "OVNI"
+endif
+
 if !BUILD_GRAPH_INSTRUMENTATION
 disabled_config_features += "GRAPH"
 endif

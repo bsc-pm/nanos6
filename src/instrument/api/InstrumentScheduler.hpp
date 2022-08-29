@@ -23,6 +23,12 @@ namespace Instrument {
 	//! \brief Exits the scheduler getReadyTask method
 	void exitGetReadyTask(Task *task);
 
+	//! \brief Enters the scheduler processReadyTasks method
+	void enterProcessReadyTasks();
+
+	//! \brief Exits the scheduler processReadyTasks method
+	void exitProcessReadyTasks();
+
 	//! \brief The current worker enters the scheduler subscription lock
 	void enterSchedulerLock();
 

@@ -20,6 +20,10 @@ namespace Instrument {
 
 	inline void exitGetReadyTask() {}
 
+	inline void enterProcessReadyTasks() {}
+
+	inline void exitProcessReadyTasks() {}
+
 	inline void enterSchedulerLock() {}
 
 	inline void schedulerLockBecomesServer() {}

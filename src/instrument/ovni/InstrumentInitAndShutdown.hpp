@@ -7,7 +7,6 @@
 #ifndef INSTRUMENT_OVNI_INIT_AND_SHUTDOWN_HPP
 #define INSTRUMENT_OVNI_INIT_AND_SHUTDOWN_HPP
 
-#include "executors/threads/CPUManager.hpp"
 #include "instrument/api/InstrumentInitAndShutdown.hpp"
 
 
@@ -15,6 +14,7 @@ namespace Instrument {
 	void initialize();
 	void shutdown();
 	void preinitFinished();
+	void addCPUs();
 
 	int64_t getInstrumentStartTime();
 }

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -45,6 +45,7 @@ void LeaderThread::body()
 {
 	initializeHelperThread();
 	Instrument::threadHasResumed(getInstrumentationId());
+	Instrument::leaderThreadBegin();
 
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		// The delay is 1 millisecond
@@ -53,13 +54,14 @@ void LeaderThread::body()
 		// The loop repeats the call with the remaining time in the event that
 		// the thread received a signal with a handler that has SA_RESTART set
 		Instrument::threadWillSuspend(getInstrumentationId());
-		while (nanosleep(&delay, &delay)) {
+		while (_singleton->nsleep(&delay, &delay)) {
 		}
 		Instrument::threadHasResumed(getInstrumentationId());
 
 		Instrument::leaderThreadSpin();
 	}
 
+	Instrument::leaderThreadEnd();
 	Instrument::threadWillShutdown(getInstrumentationId());
 
 	return;

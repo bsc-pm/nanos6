@@ -13,6 +13,7 @@
 
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/Padding.hpp"
+#include "InstrumentMemory.hpp"
 
 class MemoryAllocator {
 private:
@@ -50,6 +51,7 @@ public:
 
 	static inline void *alloc(size_t size)
 	{
+		Instrument::memoryAllocEnter();
 		assert(size > 0);
 
 		void *ptr = nullptr;
@@ -61,6 +63,7 @@ public:
 				FatalErrorHandler::fail("nanos6_je_mallocx failed to allocate memory");
 		}
 
+		Instrument::memoryAllocExit();
 		return ptr;
 	}
 
@@ -80,6 +83,7 @@ public:
 
 	static inline void free(void *chunk, size_t size)
 	{
+		Instrument::memoryFreeEnter();
 		assert(size > 0);
 
 		if (size >= CACHELINE_SIZE / 2) {
@@ -87,6 +91,7 @@ public:
 		} else {
 			nanos6_je_sdallocx(chunk, size, MALLOCX_NONE);
 		}
+		Instrument::memoryFreeExit();
 	}
 
 	static inline void freeAligned(void *chunk, size_t size)
