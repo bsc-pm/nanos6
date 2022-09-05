@@ -25,6 +25,10 @@ DeviceScheduler *SchedulerGenerator::createDeviceScheduler(
 	bool enableImmediateSuccessor,
 	nanos6_device_t deviceType)
 {
+	// If there are no devices, disable the scheduler
+	if (totalComputePlaces == 0)
+		return nullptr;
+
 	switch(deviceType) {
 		case nanos6_cuda_device:
 			return new DeviceScheduler(
