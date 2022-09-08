@@ -151,11 +151,17 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 			params[i] = (void *)((char *)args + taskInfo->offset_table[i]);
 		}
 
-		for (int i = 0; i < taskInfo->num_symbols; ++i) {
-			int arg = taskInfo->arg_idx_table[i];
-			// Translate corresponding param
-			if (arg >= 0)
-				params[arg] = (void *) (((size_t) params[arg]) - translationTable[i].local_address + translationTable[i].device_address);
+		if (translationTable) {
+			for (int i = 0; i < taskInfo->num_symbols; ++i) {
+				int arg = taskInfo->arg_idx_table[i];
+				// Translate corresponding param
+				if (arg >= 0 && translationTable[i].device_address != 0) {
+					// params[arg] is a void * which actually points to the location of the argument
+					// What we want to translate is the argument itself, so we will have to dereference it
+					uintptr_t *argument = (uintptr_t *)params[arg];
+					*argument = *argument - translationTable[i].local_address + translationTable[i].device_address;
+				}
+			}
 		}
 
 		CUresult execution_result = cuLaunchKernel(
@@ -175,6 +181,17 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 				task->getTaskInfo()->implementations[0].device_function_name, err_str,
 				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm_size);
 			FatalErrorHandler::fail("Failed to execute cuda kernel: ", task->getTaskInfo()->implementations[0].device_function_name);
+		}
+
+		// Here we un-translate the arguments, in case this task needs to be realunched at some point
+		if (translationTable) {
+			for (int i = 0; i < taskInfo->num_symbols; ++i) {
+				int arg = taskInfo->arg_idx_table[i];
+				if (arg >= 0 && translationTable[i].device_address != 0) {
+					uintptr_t *argument = (uintptr_t *)params[arg];
+					*argument = *argument - translationTable[i].device_address + translationTable[i].local_address;
+				}
+			}
 		}
 
 		if (numArgs > MAX_STACK_ARGS)
