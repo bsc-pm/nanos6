@@ -645,6 +645,27 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	/***********/
+	/* WARM-UP */
+	/***********/
+
+	// Unfortunately mercurium does not support atomics
+	volatile int warmupCounter = 0;
+
+	for (int t = 0; t < ncpus; ++t) {
+		#pragma oss task shared(warmupCounter, ncpus)
+		{
+			__sync_fetch_and_add(&warmupCounter, 1);
+
+			while (warmupCounter < ncpus) {
+				usleep(100);
+				__sync_synchronize();
+			}
+		}
+	}
+	#pragma oss taskwait
+
+
 	int var1;
 
 	// 1 writer
