@@ -10,6 +10,7 @@
 #include <cstring>
 #include <math.h>
 #include <set>
+#include <unistd.h>
 #include <vector>
 
 #include <nanos6/debug.h>
@@ -669,6 +670,26 @@ int main(int argc, char **argv)
 		tap.end();
 		return 0;
 	}
+
+	/***********/
+	/* WARM-UP */
+	/***********/
+
+	// Unfortunately mercurium does not support atomics
+	volatile int warmupCounter = 0;
+
+	for (int t = 0; t < ncpus; ++t) {
+		#pragma oss task shared(warmupCounter, ncpus)
+		{
+			__sync_fetch_and_add(&warmupCounter, 1);
+
+			while (warmupCounter < ncpus) {
+				usleep(100);
+				__sync_synchronize();
+			}
+		}
+	}
+	#pragma oss taskwait
 
 	std::vector<std::vector<TaskVerifier *> *> testVerifiers;
 	std::vector<std::pair<VerifierConstraintCalculator, std::string> > testConstraintCalculators;

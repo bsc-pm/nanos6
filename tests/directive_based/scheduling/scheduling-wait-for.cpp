@@ -63,9 +63,15 @@ bool checkTimeouts(double theoretical, std::vector<uint64_t> &timeouts, int numT
 		", median ", median, ", min ", min, ", max ", max, ", stdev ", stdev,
 		", outliers ", numOutliers);
 
+#ifdef LESS_TEST_THREADS
+	const double meanFailFactor = 2.5;
+#else
+	const double meanFailFactor = 1.6;
+#endif
+
 	if (checkOutliers && numOutliers > numTimeouts * 0.1) {
 		return false;
-	} else if (mean < theoretical * 0.8 || mean > theoretical * 1.6) {
+	} else if (mean < theoretical * 0.8 || mean > theoretical * 2.5) {
 		return false;
 	} else if (median < theoretical * 0.8 || median > theoretical * 1.2) {
 		return false;
@@ -93,6 +99,26 @@ int main(int argc, char **argv)
 
 	tap.emitDiagnostic("Wait-for input: theoretical timeout ", theoreticalTimeout,
 		", tasks ", numTasks, ", waits x task ", numWaits);
+
+	/***********/
+	/* WARM-UP */
+	/***********/
+
+	// Unfortunately mercurium does not support atomics
+	volatile int warmupCounter = 0;
+
+	for (int t = 0; t < numCPUs; ++t) {
+		#pragma oss task shared(warmupCounter, numCPUs)
+		{
+			__sync_fetch_and_add(&warmupCounter, 1);
+
+			while (warmupCounter < numCPUs) {
+				usleep(100);
+				__sync_synchronize();
+			}
+		}
+	}
+	#pragma oss taskwait
 
 	/***********/
 	/* PHASE 1 */
