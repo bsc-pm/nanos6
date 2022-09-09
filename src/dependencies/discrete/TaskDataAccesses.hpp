@@ -126,9 +126,9 @@ struct TaskDataAccesses {
 		return (res == 0);
 	}
 
-	inline void increaseDeletableCount()
+	inline void increaseDeletableCount(int amount = 1)
 	{
-		__attribute__((unused)) int res = _deletableCount.fetch_add(1, std::memory_order_relaxed);
+		__attribute__((unused)) int res = _deletableCount.fetch_add(amount, std::memory_order_relaxed);
 		assert(res >= 0);
 	}
 

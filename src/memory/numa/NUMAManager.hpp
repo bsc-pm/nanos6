@@ -409,12 +409,91 @@ public:
 		}
 	}
 
-	static uint8_t getHomeNode(void *ptr, size_t size)
+	static inline uint8_t getHomeNode(void *ptr, size_t size)
 	{
 		if (!isTrackingEnabled()) {
 			return (uint8_t) -1;
+		} else {
+			return doGetHomeNode(ptr, size);
 		}
+	}
 
+	static inline void clearAll(bitmask_t *bitmask)
+	{
+		*bitmask = 0;
+	}
+
+	static inline void clearBit(bitmask_t *bitmask, uint64_t bitIndex)
+	{
+		BitManipulation::disableBit(bitmask, bitIndex);
+	}
+
+	static inline void setAll(bitmask_t *bitmask)
+	{
+		*bitmask = _bitmaskNumaAll;
+	}
+
+	static inline void setAllActive(bitmask_t *bitmask)
+	{
+		*bitmask = _bitmaskNumaAllActive;
+	}
+
+	static inline void setAnyActive(bitmask_t *bitmask)
+	{
+		*bitmask = _bitmaskNumaAnyActive;
+	}
+
+	static inline void setWildcard(bitmask_t *bitmask, nanos6_bitmask_wildcard_t wildcard)
+	{
+		if (wildcard == NUMA_ALL) {
+			setAll(bitmask);
+		} else if (wildcard == NUMA_ALL_ACTIVE) {
+			setAllActive(bitmask);
+		} else if (wildcard == NUMA_ANY_ACTIVE) {
+			setAnyActive(bitmask);
+		} else {
+			FatalErrorHandler::warnIf(true, "No valid wildcard provided. Bitmask is left unchangend.");
+		}
+	}
+
+	static inline void setBit(bitmask_t *bitmask, uint64_t bitIndex)
+	{
+		BitManipulation::enableBit(bitmask, bitIndex);
+	}
+
+	static inline uint64_t isBitSet(const bitmask_t *bitmask, uint64_t bitIndex)
+	{
+		return (uint64_t) BitManipulation::checkBit(bitmask, bitIndex);
+	}
+
+	static inline uint64_t countEnabledBits(const bitmask_t *bitmask)
+	{
+		return BitManipulation::countEnabledBits(bitmask);
+	}
+
+	static inline bool isTrackingEnabled()
+	{
+		return (_trackingEnabled.load(std::memory_order_relaxed) &&
+			getValidTrackingNodes() > 1 &&
+			DataAccessRegistration::supportsDataTracking());
+	}
+
+	static inline bool isValidNUMA(uint64_t bitIndex)
+	{
+		return BitManipulation::checkBit(&_bitmaskNumaAnyActive, bitIndex);
+	}
+
+	static inline size_t getOSIndex(size_t logicalId)
+	{
+		assert(logicalId < _logicalToOsIndex.size());
+		return _logicalToOsIndex[logicalId];
+	}
+
+	static uint64_t getTrackingNodes();
+
+private:
+	static inline uint8_t doGetHomeNode(void *ptr, size_t size)
+	{
 		// Search in the directory
 		_lock.readLock();
 		auto it = _directory.lower_bound(ptr);
@@ -480,75 +559,6 @@ public:
 		return idMax;
 	}
 
-	static inline void clearAll(bitmask_t *bitmask)
-	{
-		*bitmask = 0;
-	}
-
-	static inline void clearBit(bitmask_t *bitmask, uint64_t bitIndex)
-	{
-		BitManipulation::disableBit(bitmask, bitIndex);
-	}
-
-	static inline void setAll(bitmask_t *bitmask)
-	{
-		*bitmask = _bitmaskNumaAll;
-	}
-
-	static inline void setAllActive(bitmask_t *bitmask)
-	{
-		*bitmask = _bitmaskNumaAllActive;
-	}
-
-	static inline void setAnyActive(bitmask_t *bitmask)
-	{
-		*bitmask = _bitmaskNumaAnyActive;
-	}
-
-	static inline void setWildcard(bitmask_t *bitmask, nanos6_bitmask_wildcard_t wildcard)
-	{
-		if (wildcard == NUMA_ALL) {
-			setAll(bitmask);
-		} else if (wildcard == NUMA_ALL_ACTIVE) {
-			setAllActive(bitmask);
-		} else if (wildcard == NUMA_ANY_ACTIVE) {
-			setAnyActive(bitmask);
-		} else {
-			FatalErrorHandler::warnIf(true, "No valid wildcard provided. Bitmask is left unchangend.");
-		}
-	}
-
-	static inline void setBit(bitmask_t *bitmask, uint64_t bitIndex)
-	{
-		BitManipulation::enableBit(bitmask, bitIndex);
-	}
-
-	static inline uint64_t isBitSet(const bitmask_t *bitmask, uint64_t bitIndex)
-	{
-		return (uint64_t) BitManipulation::checkBit(bitmask, bitIndex);
-	}
-
-	static inline uint64_t countEnabledBits(const bitmask_t *bitmask)
-	{
-		return BitManipulation::countEnabledBits(bitmask);
-	}
-
-	static bool isTrackingEnabled();
-
-	static inline bool isValidNUMA(uint64_t bitIndex)
-	{
-		return BitManipulation::checkBit(&_bitmaskNumaAnyActive, bitIndex);
-	}
-
-	static inline size_t getOSIndex(size_t logicalId)
-	{
-		assert(logicalId < _logicalToOsIndex.size());
-		return _logicalToOsIndex[logicalId];
-	}
-
-	static uint64_t getTrackingNodes();
-
-private:
 	static inline size_t getContainedBytes(void *ptr1, size_t size1, void *ptr2, size_t size2)
 	{
 		uintptr_t start1 = (uintptr_t) ptr1;
