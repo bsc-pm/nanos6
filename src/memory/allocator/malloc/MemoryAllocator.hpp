@@ -73,7 +73,7 @@ public:
 		Instrument::memoryFreeExit();
 	}
 
-	static inline void freeAligned(void *chunk, size_t size)
+	static inline void freeAligned(void *chunk, __attribute__((unused)) size_t size)
 	{
 		std::free(chunk);
 	}
