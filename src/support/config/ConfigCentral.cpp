@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 
@@ -28,6 +28,8 @@ ConfigCentral::ConfigCentral() :
 	registerOption<string_t>("cpumanager.policy", "default");
 
 	// CUDA devices
+	registerOption<string_t>("devices.cuda.kernels_folder", "nanos6-cuda-kernels");
+	registerOption<bool_t>("devices.cuda.warning_on_incompatible_binary", true);
 	registerOption<integer_t>("devices.cuda.page_size", 0x8000);
 	registerOption<integer_t>("devices.cuda.streams", 16);
 	registerOption<bool_t>("devices.cuda.polling.pinned", true);
@@ -88,10 +90,10 @@ ConfigCentral::ConfigCentral() :
 
 	// Verbose instrumentation
 	registerOption<string_t>("instrument.verbose.areas", {
-		"all", "!ComputePlaceManagement", "!DependenciesByAccess",
-		"!DependenciesByAccessLinks", "!DependenciesByGroup",
-		"!LeaderThread", "!TaskStatus", "!ThreadManagement"
-	});
+			"all", "!ComputePlaceManagement", "!DependenciesByAccess",
+			"!DependenciesByAccessLinks", "!DependenciesByGroup",
+			"!LeaderThread", "!TaskStatus", "!ThreadManagement"
+		});
 	registerOption<bool_t>("instrument.verbose.dump_only_on_exit", false);
 	registerOption<string_t>("instrument.verbose.output_file", "/dev/stderr");
 	registerOption<bool_t>("instrument.verbose.timestamps", true);

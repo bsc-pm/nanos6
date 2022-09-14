@@ -452,6 +452,7 @@ cuda_sources =
 if USE_CUDA
 cuda_sources += \
 	src/hardware/device/cuda/CUDAAccelerator.cpp \
+	src/hardware/device/cuda/CUDARuntimeLoader.cpp \
 	src/system/CUDADeviceAPI.cpp
 endif
 
@@ -762,6 +763,7 @@ noinst_HEADERS = \
 	src/hardware/device/cuda/CUDADeviceInfo.hpp \
 	src/hardware/device/cuda/CUDAFunctions.hpp \
 	src/hardware/device/cuda/CUDAStreamPool.hpp \
+	src/hardware/device/cuda/CUDARuntimeLoader.hpp \
 	src/hardware/device/openacc/OpenAccAccelerator.hpp \
 	src/hardware/device/openacc/OpenAccDeviceInfo.hpp \
 	src/hardware/device/openacc/OpenAccFunctions.hpp \

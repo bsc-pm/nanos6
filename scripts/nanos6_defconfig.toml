@@ -1,6 +1,6 @@
 # This file is part of Nanos6 and is licensed under the terms contained in the COPYING file
 #
-# Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+# Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 
 # The Nanos6 default configuration file. More details about the configuration options and the possible
 # values are available on the OmpSs-2 User Guide (https://pm.bsc.es/ftp/ompss-2/doc/user-guide/) or on
@@ -147,6 +147,10 @@ __!require_PQOS
 __require_CUDA
 	# OmpSs-2 @ CUDA
 	[devices.cuda]
+		# Enables the warning when trying to load incompatible cuda code embedded into the binary
+		warning_on_incompatible_binary = true
+		# CUDA default kernels folder
+		kernels_folder = "nanos6-cuda-kernels"
 		# CUDA device page size. Default is 0x8000
 		page_size = 0x8000
 		# Maximum CUDA streams per GPU. Default is 16

@@ -31,11 +31,16 @@ void *CUDAReductionStorage::getFreeSlotStorage(
 	size_t slotIndex,
 	ComputePlace *destinationComputePlace)
 {
-	assert(slotIndex < _slots.size());
 	int deviceId = destinationComputePlace->getIndex();
 	int oldDeviceId = 0;
+	slot_t slot;
 
-	slot_t &slot = _slots[slotIndex];
+	{
+		std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
+		assert(slotIndex < _slots.size());
+		slot = _slots[slotIndex];
+	}
+
 	assert(slot.initialized || slot.storage == nullptr);
 	assert(!slot.initialized || slot.deviceId == deviceId);
 
@@ -68,6 +73,11 @@ void *CUDAReductionStorage::getFreeSlotStorage(
 		// Restore old GPU value if needed
 		if (oldDeviceId != deviceId) {
 			CUDAFunctions::setActiveDevice(oldDeviceId);
+		}
+
+		{
+			std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
+			_slots[slotIndex] = slot;
 		}
 	}
 

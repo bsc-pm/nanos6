@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_FUNCTIONS_HPP
@@ -9,28 +9,47 @@
 
 #include <cuda_runtime_api.h>
 
+#include "CUDARuntimeLoader.hpp"
 #include "lowlevel/cuda/CUDAErrorHandler.hpp"
 #include "support/config/ConfigVariable.hpp"
+
 
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
 class CUDAFunctions {
+	static CUDARuntimeLoader &getCudaRuntimeLoader()
+	{
+		static CUDARuntimeLoader loader;
+		return loader;
+	}
 
 public:
 	static bool initialize()
 	{
-		// Dummy setDevice operation to initialize CUDA runtime;
-		// if even 1 GPU is present setting to 0 should always
-		// be succesful.
-		cudaError_t err = cudaSetDevice(0);
-		if (err != cudaErrorNoDevice) {
-			CUDAErrorHandler::warn(err, " received during CUDA initialization. ",
-				"Nanos6 was compiled with CUDA support but the driver returned error.",
-				"\nRunning CUDA tasks is disabled");
+		static bool initialized = false;
+		static bool initializedStatus = false;
+		if (initialized)
+			return initializedStatus;
+
+		initialized = true;
+
+		CUresult st = cuInit(0);
+		if (st != CUDA_SUCCESS) {
+			initializedStatus = false;
+			return initializedStatus;
 		}
-		return err == cudaSuccess;
+
+		// Try to load all kernels
+		getCudaRuntimeLoader();
+
+		initializedStatus = true;
+		return initializedStatus;
 	}
 
+	static CUfunction loadFunction(const char *str)
+	{
+		return getCudaRuntimeLoader().loadFunction(str);
+	}
 
 	static size_t getDeviceCount()
 	{
