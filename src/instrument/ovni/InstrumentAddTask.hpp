@@ -96,6 +96,8 @@ namespace Instrument {
 		__attribute__((unused)) size_t flags,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		Ovni::enterCreateTask();
+
 		uint32_t taskId;
 		uint32_t taskTypeId;
 
