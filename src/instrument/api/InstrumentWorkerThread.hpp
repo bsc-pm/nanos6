@@ -36,12 +36,6 @@ namespace Instrument {
 	//! Called when the current worker exits switchTo()
 	void exitSwitchTo();
 
-	//! Called when the current worker enters migrate()
-	void enterMigrate();
-
-	//! Called when the current worker exits migrate()
-	void exitMigrate();
-
 	//! Called when the current worker enters suspend()
 	void enterSuspend();
 

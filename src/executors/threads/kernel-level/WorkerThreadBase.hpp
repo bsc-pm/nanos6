@@ -72,9 +72,6 @@ public:
 	//! \param[in] inInitializationOrShutdown true if it should not enforce assertions that are not valid during initialization and shutdown
 	inline void resume(CPU *cpu, bool inInitializationOrShutdown);
 
-	//! \brief migrate the currently running thread to a given CPU
-	inline void migrate(CPU *cpu);
-
 	//! \brief suspend the currently running thread and replace it by another (if given)
 	//!
 	//! \param[in] replacement a thread that is currently suspended and that must take the place of the current thread or nullptr
@@ -94,7 +91,6 @@ public:
 	//! \brief set the current hardware place
 	//!
 	//! Note: This function should only be used in very exceptional circumstances.
-	//! Use "migrate" function to migrate the thread to another CPU.
 	inline void setComputePlace(CPU *cpu)
 	{
 		_cpu = cpu;
@@ -161,23 +157,6 @@ void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 	KernelLevelThread::resume();
 
 	Instrument::exitResume();
-}
-
-
-void WorkerThreadBase::migrate(CPU *cpu)
-{
-	Instrument::enterMigrate();
-	assert(cpu != nullptr);
-
-	assert(KernelLevelThread::getCurrentKernelLevelThread() == this);
-	assert(_cpu != cpu);
-
-	assert(_cpuToBeResumedOn == nullptr);
-
-	// Since it is the same thread the one that migrates itself, change the CPU directly
-	_cpu = cpu;
-	bind(cpu);
-	Instrument::exitMigrate();
 }
 
 

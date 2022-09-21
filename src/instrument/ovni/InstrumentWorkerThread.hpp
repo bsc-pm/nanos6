@@ -48,16 +48,6 @@ namespace Instrument {
 		Ovni::switchToExit();
 	}
 
-	inline void enterMigrate()
-	{
-		Ovni::migrateEnter();
-	}
-
-	inline void exitMigrate()
-	{
-		Ovni::migrateExit();
-	}
-
 	inline void enterSuspend()
 	{
 		Ovni::suspendEnter();

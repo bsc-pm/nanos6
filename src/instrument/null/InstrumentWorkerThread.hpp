@@ -21,8 +21,6 @@ namespace Instrument {
 	inline void exitHandleTask() {}
 	inline void enterSwitchTo() {}
 	inline void exitSwitchTo() {}
-	inline void enterMigrate() {}
-	inline void exitMigrate() {}
 	inline void enterSuspend() {}
 	inline void exitSuspend() {}
 	inline void enterResume() {}

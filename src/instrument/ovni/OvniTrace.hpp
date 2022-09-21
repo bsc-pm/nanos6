@@ -134,8 +134,6 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(2, handleTaskExit, "6WT")
 		ALIAS_TRACEPOINT(2, switchToEnter, "6Ww")
 		ALIAS_TRACEPOINT(2, switchToExit, "6WW")
-		ALIAS_TRACEPOINT(2, migrateEnter, "6Wm")
-		ALIAS_TRACEPOINT(2, migrateExit, "6WM")
 		ALIAS_TRACEPOINT(2, suspendEnter, "6Ws")
 		ALIAS_TRACEPOINT(2, suspendExit, "6WS")
 		ALIAS_TRACEPOINT(2, resumeEnter, "6Wr")
