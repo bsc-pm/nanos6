@@ -120,13 +120,13 @@ namespace Instrument {
 		// Scheduler
 		ALIAS_TRACEPOINT(2, schedServerEnter, "6S[")
 		ALIAS_TRACEPOINT(2, schedServerExit, "6S]")
-		ALIAS_TRACEPOINT(2, processReadyEnter, "6Sp")
-		ALIAS_TRACEPOINT(2, processReadyExit, "6SP")
 		ALIAS_TRACEPOINT(2, schedReceiveTask, "6Sr")
 		ALIAS_TRACEPOINT(2, schedAssignTask, "6Ss")
 		ALIAS_TRACEPOINT(2, schedSelfAssignTask, "6S@")
 		ALIAS_TRACEPOINT(3, addReadyTaskEnter, "6Sa")
 		ALIAS_TRACEPOINT(3, addReadyTaskExit, "6SA")
+		ALIAS_TRACEPOINT(3, processReadyEnter, "6Sp")
+		ALIAS_TRACEPOINT(3, processReadyExit, "6SP")
 		// Worker
 		ALIAS_TRACEPOINT(2, workerLoopEnter, "6W[")
 		ALIAS_TRACEPOINT(2, workerLoopExit, "6W]")
