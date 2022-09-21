@@ -1141,6 +1141,10 @@ namespace DataAccessRegistration {
 	{
 		processSatisfiedCommutativeOriginators(hpDependencyData);
 
+		Task *immediateSuccessor = nullptr;
+		bool searchForIS = !fromBusyThread && (computePlace->getFirstSuccessor() == nullptr);
+		// bool searchForIS = false;
+
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
@@ -1157,7 +1161,21 @@ namespace DataAccessRegistration {
 				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
 			}
 
-			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint, schedulingHint);
+			if (searchForIS &&
+				satisfiedOriginator->getDeviceType() == nanos6_host_device &&
+				!satisfiedOriginator->isTaskforSource() &&
+				(!immediateSuccessor || satisfiedOriginator->getPriority() > immediateSuccessor->getPriority())) {
+				if (immediateSuccessor)
+					Scheduler::addReadyTask(immediateSuccessor, computePlaceHint, schedulingHint);
+
+				immediateSuccessor = satisfiedOriginator;
+			} else {
+				Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint, schedulingHint);
+			}
+		}
+
+		if (immediateSuccessor) {
+			computePlace->setFirstSuccessor(immediateSuccessor);
 		}
 
 		hpDependencyData._satisfiedOriginators.clear();
