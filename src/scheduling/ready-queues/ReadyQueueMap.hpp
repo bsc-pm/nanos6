@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef READY_QUEUE_MAP_HPP
@@ -42,14 +42,10 @@ public:
 	{
 		Task::priority_t priority = task->getPriority();
 
-		// Get ready queue for the given priority if exists, otherwise create it
-		ready_map_t::iterator it = (_readyMap.emplace(priority, ready_queue_t())).first;
-		assert(it != _readyMap.end());
-
 		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
-			it->second.push_front(task);
+			_readyMap[priority].push_front(task);
 		} else {
-			it->second.push_back(task);
+			_readyMap[priority].push_back(task);
 		}
 
 		++_numReadyTasks;
