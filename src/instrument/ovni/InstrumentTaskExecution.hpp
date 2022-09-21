@@ -19,6 +19,7 @@ namespace Instrument {
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		Ovni::taskBodyEnter();
 		Ovni::taskExecute(taskId._taskId);
 	}
 
@@ -27,6 +28,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		Ovni::taskEnd(taskId._taskId);
+		Ovni::taskBodyExit();
 	}
 
 	inline void destroyTask(
