@@ -51,19 +51,20 @@ public:
 
 	static inline void *alloc(size_t size)
 	{
-		Instrument::memoryAllocEnter();
 		assert(size > 0);
 
 		void *ptr = nullptr;
 		if (size >= CACHELINE_SIZE / 2) {
 			ptr = allocAligned(size);
 		} else {
+			Instrument::memoryAllocEnter();
 			ptr = nanos6_je_mallocx(size, MALLOCX_NONE);
+			Instrument::memoryAllocExit();
+
 			if (ptr == nullptr)
 				FatalErrorHandler::fail("nanos6_je_mallocx failed to allocate memory");
 		}
 
-		Instrument::memoryAllocExit();
 		return ptr;
 	}
 
@@ -71,7 +72,10 @@ public:
 	{
 		assert(size > 0);
 
+		Instrument::memoryAllocEnter();
 		void *ptr = nanos6_je_mallocx(size, MALLOCX_ALIGN(CACHELINE_SIZE));
+		Instrument::memoryAllocExit();
+
 		if (ptr == nullptr)
 			FatalErrorHandler::fail("nanos6_je_mallocx failed to allocate memory");
 
@@ -83,22 +87,24 @@ public:
 
 	static inline void free(void *chunk, size_t size)
 	{
-		Instrument::memoryFreeEnter();
 		assert(size > 0);
 
 		if (size >= CACHELINE_SIZE / 2) {
 			freeAligned(chunk, size);
 		} else {
+			Instrument::memoryFreeEnter();
 			nanos6_je_sdallocx(chunk, size, MALLOCX_NONE);
+			Instrument::memoryFreeExit();
 		}
-		Instrument::memoryFreeExit();
 	}
 
 	static inline void freeAligned(void *chunk, size_t size)
 	{
 		assert(size > 0);
 
+		Instrument::memoryFreeEnter();
 		nanos6_je_sdallocx(chunk, size, MALLOCX_ALIGN(CACHELINE_SIZE));
+		Instrument::memoryFreeExit();
 	}
 
 	// Simplifications for using "new" and "delete" with the allocator
