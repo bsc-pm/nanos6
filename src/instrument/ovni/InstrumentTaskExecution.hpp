@@ -36,21 +36,21 @@ namespace Instrument {
 	}
 
 	inline void startTaskforCollaborator(
-		task_id_t taskforId,
+		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) bool first,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::taskExecute(taskforId._taskId);
+		Ovni::startTaskfor();
 	}
 
 	inline void endTaskforCollaborator(
-		task_id_t taskforId,
+		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) bool last,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Ovni::taskEnd(taskforId._taskId);
+		Ovni::stopTaskfor();
 	}
 }
 

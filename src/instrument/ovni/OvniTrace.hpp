@@ -168,6 +168,9 @@ namespace Instrument {
 		// Task creation
 		ALIAS_TRACEPOINT(2, enterCreateTask, "6C[")
 		ALIAS_TRACEPOINT(2, exitCreateTask, "6C]")
+		// Task for
+		ALIAS_TRACEPOINT(2, startTaskfor, "6O[")
+		ALIAS_TRACEPOINT(2, stopTaskfor, "6O]")
 
 		// Task lifecycle (these track the state of tasks)
 		static void taskCreate(uint32_t taskId, uint32_t typeId)
