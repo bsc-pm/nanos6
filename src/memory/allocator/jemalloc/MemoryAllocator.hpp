@@ -13,7 +13,7 @@
 
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/Padding.hpp"
-#include "InstrumentMemory.hpp"
+#include <InstrumentMemory.hpp>
 
 class MemoryAllocator {
 private:

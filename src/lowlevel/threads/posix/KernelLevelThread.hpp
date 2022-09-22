@@ -24,7 +24,7 @@
 #include "lowlevel/CompatSyscalls.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "InstrumentPthread.hpp"
+#include <InstrumentPthread.hpp>
 
 
 static void *kernel_level_thread_body_wrapper(void *parameter);
