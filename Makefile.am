@@ -822,6 +822,9 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
+	src/instrument/api/InstrumentMainThread.hpp \
+	src/instrument/api/InstrumentMemory.hpp \
+	src/instrument/api/InstrumentPthread.hpp \
 	src/instrument/api/InstrumentReductions.hpp \
 	src/instrument/api/InstrumentScheduler.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
@@ -850,6 +853,9 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentInstrumentationContext.hpp \
 	src/instrument/ctf/InstrumentLeaderThread.hpp \
 	src/instrument/ctf/InstrumentLogMessage.hpp \
+	src/instrument/ctf/InstrumentMainThread.hpp \
+	src/instrument/ctf/InstrumentMemory.hpp \
+	src/instrument/ctf/InstrumentPthread.hpp \
 	src/instrument/ctf/InstrumentReductions.hpp \
 	src/instrument/ctf/InstrumentScheduler.hpp \
 	src/instrument/ctf/InstrumentTaskExecution.hpp \
@@ -861,7 +867,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/ctf/InstrumentThreadLocalData.hpp \
 	src/instrument/ctf/InstrumentThreadManagement.hpp \
-	src/instrument/ctf/InstrumentTracingPointTypes.hpp\
+	src/instrument/ctf/InstrumentTracingPointTypes.hpp \
 	src/instrument/ctf/InstrumentTracingPoints.hpp \
 	src/instrument/ctf/InstrumentUserMutex.hpp \
 	src/instrument/ctf/InstrumentWorkerThread.hpp \
@@ -905,6 +911,9 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentMainThread.hpp \
+	src/instrument/extrae/InstrumentMemory.hpp \
+	src/instrument/extrae/InstrumentPthread.hpp \
 	src/instrument/extrae/InstrumentReductions.hpp \
 	src/instrument/extrae/InstrumentScheduler.hpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
@@ -915,12 +924,13 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentThreadId.hpp \
 	src/instrument/extrae/InstrumentThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
-	src/instrument/extrae/InstrumentTracingPointTypes.hpp\
+	src/instrument/extrae/InstrumentTracingPointTypes.hpp \
 	src/instrument/extrae/InstrumentTracingPoints.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
 	src/instrument/extrae/InstrumentWorkerThread.hpp \
 	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
 	src/instrument/generic_ids/GenericIds.hpp \
+	src/instrument/generic_ids/InstrumentComputePlaceId.hpp \
 	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
 	src/instrument/generic_ids/InstrumentThreadId.hpp \
 	src/instrument/graph/Color.hpp \
@@ -944,6 +954,9 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentLogMessage.hpp \
+	src/instrument/graph/InstrumentMainThread.hpp \
+	src/instrument/graph/InstrumentMemory.hpp \
+	src/instrument/graph/InstrumentPthread.hpp \
 	src/instrument/graph/InstrumentReductions.hpp \
 	src/instrument/graph/InstrumentScheduler.hpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
@@ -979,6 +992,9 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentInstrumentationContext.hpp \
 	src/instrument/lint/InstrumentLeaderThread.hpp \
 	src/instrument/lint/InstrumentLogMessage.hpp \
+	src/instrument/lint/InstrumentMainThread.hpp \
+	src/instrument/lint/InstrumentMemory.hpp \
+	src/instrument/lint/InstrumentPthread.hpp \
 	src/instrument/lint/InstrumentReductions.hpp \
 	src/instrument/lint/InstrumentScheduler.hpp \
 	src/instrument/lint/InstrumentTaskExecution.hpp \
@@ -1012,6 +1028,9 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
+	src/instrument/null/InstrumentMainThread.hpp \
+	src/instrument/null/InstrumentMemory.hpp \
+	src/instrument/null/InstrumentPthread.hpp \
 	src/instrument/null/InstrumentReductions.hpp \
 	src/instrument/null/InstrumentScheduler.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
@@ -1045,6 +1064,9 @@ noinst_HEADERS = \
 	src/instrument/ovni/InstrumentInstrumentationContext.hpp \
 	src/instrument/ovni/InstrumentLeaderThread.hpp \
 	src/instrument/ovni/InstrumentLogMessage.hpp \
+	src/instrument/ovni/InstrumentMainThread.hpp \
+	src/instrument/ovni/InstrumentMemory.hpp \
+	src/instrument/ovni/InstrumentPthread.hpp \
 	src/instrument/ovni/InstrumentReductions.hpp \
 	src/instrument/ovni/InstrumentScheduler.hpp \
 	src/instrument/ovni/InstrumentTaskExecution.hpp \
@@ -1056,9 +1078,10 @@ noinst_HEADERS = \
 	src/instrument/ovni/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/ovni/InstrumentThreadLocalData.hpp \
 	src/instrument/ovni/InstrumentThreadManagement.hpp \
-	src/instrument/ovni/InstrumentTracingPointTypes.hpp\
+	src/instrument/ovni/InstrumentTracingPointTypes.hpp \
 	src/instrument/ovni/InstrumentTracingPoints.hpp \
 	src/instrument/ovni/InstrumentUserMutex.hpp \
+	src/instrument/ovni/InstrumentWorkerThread.hpp \
 	src/instrument/ovni/OvniTrace.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlockingAPI.hpp \
@@ -1077,6 +1100,9 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
+	src/instrument/stats/InstrumentMainThread.hpp \
+	src/instrument/stats/InstrumentMemory.hpp \
+	src/instrument/stats/InstrumentPthread.hpp \
 	src/instrument/stats/InstrumentReductions.hpp \
 	src/instrument/stats/InstrumentScheduler.hpp \
 	src/instrument/stats/InstrumentStats.hpp \
@@ -1093,6 +1119,57 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/InstrumentWorkerThread.hpp \
 	src/instrument/stats/Timer.hpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
+	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
+	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
+	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
+	src/instrument/support/introspection/DL/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
+	src/instrument/verbose/InstrumentAddTask.hpp \
+	src/instrument/verbose/InstrumentBlockingAPI.hpp \
+	src/instrument/verbose/InstrumentCPULocalData.hpp \
+	src/instrument/verbose/InstrumentComputePlaceId.hpp \
+	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
+	src/instrument/verbose/InstrumentDataAccessId.hpp \
+	src/instrument/verbose/InstrumentDebug.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
+	src/instrument/verbose/InstrumentDependencySubsystemEntryPoints.hpp \
+	src/instrument/verbose/InstrumentDistributedMemory.hpp \
+	src/instrument/verbose/InstrumentExternalThreadId.hpp \
+	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
+	src/instrument/verbose/InstrumentLeaderThread.hpp \
+	src/instrument/verbose/InstrumentLogMessage.hpp \
+	src/instrument/verbose/InstrumentMainThread.hpp \
+	src/instrument/verbose/InstrumentMemory.hpp \
+	src/instrument/verbose/InstrumentPthread.hpp \
+	src/instrument/verbose/InstrumentReductions.hpp \
+	src/instrument/verbose/InstrumentScheduler.hpp \
+	src/instrument/verbose/InstrumentTaskExecution.hpp \
+	src/instrument/verbose/InstrumentTaskId.hpp \
+	src/instrument/verbose/InstrumentTaskStatus.hpp \
+	src/instrument/verbose/InstrumentTaskWait.hpp \
+	src/instrument/verbose/InstrumentTasktypeData.hpp \
+	src/instrument/verbose/InstrumentThreadId.hpp \
+	src/instrument/verbose/InstrumentThreadLocalData.hpp \
+	src/instrument/verbose/InstrumentThreadManagement.hpp \
+	src/instrument/verbose/InstrumentTracingPointTypes.hpp \
+	src/instrument/verbose/InstrumentTracingPoints.hpp \
+	src/instrument/verbose/InstrumentUserMutex.hpp \
+	src/instrument/verbose/InstrumentVerbose.hpp \
+	src/instrument/verbose/InstrumentWorkerThread.hpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
