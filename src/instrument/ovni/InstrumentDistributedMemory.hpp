@@ -11,16 +11,19 @@
 #include <cassert>
 
 #include "instrument/api/InstrumentDistributedMemory.hpp"
+#include "OvniTrace.hpp"
 
 namespace Instrument {
 	inline int isDistributedInstrumentEnabled()
 	{
-		return false;
+		return 1;
 	}
 
 	inline void setupDistributedMemoryEnvironment(
 		__attribute__((unused)) const nanos6_distributed_instrument_info_t *info
 	) {
+		assert(info != nullptr);
+		Ovni::procSetRank(info->rank, info->num_ranks);
 	}
 }
 

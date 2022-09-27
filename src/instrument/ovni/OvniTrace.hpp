@@ -294,6 +294,12 @@ namespace Instrument {
 			ovni_proc_init(1, loomName, pid);
 		}
 
+		static void procSetRank(int rank, int nranks)
+		{
+			assert(ovni_thread_isready());
+			ovni_proc_set_rank(rank, nranks);
+		}
+
 		static void procFini()
 		{
 			ovni_proc_fini();
