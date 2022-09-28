@@ -1498,15 +1498,23 @@ libnanos6_debug_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIB
 nodist_libnanos6_debug_regions_ovni_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
+if HAVE_OVNI
 if BUILD_OVNI_INSTRUMENTATION
 nodist_libnanos6_debug_discrete_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
 else
 nodist_libnanos6_debug_discrete_ovni_la_SOURCES += loader/disabled_variant.c
 endif
+else
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
 endif
 
+if HAVE_OVNI
 if BUILD_OVNI_INSTRUMENTATION
 nodist_libnanos6_debug_regions_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
 else
 nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
 endif
@@ -1704,13 +1712,18 @@ libnanos6_optimized_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni
 nodist_libnanos6_optimized_regions_ovni_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
+if HAVE_OVNI
 if BUILD_OVNI_INSTRUMENTATION
 nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
 else
 nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += loader/disabled_variant.c
 endif
+else
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
 endif
 
+if HAVE_OVNI
 if BUILD_OVNI_INSTRUMENTATION
 enabled_variants += ovni
 nodist_libnanos6_optimized_regions_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
@@ -1718,7 +1731,10 @@ else
 disabled_variants += ovni
 nodist_libnanos6_optimized_regions_ovni_la_SOURCES += loader/disabled_variant.c
 endif
-
+else
+disabled_variants += ovni
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
 
 # Optimized stats variants
 libnanos6_optimized_discrete_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
