@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -75,7 +75,7 @@ static void initializeUserStreams(
 	int nodeId;
 	ctf_cpu_id_t cpuId;
 	ctf_cpu_id_t maxCpuId = 0;
-	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
+	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 
 	const size_t defaultStreamBufferSize = 2*1024*1024;
@@ -316,4 +316,8 @@ int64_t Instrument::getInstrumentStartTime()
 {
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 	return trace.getAbsoluteStartTimestamp();
+}
+
+void Instrument::addCPUs()
+{
 }

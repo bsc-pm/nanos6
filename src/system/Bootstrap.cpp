@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -34,11 +34,13 @@
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/Throttle.hpp"
 #include "system/ompss/SpawnFunction.hpp"
+
 #include "tasks/StreamManager.hpp"
 
 #include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <InstrumentMainThread.hpp>
 
 static ExternalThread *mainThread = nullptr;
 
@@ -70,6 +72,9 @@ void nanos6_preinit(void)
 	// Initialize all runtime options if needed
 	ConfigCentral::initializeOptionsIfNeeded();
 
+	// Begin the main thread just after the configuration is ready
+	Instrument::mainThreadBegin();
+
 	// Enable special flags for turbo mode
 	TurboSettings::initialize();
 
@@ -98,7 +103,6 @@ void nanos6_preinit(void)
 
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
-
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
 
 	// Register mainThread so that it will be automatically deleted
@@ -128,11 +132,17 @@ void nanos6_init(void)
 	Instrument::threadWillSuspend(mainThread->getInstrumentationId());
 
 	StreamManager::initialize();
+
+	// The thread will be paused in the loader waiting in a condition
+	// variable, but not via the instrumented suspend() method. So we
+	// add an extra pause event here, and resume in shutdown.
+	Instrument::pthreadPause();
 }
 
 
 void nanos6_shutdown(void)
 {
+	Instrument::pthreadResume();
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	Instrument::threadWillShutdown(mainThread->getInstrumentationId());
 
@@ -176,4 +186,6 @@ void nanos6_shutdown(void)
 	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();
 	TurboSettings::shutdown();
+
+	Instrument::mainThreadEnd();
 }

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_THREAD_MANAGEMENT_HPP
@@ -71,6 +71,20 @@ namespace Instrument {
 		bool afterSynchronization = true
 	);
 
+	//! This function is called when the current worker thread suspends AFTER it has woken up replacements.
+	//! param[in] threadId The thread identifier
+	void threadSuspending(
+		thread_id_t threadId
+	);
+
+	//! This function is called when the current worker thread suspends AFTER it has woken up replacements.
+	//! param[in] threadId The thread identifier
+	//! param[in] cpu The new compute place it is bound to
+	void threadBindRemote(
+		thread_id_t threadId,
+		compute_place_id_t cpu
+	);
+
 	//! This function is called when the current worker thread resumes
 	//! param[in] threadId The thread identifier
 	//! param[in] cpu The compute place where the current thread is bound
@@ -98,14 +112,6 @@ namespace Instrument {
 	//! This function is called when the current external threads has resumed
 	//! \param[in] threadId The thread identifier
 	void threadHasResumed(external_thread_id_t threadId);
-
-	// TODO remove threadEnterBusyWait and threadExitBusyWait
-	enum busy_wait_reason_t {
-		scheduling_polling_slot_busy_wait_reason = 1
-	};
-
-	void threadEnterBusyWait(busy_wait_reason_t reason);
-	void threadExitBusyWait();
 }
 
 

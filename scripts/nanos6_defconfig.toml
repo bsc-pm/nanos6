@@ -15,7 +15,7 @@
 	# Possible values: "discrete", "regions"
 	dependencies = "discrete"
 	# Choose the instrumentation variant to run. Default is "none"
-	# Possible values: "none", "ctf", "extrae", "graph", "lint", "stats", "verbose"
+	# Possible values: "none", "ctf", "ovni", "extrae", "graph", "lint", "stats", "verbose"
 	instrument = "none"
 
 [turbo]
@@ -231,6 +231,14 @@ __require_CTF
 				# 	"sys_exit_gettimeofday"
 				# ]
 __!require_CTF
+__require_OVNI
+	[instrument.ovni]
+		# Level of detail. Selects what should be instrumented:
+		# 1 = Tasks
+		# 2 = Tasks + simple subsystem (the default)
+		# 3 = Tasks + full subsystem + memory (huge performance penalty)
+		level = 2
+__!require_OVNI
 __require_EXTRAE
 	[instrument.extrae]
 		# Indicate whether the trace should show the activity of the threads instead of the CPUs'

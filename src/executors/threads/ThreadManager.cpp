@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef _GNU_SOURCE
@@ -101,6 +101,11 @@ void ThreadManager::addShutdownThread(WorkerThread *shutdownThread)
 	assert(_shutdownThreads != nullptr);
 
 	CPU *cpu = shutdownThread->getComputePlace();
+
+	// Before allowing others to use this CPU, we mark the thread as
+	// cooling, so we ensure only one thread can be running at the same
+	// time.
+	Instrument::pthreadCool();
 
 	_shutdownThreads->_lock.lock();
 	_shutdownThreads->_threads.push_back(shutdownThread);

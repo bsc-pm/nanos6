@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -65,6 +65,8 @@ void WorkerThread::body()
 		Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId
 	);
 
+	Instrument::workerThreadBegin();
+
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
 	while (CPUManager::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
@@ -85,10 +87,10 @@ void WorkerThread::body()
 			if (assignedThread != nullptr) {
 				_task = nullptr;
 
-				ThreadManager::addIdler(this);
-
 				// Runtime Tracking Point - The current thread will suspend
 				TrackingPoints::threadWillSuspend(this, cpu);
+
+				ThreadManager::addIdler(this);
 
 				switchTo(assignedThread);
 			} else {
@@ -124,6 +126,8 @@ void WorkerThread::body()
 	// The thread should not have any task assigned at this point
 	assert(_task == nullptr);
 
+	Instrument::workerThreadEnd();
+
 	// Runtime Tracking Point - The current thread is gonna shutdown
 	TrackingPoints::threadWillShutdown();
 
@@ -134,6 +138,8 @@ void WorkerThread::handleTask(CPU *cpu)
 {
 	assert(_task != nullptr);
 	assert(cpu != nullptr);
+
+	Instrument::enterHandleTask();
 
 	// Only for source taskfors
 	if (_task->isTaskforSource()) {
@@ -162,6 +168,8 @@ void WorkerThread::handleTask(CPU *cpu)
 
 		_task = nullptr;
 	}
+
+	Instrument::exitHandleTask();
 }
 
 void WorkerThread::executeTask(CPU *cpu)

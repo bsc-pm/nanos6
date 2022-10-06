@@ -145,11 +145,11 @@ void nanos6_user_unlock(void **handlerPointer)
 			if (obtainedCPU != nullptr) {
 				releasedThread->resume(obtainedCPU, false);
 			} else {
-				// No idle CPUs available, first re-add the current task to the scheduler
-				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
-
 				// Runtime Tracking Point - A thread is about to be suspended
 				TrackingPoints::threadWillSuspend(currentThread, cpu);
+
+				// No idle CPUs available, first re-add the current task to the scheduler
+				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);

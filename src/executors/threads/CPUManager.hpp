@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_HPP
@@ -15,6 +15,8 @@
 #include "executors/threads/cpu-managers/dlb/DLBCPUManager.hpp"
 #endif
 #include "support/config/ConfigVariable.hpp"
+
+#include <InstrumentInitAndShutdown.hpp>
 
 
 class CPUManager {
@@ -57,6 +59,9 @@ public:
 
 		// Mark that the CPU Manager has finished preinitialization
 		_preinitialized = true;
+
+		// Inform the instrumentation of the available CPUs
+		Instrument::addCPUs();
 	}
 
 	static inline CPUManagerPolicy getPolicyId()

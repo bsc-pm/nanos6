@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef WORKER_THREAD_BASE_HPP
@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include <InstrumentThreadManagement.hpp>
+#include <InstrumentWorkerThread.hpp>
 
 #include "executors/threads/CPU.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
@@ -71,9 +72,6 @@ public:
 	//! \param[in] inInitializationOrShutdown true if it should not enforce assertions that are not valid during initialization and shutdown
 	inline void resume(CPU *cpu, bool inInitializationOrShutdown);
 
-	//! \brief migrate the currently running thread to a given CPU
-	inline void migrate(CPU *cpu);
-
 	//! \brief suspend the currently running thread and replace it by another (if given)
 	//!
 	//! \param[in] replacement a thread that is currently suspended and that must take the place of the current thread or nullptr
@@ -93,7 +91,6 @@ public:
 	//! \brief set the current hardware place
 	//!
 	//! Note: This function should only be used in very exceptional circumstances.
-	//! Use "migrate" function to migrate the thread to another CPU.
 	inline void setComputePlace(CPU *cpu)
 	{
 		_cpu = cpu;
@@ -121,6 +118,7 @@ WorkerThreadBase::WorkerThreadBase(CPU *cpu)
 
 void WorkerThreadBase::suspend()
 {
+	Instrument::enterSuspend();
 	KernelLevelThread::suspend();
 
 	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
@@ -130,11 +128,14 @@ void WorkerThreadBase::suspend()
 #ifndef NDEBUG
 	_cpuToBeResumedOn = nullptr;
 #endif
+	Instrument::exitSuspend();
 }
 
 
 void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 {
+	Instrument::enterResume();
+
 	assert(cpu != nullptr);
 
 	if (!inInitializationOrShutdown) {
@@ -144,6 +145,7 @@ void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 	assert(_cpuToBeResumedOn == nullptr);
 	_cpuToBeResumedOn.store(cpu, std::memory_order_release);
 	if (_cpu != cpu) {
+		Instrument::threadBindRemote(getInstrumentationId(), cpu->getInstrumentationId());
 		bind(cpu);
 	}
 
@@ -153,26 +155,14 @@ void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 
 	// Resume it
 	KernelLevelThread::resume();
-}
 
-
-void WorkerThreadBase::migrate(CPU *cpu)
-{
-	assert(cpu != nullptr);
-
-	assert(KernelLevelThread::getCurrentKernelLevelThread() == this);
-	assert(_cpu != cpu);
-
-	assert(_cpuToBeResumedOn == nullptr);
-
-	// Since it is the same thread the one that migrates itself, change the CPU directly
-	_cpu = cpu;
-	bind(cpu);
+	Instrument::exitResume();
 }
 
 
 void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 {
+	Instrument::enterSwitchTo();
 	assert(KernelLevelThread::getCurrentKernelLevelThread() == this);
 	assert(replacement != this);
 
@@ -195,10 +185,12 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 		// this thread's CPU has been released.
 	}
 
+	Instrument::threadSuspending(_instrumentationId);
 	suspend();
 	// After resuming (if ever blocked), the thread continues here
 
 	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
+	Instrument::exitSwitchTo();
 }
 
 

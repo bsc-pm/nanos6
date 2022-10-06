@@ -14,6 +14,7 @@
 
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/Padding.hpp"
+#include <InstrumentMemory.hpp>
 
 class MemoryAllocator {
 public:
@@ -42,7 +43,9 @@ public:
 		if (size >= CACHELINE_SIZE / 2) {
 			ptr = allocAligned(size);
 		} else {
+			Instrument::memoryAllocEnter();
 			ptr = malloc(size);
+			Instrument::memoryAllocExit();
 			if (ptr == nullptr)
 				FatalErrorHandler::fail("malloc failed to allocate memory");
 		}
@@ -54,7 +57,10 @@ public:
 	{
 		void *ptr = nullptr;
 
+		Instrument::memoryAllocEnter();
 		int rc = posix_memalign(&ptr, CACHELINE_SIZE, size);
+		Instrument::memoryAllocExit();
+
 		FatalErrorHandler::handle(rc, " when allocating with posix_memalign");
 
 		if ((uintptr_t) ptr % CACHELINE_SIZE != 0)
@@ -65,12 +71,16 @@ public:
 
 	static inline void free(void *chunk, __attribute__((unused)) size_t size)
 	{
+		Instrument::memoryFreeEnter();
 		std::free(chunk);
+		Instrument::memoryFreeExit();
 	}
 
-	static inline void freeAligned(void *chunk, size_t size)
+	static inline void freeAligned(void *chunk, __attribute__((unused)) size_t size)
 	{
+		Instrument::memoryFreeEnter();
 		std::free(chunk);
+		Instrument::memoryFreeExit();
 	}
 
 	/* Simplifications for using "new" and "delete" with the allocator */

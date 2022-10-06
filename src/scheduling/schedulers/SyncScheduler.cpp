@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "SyncScheduler.hpp"
@@ -93,7 +93,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We are stopping to serve tasks
 	setServingTasks(false);
-	Instrument::exitSchedulerLockAsServer();
+	if (task)
+		Instrument::exitSchedulerLockAsServer(task->getInstrumentationTaskId());
+	else
+		Instrument::exitSchedulerLockAsServer();
 
 	// Release the lock so another compute place can serve tasks
 	_lock.unlock();

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_CTF_WORKERTHREAD_HPP
@@ -49,6 +49,29 @@ namespace Instrument {
 			tp_worker_enter_busy_wait();
 		}
 	}
+
+	inline void workerThreadBegin()
+	{
+	}
+
+	inline void workerThreadEnd()
+	{
+	}
+
+	inline void enterHandleTask()
+	{
+	}
+
+	inline void exitHandleTask()
+	{
+	}
+
+	inline void enterSwitchTo() {}
+	inline void exitSwitchTo() {}
+	inline void enterSuspend() {}
+	inline void exitSuspend() {}
+	inline void enterResume() {}
+	inline void exitResume() {}
 }
 
 #endif // INSTRUMENT_CTF_WORKERTHREAD_HPP

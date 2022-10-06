@@ -93,6 +93,8 @@ lib_LTLIBRARIES = \
 	libnanos6-debug-regions-graph.la \
 	libnanos6-debug-discrete-lint.la \
 	libnanos6-debug-regions-lint.la \
+	libnanos6-debug-discrete-ovni.la \
+	libnanos6-debug-regions-ovni.la \
 	libnanos6-debug-discrete-stats.la \
 	libnanos6-debug-regions-stats.la \
 	libnanos6-debug-discrete-verbose.la \
@@ -106,6 +108,8 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized-regions-graph.la \
 	libnanos6-optimized-discrete-lint.la \
 	libnanos6-optimized-regions-lint.la \
+	libnanos6-optimized-discrete-ovni.la \
+	libnanos6-optimized-regions-ovni.la \
 	libnanos6-optimized-discrete-stats.la \
 	libnanos6-optimized-regions-stats.la \
 	libnanos6-optimized-discrete-verbose.la \
@@ -588,6 +592,15 @@ instrument_graph_sources = \
 instrument_lint_sources = \
 	src/instrument/lint/Callbacks.cpp
 
+instrument_ovni_sources = \
+	src/instrument/ovni/InstrumentExternalThreadLocalData.cpp \
+	src/instrument/ovni/InstrumentInitAndShutdown.cpp \
+	src/instrument/ovni/InstrumentTaskId.cpp \
+	src/instrument/ovni/InstrumentTasktypeData.cpp \
+	src/instrument/ovni/InstrumentThreadManagement.cpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
+
 instrument_stats_sources = \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentStats.cpp \
@@ -629,6 +642,7 @@ dist_instrument_sources = \
 	$(instrument_extrae_sources) \
 	$(instrument_graph_sources) \
 	$(instrument_lint_sources) \
+	$(instrument_ovni_sources) \
 	$(instrument_stats_sources) \
 	$(instrument_verbose_sources) \
 	$(noinstrument_sources)
@@ -808,6 +822,9 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
+	src/instrument/api/InstrumentMainThread.hpp \
+	src/instrument/api/InstrumentMemory.hpp \
+	src/instrument/api/InstrumentPthread.hpp \
 	src/instrument/api/InstrumentReductions.hpp \
 	src/instrument/api/InstrumentScheduler.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
@@ -817,31 +834,12 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentTracingPoints.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
 	src/instrument/api/InstrumentWorkerThread.hpp \
-	src/instrument/ctf/ctfapi/context/CTFContext.hpp \
-	src/instrument/ctf/ctfapi/context/CTFStreamContextUnbounded.hpp \
-	src/instrument/ctf/ctfapi/context/CTFContextCPUHardwareCounters.hpp \
-	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.hpp \
-	src/instrument/ctf/ctfapi/context/CTFEventContext.hpp \
-	src/instrument/ctf/ctfapi/stream/CircularBuffer.hpp \
-	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.hpp \
-	src/instrument/ctf/ctfapi/stream/CTFKernelStream.hpp \
-	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
-	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
-	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
-	src/instrument/ctf/ctfapi/CTFAPI.hpp \
-	src/instrument/ctf/ctfapi/CTFClock.hpp \
-	src/instrument/ctf/ctfapi/CTFEvent.hpp \
-	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
-	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
-	src/instrument/ctf/ctfapi/CTFTrace.hpp \
-	src/instrument/ctf/ctfapi/CTFTypes.hpp \
-	src/instrument/ctf/ctfapi/CTFUserMetadata.hpp \
 	src/instrument/ctf/CTFTracepoints.hpp \
 	src/instrument/ctf/InstrumentAddTask.hpp \
 	src/instrument/ctf/InstrumentBlockingAPI.hpp \
+	src/instrument/ctf/InstrumentCPULocalData.hpp \
 	src/instrument/ctf/InstrumentComputePlaceId.hpp \
 	src/instrument/ctf/InstrumentComputePlaceManagement.hpp \
-	src/instrument/ctf/InstrumentCPULocalData.hpp \
 	src/instrument/ctf/InstrumentDataAccessId.hpp \
 	src/instrument/ctf/InstrumentDebug.hpp \
 	src/instrument/ctf/InstrumentDependenciesByAccess.hpp \
@@ -855,29 +853,51 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentInstrumentationContext.hpp \
 	src/instrument/ctf/InstrumentLeaderThread.hpp \
 	src/instrument/ctf/InstrumentLogMessage.hpp \
+	src/instrument/ctf/InstrumentMainThread.hpp \
+	src/instrument/ctf/InstrumentMemory.hpp \
+	src/instrument/ctf/InstrumentPthread.hpp \
 	src/instrument/ctf/InstrumentReductions.hpp \
 	src/instrument/ctf/InstrumentScheduler.hpp \
 	src/instrument/ctf/InstrumentTaskExecution.hpp \
 	src/instrument/ctf/InstrumentTaskId.hpp \
 	src/instrument/ctf/InstrumentTaskStatus.hpp \
-	src/instrument/ctf/InstrumentTasktypeData.hpp \
 	src/instrument/ctf/InstrumentTaskWait.hpp \
+	src/instrument/ctf/InstrumentTasktypeData.hpp \
 	src/instrument/ctf/InstrumentThreadId.hpp \
 	src/instrument/ctf/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/ctf/InstrumentThreadLocalData.hpp \
 	src/instrument/ctf/InstrumentThreadManagement.hpp \
-	src/instrument/ctf/InstrumentTracingPointTypes.hpp\
+	src/instrument/ctf/InstrumentTracingPointTypes.hpp \
 	src/instrument/ctf/InstrumentTracingPoints.hpp \
 	src/instrument/ctf/InstrumentUserMutex.hpp \
 	src/instrument/ctf/InstrumentWorkerThread.hpp \
+	src/instrument/ctf/ctfapi/CTFAPI.hpp \
+	src/instrument/ctf/ctfapi/CTFClock.hpp \
+	src/instrument/ctf/ctfapi/CTFEvent.hpp \
+	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
+	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
+	src/instrument/ctf/ctfapi/CTFTrace.hpp \
+	src/instrument/ctf/ctfapi/CTFTypes.hpp \
+	src/instrument/ctf/ctfapi/CTFUserMetadata.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContext.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContextCPUHardwareCounters.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.hpp \
+	src/instrument/ctf/ctfapi/context/CTFEventContext.hpp \
+	src/instrument/ctf/ctfapi/context/CTFStreamContextUnbounded.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelStream.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
+	src/instrument/ctf/ctfapi/stream/CircularBuffer.hpp \
 	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
 	src/instrument/extrae/ExtraeSymbolResolver.hpp \
 	src/instrument/extrae/InstrumentAddTask.hpp \
 	src/instrument/extrae/InstrumentBlockingAPI.hpp \
+	src/instrument/extrae/InstrumentCPULocalData.hpp \
 	src/instrument/extrae/InstrumentCommon.hpp \
 	src/instrument/extrae/InstrumentComputePlaceId.hpp \
 	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
-	src/instrument/extrae/InstrumentCPULocalData.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
 	src/instrument/extrae/InstrumentDebug.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
@@ -891,22 +911,26 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentMainThread.hpp \
+	src/instrument/extrae/InstrumentMemory.hpp \
+	src/instrument/extrae/InstrumentPthread.hpp \
 	src/instrument/extrae/InstrumentReductions.hpp \
 	src/instrument/extrae/InstrumentScheduler.hpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
-	src/instrument/extrae/InstrumentTasktypeData.hpp \
 	src/instrument/extrae/InstrumentTaskWait.hpp \
+	src/instrument/extrae/InstrumentTasktypeData.hpp \
 	src/instrument/extrae/InstrumentThreadId.hpp \
 	src/instrument/extrae/InstrumentThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
-	src/instrument/extrae/InstrumentTracingPointTypes.hpp\
+	src/instrument/extrae/InstrumentTracingPointTypes.hpp \
 	src/instrument/extrae/InstrumentTracingPoints.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
 	src/instrument/extrae/InstrumentWorkerThread.hpp \
 	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
 	src/instrument/generic_ids/GenericIds.hpp \
+	src/instrument/generic_ids/InstrumentComputePlaceId.hpp \
 	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
 	src/instrument/generic_ids/InstrumentThreadId.hpp \
 	src/instrument/graph/Color.hpp \
@@ -914,9 +938,9 @@ noinst_HEADERS = \
 	src/instrument/graph/GenerateEdges.hpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
 	src/instrument/graph/InstrumentBlockingAPI.hpp \
+	src/instrument/graph/InstrumentCPULocalData.hpp \
 	src/instrument/graph/InstrumentComputePlaceId.hpp \
 	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
-	src/instrument/graph/InstrumentCPULocalData.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
 	src/instrument/graph/InstrumentDebug.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
@@ -930,13 +954,16 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentLogMessage.hpp \
+	src/instrument/graph/InstrumentMainThread.hpp \
+	src/instrument/graph/InstrumentMemory.hpp \
+	src/instrument/graph/InstrumentPthread.hpp \
 	src/instrument/graph/InstrumentReductions.hpp \
 	src/instrument/graph/InstrumentScheduler.hpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
-	src/instrument/graph/InstrumentTasktypeData.hpp \
 	src/instrument/graph/InstrumentTaskWait.hpp \
+	src/instrument/graph/InstrumentTasktypeData.hpp \
 	src/instrument/graph/InstrumentThreadId.hpp \
 	src/instrument/graph/InstrumentThreadLocalData.hpp \
 	src/instrument/graph/InstrumentThreadManagement.hpp \
@@ -949,9 +976,9 @@ noinst_HEADERS = \
 	src/instrument/lint/Callbacks.hpp \
 	src/instrument/lint/InstrumentAddTask.hpp \
 	src/instrument/lint/InstrumentBlockingAPI.hpp \
+	src/instrument/lint/InstrumentCPULocalData.hpp \
 	src/instrument/lint/InstrumentComputePlaceId.hpp \
 	src/instrument/lint/InstrumentComputePlaceManagement.hpp \
-	src/instrument/lint/InstrumentCPULocalData.hpp \
 	src/instrument/lint/InstrumentDataAccessId.hpp \
 	src/instrument/lint/InstrumentDebug.hpp \
 	src/instrument/lint/InstrumentDependenciesByAccess.hpp \
@@ -965,13 +992,16 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentInstrumentationContext.hpp \
 	src/instrument/lint/InstrumentLeaderThread.hpp \
 	src/instrument/lint/InstrumentLogMessage.hpp \
+	src/instrument/lint/InstrumentMainThread.hpp \
+	src/instrument/lint/InstrumentMemory.hpp \
+	src/instrument/lint/InstrumentPthread.hpp \
 	src/instrument/lint/InstrumentReductions.hpp \
 	src/instrument/lint/InstrumentScheduler.hpp \
 	src/instrument/lint/InstrumentTaskExecution.hpp \
 	src/instrument/lint/InstrumentTaskId.hpp \
 	src/instrument/lint/InstrumentTaskStatus.hpp \
-	src/instrument/lint/InstrumentTasktypeData.hpp \
 	src/instrument/lint/InstrumentTaskWait.hpp \
+	src/instrument/lint/InstrumentTasktypeData.hpp \
 	src/instrument/lint/InstrumentThreadId.hpp \
 	src/instrument/lint/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/lint/InstrumentThreadLocalData.hpp \
@@ -982,9 +1012,9 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentWorkerThread.hpp \
 	src/instrument/null/InstrumentAddTask.hpp \
 	src/instrument/null/InstrumentBlockingAPI.hpp \
+	src/instrument/null/InstrumentCPULocalData.hpp \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
 	src/instrument/null/InstrumentComputePlaceManagement.hpp \
-	src/instrument/null/InstrumentCPULocalData.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
 	src/instrument/null/InstrumentDebug.hpp \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
@@ -998,13 +1028,16 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
+	src/instrument/null/InstrumentMainThread.hpp \
+	src/instrument/null/InstrumentMemory.hpp \
+	src/instrument/null/InstrumentPthread.hpp \
 	src/instrument/null/InstrumentReductions.hpp \
 	src/instrument/null/InstrumentScheduler.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
-	src/instrument/null/InstrumentTasktypeData.hpp \
 	src/instrument/null/InstrumentTaskWait.hpp \
+	src/instrument/null/InstrumentTasktypeData.hpp \
 	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/null/InstrumentThreadLocalData.hpp \
@@ -1013,11 +1046,48 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
 	src/instrument/null/InstrumentWorkerThread.hpp \
+	src/instrument/ovni/InstrumentAddTask.hpp \
+	src/instrument/ovni/InstrumentBlockingAPI.hpp \
+	src/instrument/ovni/InstrumentCPULocalData.hpp \
+	src/instrument/ovni/InstrumentComputePlaceId.hpp \
+	src/instrument/ovni/InstrumentComputePlaceManagement.hpp \
+	src/instrument/ovni/InstrumentDataAccessId.hpp \
+	src/instrument/ovni/InstrumentDebug.hpp \
+	src/instrument/ovni/InstrumentDependenciesByAccess.hpp \
+	src/instrument/ovni/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/ovni/InstrumentDependenciesByGroup.hpp \
+	src/instrument/ovni/InstrumentDependencySubsystemEntryPoints.hpp \
+	src/instrument/ovni/InstrumentDistributedMemory.hpp \
+	src/instrument/ovni/InstrumentExternalThreadId.hpp \
+	src/instrument/ovni/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/ovni/InstrumentInitAndShutdown.hpp \
+	src/instrument/ovni/InstrumentInstrumentationContext.hpp \
+	src/instrument/ovni/InstrumentLeaderThread.hpp \
+	src/instrument/ovni/InstrumentLogMessage.hpp \
+	src/instrument/ovni/InstrumentMainThread.hpp \
+	src/instrument/ovni/InstrumentMemory.hpp \
+	src/instrument/ovni/InstrumentPthread.hpp \
+	src/instrument/ovni/InstrumentReductions.hpp \
+	src/instrument/ovni/InstrumentScheduler.hpp \
+	src/instrument/ovni/InstrumentTaskExecution.hpp \
+	src/instrument/ovni/InstrumentTaskId.hpp \
+	src/instrument/ovni/InstrumentTaskStatus.hpp \
+	src/instrument/ovni/InstrumentTaskWait.hpp \
+	src/instrument/ovni/InstrumentTasktypeData.hpp \
+	src/instrument/ovni/InstrumentThreadId.hpp \
+	src/instrument/ovni/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/ovni/InstrumentThreadLocalData.hpp \
+	src/instrument/ovni/InstrumentThreadManagement.hpp \
+	src/instrument/ovni/InstrumentTracingPointTypes.hpp \
+	src/instrument/ovni/InstrumentTracingPoints.hpp \
+	src/instrument/ovni/InstrumentUserMutex.hpp \
+	src/instrument/ovni/InstrumentWorkerThread.hpp \
+	src/instrument/ovni/OvniTrace.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlockingAPI.hpp \
+	src/instrument/stats/InstrumentCPULocalData.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
 	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
-	src/instrument/stats/InstrumentCPULocalData.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
 	src/instrument/stats/InstrumentDebug.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
@@ -1030,14 +1100,17 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
+	src/instrument/stats/InstrumentMainThread.hpp \
+	src/instrument/stats/InstrumentMemory.hpp \
+	src/instrument/stats/InstrumentPthread.hpp \
 	src/instrument/stats/InstrumentReductions.hpp \
 	src/instrument/stats/InstrumentScheduler.hpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
 	src/instrument/stats/InstrumentTaskStatus.hpp \
-	src/instrument/stats/InstrumentTasktypeData.hpp \
 	src/instrument/stats/InstrumentTaskWait.hpp \
+	src/instrument/stats/InstrumentTasktypeData.hpp \
 	src/instrument/stats/InstrumentThreadId.hpp \
 	src/instrument/stats/InstrumentThreadLocalData.hpp \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
@@ -1064,9 +1137,60 @@ noinst_HEADERS = \
 	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentBlockingAPI.hpp \
+	src/instrument/verbose/InstrumentCPULocalData.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
+	src/instrument/verbose/InstrumentDataAccessId.hpp \
+	src/instrument/verbose/InstrumentDebug.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
+	src/instrument/verbose/InstrumentDependencySubsystemEntryPoints.hpp \
+	src/instrument/verbose/InstrumentDistributedMemory.hpp \
+	src/instrument/verbose/InstrumentExternalThreadId.hpp \
+	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
+	src/instrument/verbose/InstrumentLeaderThread.hpp \
+	src/instrument/verbose/InstrumentLogMessage.hpp \
+	src/instrument/verbose/InstrumentMainThread.hpp \
+	src/instrument/verbose/InstrumentMemory.hpp \
+	src/instrument/verbose/InstrumentPthread.hpp \
+	src/instrument/verbose/InstrumentReductions.hpp \
+	src/instrument/verbose/InstrumentScheduler.hpp \
+	src/instrument/verbose/InstrumentTaskExecution.hpp \
+	src/instrument/verbose/InstrumentTaskId.hpp \
+	src/instrument/verbose/InstrumentTaskStatus.hpp \
+	src/instrument/verbose/InstrumentTaskWait.hpp \
+	src/instrument/verbose/InstrumentTasktypeData.hpp \
+	src/instrument/verbose/InstrumentThreadId.hpp \
+	src/instrument/verbose/InstrumentThreadLocalData.hpp \
+	src/instrument/verbose/InstrumentThreadManagement.hpp \
+	src/instrument/verbose/InstrumentTracingPointTypes.hpp \
+	src/instrument/verbose/InstrumentTracingPoints.hpp \
+	src/instrument/verbose/InstrumentUserMutex.hpp \
+	src/instrument/verbose/InstrumentVerbose.hpp \
+	src/instrument/verbose/InstrumentWorkerThread.hpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
+	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
+	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
+	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
+	src/instrument/support/introspection/DL/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
+	src/instrument/verbose/InstrumentAddTask.hpp \
+	src/instrument/verbose/InstrumentBlockingAPI.hpp \
 	src/instrument/verbose/InstrumentCPULocalData.hpp \
+	src/instrument/verbose/InstrumentComputePlaceId.hpp \
+	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
 	src/instrument/verbose/InstrumentDebug.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
@@ -1084,8 +1208,8 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
-	src/instrument/verbose/InstrumentTasktypeData.hpp \
 	src/instrument/verbose/InstrumentTaskWait.hpp \
+	src/instrument/verbose/InstrumentTasktypeData.hpp \
 	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
@@ -1095,6 +1219,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentVerbose.hpp \
 	src/instrument/verbose/InstrumentWorkerThread.hpp \
 	src/lowlevel/BacktraceRecording.hpp \
+	src/lowlevel/CompatSyscalls.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
@@ -1361,6 +1486,39 @@ else
 nodist_libnanos6_debug_regions_lint_la_SOURCES += loader/disabled_variant.c
 endif
 
+# Debug ovni variants
+libnanos6_debug_discrete_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_debug_discrete_ovni_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_debug_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES =
+
+libnanos6_debug_regions_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_debug_regions_ovni_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
+libnanos6_debug_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_debug_regions_ovni_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if HAVE_OVNI
+if BUILD_OVNI_INSTRUMENTATION
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+else
+nodist_libnanos6_debug_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+if HAVE_OVNI
+if BUILD_OVNI_INSTRUMENTATION
+nodist_libnanos6_debug_regions_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+else
+nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+
 
 # Debug stats variants
 libnanos6_debug_discrete_stats_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
@@ -1542,6 +1700,41 @@ disabled_variants += lint
 nodist_libnanos6_optimized_regions_lint_la_SOURCES += loader/disabled_variant.c
 endif
 
+# Optimized ovni variants
+libnanos6_optimized_discrete_ovni_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_optimized_discrete_ovni_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_optimized_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES =
+
+libnanos6_optimized_regions_ovni_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
+libnanos6_optimized_regions_ovni_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
+libnanos6_optimized_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if HAVE_OVNI
+if BUILD_OVNI_INSTRUMENTATION
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
+else
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+else
+nodist_libnanos6_optimized_discrete_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+if HAVE_OVNI
+if BUILD_OVNI_INSTRUMENTATION
+enabled_variants += ovni
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES += $(common_sources) $(instrument_ovni_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
+else
+disabled_variants += ovni
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
+else
+disabled_variants += ovni
+nodist_libnanos6_optimized_regions_ovni_la_SOURCES += loader/disabled_variant.c
+endif
 
 # Optimized stats variants
 libnanos6_optimized_discrete_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
@@ -1896,6 +2089,10 @@ endif
 
 if !BUILD_CTF_INSTRUMENTATION
 disabled_config_features += "CTF"
+endif
+
+if !BUILD_OVNI_INSTRUMENTATION
+disabled_config_features += "OVNI"
 endif
 
 if !BUILD_GRAPH_INSTRUMENTATION

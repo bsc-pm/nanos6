@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_CTF_SCHEDULER_HPP
@@ -88,6 +88,15 @@ namespace Instrument {
 	{
 		tp_scheduler_lock_server_exit();
 	}
+
+	inline void exitSchedulerLockAsServer(
+		__attribute__((unused)) task_id_t taskId
+	) {
+		tp_scheduler_lock_server_exit();
+	}
+
+	inline void enterProcessReadyTasks() {}
+	inline void exitProcessReadyTasks() {}
 
 }
 

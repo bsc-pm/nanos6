@@ -92,6 +92,7 @@ AC_CHECK_PQOS
 AC_CHECK_DLB
 AC_CHECK_JEMALLOC
 AC_CHECK_BABELTRACE2
+AC_CHECK_OVNI
 
 # Build ctf2prv fast converter if Babeltrace2 is available
 AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])
@@ -330,6 +331,16 @@ if test x"${have_extrae}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Ovni is enabled... ])
+if test x"${ac_use_ovni}" = x"yes" ; then
+    AC_MSG_RESULT([yes])
+    _AS_ECHO([   Ovni CPPFLAGS... ${ovni_CPPFLAGS}])
+    _AS_ECHO([   Ovni LIBS... ${ovni_LIBS}])
+else
+    AC_MSG_RESULT([no])
 fi
 
 _AS_ECHO([])

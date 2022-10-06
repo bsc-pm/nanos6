@@ -273,6 +273,21 @@ information on how the CTF instrumentation variant works see
 
 To run the experimental fast converter, add the option `--fast`.
 
+### Tracing a Nanos6 application with ovni
+
+Nanos6 can also generate execution traces with the ovni library, which generates
+lightweight binary traces, and it is possible to mix ovni-instrumented libraries
+together with an OmpSs-2 program and obtain a single coherent trace.
+
+To enable the generation of ovni traces, Nanos6 must be built with the
+`--with-ovni` option, and without `--disable-ovni-instrumentation`. The
+application must run with the `version.instrument=ovni` configuration option.
+The trace will be left in a `ovni/` directory, which can be transformed into a
+Paraver trace with the `ovniemu` utility.
+
+The level of detail can be controlled with the `instrument.ovni.level`
+configuration option, a higher number includes more events but also incurs in a
+larger performance penalty.
 
 ### Generating a graphical representation of the dependency graph
 
