@@ -22,7 +22,6 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace, bool &hasInc
 
 	long cpuId = computePlace->getIndex();
 	long groupId = ((CPU *)computePlace)->getGroupId();
-	long immediateSuccessorGroupId = groupId*2;
 
 	hasIncompatibleWork = false;
 
@@ -44,65 +43,20 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace, bool &hasInc
 				groupTaskfor->removedFromScheduler();
 			}
 
-			Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
 			// We are setting the chunk that the collaborator will execute in the preallocatedTaskfor
+			Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
 			taskfor->setChunk(myChunk);
 			return groupTaskfor;
 		}
 	}
 
-	if (_enableImmediateSuccessor) {
-		// 3. Try to get work from my immediateSuccessorTaskfors
-		Task *currentImmediateSuccessor1 = _immediateSuccessorTaskfors[immediateSuccessorGroupId];
-		Task *currentImmediateSuccessor2 = _immediateSuccessorTaskfors[immediateSuccessorGroupId+1];
-		if (currentImmediateSuccessor1 != nullptr) {
-			assert(currentImmediateSuccessor1->isTaskfor());
-			result = currentImmediateSuccessor1;
-			_immediateSuccessorTaskfors[immediateSuccessorGroupId] = nullptr;
-		}
-		else if (currentImmediateSuccessor2 != nullptr) {
-			assert(currentImmediateSuccessor2->isTaskfor());
-			result = currentImmediateSuccessor2;
-			_immediateSuccessorTaskfors[immediateSuccessorGroupId+1] = nullptr;
-		}
-
-		// 4. Try to get work from my immediateSuccessorTasks
-		if (result == nullptr && _immediateSuccessorTasks[cpuId] != nullptr) {
-			result = _immediateSuccessorTasks[cpuId];
-			_immediateSuccessorTasks[cpuId] = nullptr;
-		}
-	}
-
-	// 5. Check if there is work remaining in the ready queue
+	// 3. Check if there is work remaining in the ready queue
 	if (result == nullptr) {
 		result = regularGetReadyTask(computePlace);
 	}
 
-	// 6. Try to get work from other immediateSuccessorTasks
-	if (result == nullptr && _enableImmediateSuccessor) {
-		for (size_t i = 0; i < _immediateSuccessorTasks.size(); i++) {
-			if (_immediateSuccessorTasks[i] != nullptr) {
-				result = _immediateSuccessorTasks[i];
-				assert(!result->isTaskfor());
-				_immediateSuccessorTasks[i] = nullptr;
-				break;
-			}
-		}
-	}
-
-	// 7. Try to get work from other immediateSuccessorTasksfors
-	if (result == nullptr && _enableImmediateSuccessor) {
-		for (size_t i = 0; i < _immediateSuccessorTaskfors.size(); i++) {
-			if (_immediateSuccessorTaskfors[i] != nullptr) {
-				result = _immediateSuccessorTaskfors[i];
-				_immediateSuccessorTaskfors[i] = nullptr;
-				break;
-			}
-		}
-	}
-
 	if (result == nullptr) {
-		// 8. If there is a hidden Taskfor in any of the slots not accessible
+		// 4. If there is a hidden Taskfor in any of the slots not accessible
 		// to this computePlace, alert about it through the bool
 		for (int i = 0; i < (int) _groupSlots.size(); ++i) {
 			if (i != groupId && _groupSlots[i] != nullptr) {

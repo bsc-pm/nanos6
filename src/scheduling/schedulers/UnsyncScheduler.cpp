@@ -11,19 +11,14 @@
 
 UnsyncScheduler::UnsyncScheduler(
 	SchedulingPolicy,
-	bool enablePriority,
-	bool enableImmediateSuccessor
+	bool enablePriority
 ) :
 	_queues(nullptr),
 	_numQueues(0),
 	_roundRobinQueues(0),
 	_deadlineTasks(nullptr),
-	_enableImmediateSuccessor(enableImmediateSuccessor),
 	_enablePriority(enablePriority)
 {
-	if (enableImmediateSuccessor) {
-		_immediateSuccessorTasks = immediate_successor_tasks_t(CPUManager::getTotalCPUs(), nullptr);
-	}
 }
 
 UnsyncScheduler::~UnsyncScheduler()

@@ -21,7 +21,7 @@ class SchedulerInterface {
 	DeviceScheduler *_deviceSchedulers[nanos6_device_type_num];
 
 	static ConfigVariable<std::string> _schedulingPolicy;
-	static ConfigVariable<bool> _enableImmediateSuccessor;
+	static ConfigVariable<float> _enableImmediateSuccessor;
 	static ConfigVariable<bool> _enablePriority;
 
 #ifdef EXTRAE_ENABLED
@@ -111,6 +111,11 @@ public:
 	static inline bool isPriorityEnabled()
 	{
 		return _enablePriority;
+	}
+
+	static inline float getImmediateSuccessorAlpha()
+	{
+		return _enableImmediateSuccessor;
 	}
 };
 

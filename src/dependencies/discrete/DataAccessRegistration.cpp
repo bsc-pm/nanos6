@@ -69,7 +69,55 @@ namespace DataAccessRegistration {
 			}
 
 			CPUDependencyData::satisfied_originator_list_t &list = hpDependencyData.getSatisfiedOriginators(i);
-			if (list.size() > 0) {
+
+			if (list.size() == 0)
+				continue;
+
+			bool successorExists = (computePlace != nullptr && (computePlace->getFirstSuccessor() != nullptr));
+			if (i == nanos6_host_device
+				&& !fromBusyThread
+				&& !successorExists
+			) {
+				// Find the best immediate successor, which must be:
+				// - highest priority
+				// - not a taskfor source
+				// On priority tie, grab the first one
+				long bestPriority = INT_MIN;
+				int bestIS = -1;
+				Task **successors = list.getArray();
+
+				for (int k = 0; k < (int)list.size(); ++k) {
+					if (successors[k]->getPriority() > bestPriority && !successors[k]->isTaskforSource()) {
+						bestPriority = successors[k]->getPriority();
+						bestIS = k;
+					}
+				}
+
+				if (bestIS >= 0) {
+					computePlace->setFirstSuccessor(successors[bestIS]);
+
+					Scheduler::addReadyTasks(
+					(nanos6_device_t)i,
+					list.getArray(),
+					bestIS,
+					computePlaceHint,
+					schedulingHint);
+
+					Scheduler::addReadyTasks(
+					(nanos6_device_t)i,
+					list.getArray() + bestIS + 1,
+					list.size() - bestIS - 1,
+					computePlaceHint,
+					schedulingHint);
+				} else {
+					Scheduler::addReadyTasks(
+					(nanos6_device_t)i,
+					list.getArray(),
+					list.size(),
+					computePlaceHint,
+					schedulingHint);
+				}
+			} else {
 				Scheduler::addReadyTasks(
 					(nanos6_device_t)i,
 					list.getArray(),

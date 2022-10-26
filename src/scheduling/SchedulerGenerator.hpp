@@ -19,14 +19,12 @@ public:
 	static HostScheduler *createHostScheduler(
 		size_t totalComputePlaces,
 		SchedulingPolicy policy,
-		bool enablePriority,
-		bool enableImmediateSuccessor);
+		bool enablePriority);
 
 	static DeviceScheduler *createDeviceScheduler(
 		size_t totalComputePlaces,
 		SchedulingPolicy policy,
 		bool enablePriority,
-		bool enableImmediateSuccessor,
 		nanos6_device_t deviceType);
 };
 

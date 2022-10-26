@@ -129,7 +129,7 @@ ConfigCentral::ConfigCentral() :
 	registerOption<string_t>("numa.tracking", "auto");
 
 	// Scheduler
-	registerOption<bool_t>("scheduler.immediate_successor", true);
+	registerOption<float_t>("scheduler.immediate_successor", true);
 	registerOption<string_t>("scheduler.policy", "fifo");
 	registerOption<bool_t>("scheduler.priority", true);
 

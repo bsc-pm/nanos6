@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef COMPUTE_PLACE_HPP
@@ -18,8 +18,9 @@
 #include <InstrumentComputePlaceId.hpp>
 #include <InstrumentCPULocalData.hpp>
 
-class Taskfor;
 class MemoryPlace;
+class Task;
+class Taskfor;
 
 //! \brief A class that represents a place where code can be executed either directly, or in a sub-place within
 class ComputePlace {
@@ -43,6 +44,8 @@ private:
 
 	//! Random generator. Currently used in TaskDataAccesses::computeNUMAAffinity
 	std::minstd_rand0 _randomEngine;
+
+	Task *_firstSuccessor;
 
 protected:
 	//! The index of the compute place
@@ -141,6 +144,17 @@ public:
 	inline std::minstd_rand0 &getRandomEngine()
 	{
 		return _randomEngine;
+	}
+
+	inline Task *getFirstSuccessor() const
+	{
+		return _firstSuccessor;
+	}
+
+	inline void setFirstSuccessor(Task *task) {
+		assert(task == nullptr || _firstSuccessor == nullptr);
+
+		_firstSuccessor = task;
 	}
 };
 
