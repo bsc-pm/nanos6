@@ -100,6 +100,20 @@ void SpawnFunction::spawnFunction(
 			taskInfo->implementations[0].task_type_label = it->first.second.c_str();
 			taskInfo->implementations[0].declaration_source = "Spawned Task";
 			taskInfo->implementations[0].get_constraints = nullptr;
+
+			// Explicitely initialize the rest of fields
+			taskInfo->num_symbols = 0;
+			taskInfo->onready_action = nullptr;
+			taskInfo->get_priority = nullptr;
+			taskInfo->duplicate_args_block = nullptr;
+			taskInfo->reduction_initializers = nullptr;
+			taskInfo->reduction_combiners = nullptr;
+			taskInfo->task_type_data = nullptr;
+			taskInfo->iter_condition = nullptr;
+			taskInfo->num_args = 0;
+			taskInfo->sizeof_table = nullptr;
+			taskInfo->offset_table = nullptr;
+			taskInfo->arg_idx_table = nullptr;
 		}
 	}
 
