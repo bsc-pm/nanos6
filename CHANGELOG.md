@@ -2,6 +2,26 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.8, Tue Nov 15, 2022
+The 2.8 release corresponds to the OmpSs-2 2022.11 release. It introduces LLVM support for CUDA tasks and runtime loading. It also adds OVNI instrumentation support and several bug fixes and features that improve the overall performance and programmability.
+
+### General
+- Add a probabilistic attribute to the Immediate Successor feature (enabled by default)
+- Improve locking, reduce allocations, and fix alignment issues
+- Improve task creation performance
+
+### **ovni** Instrumentation
+- Add support for **ovni** instrumentation through the configuration: `version.instrument=ovni`
+- Choose detail level with the option `instrument.ovni.level`
+
+### LLVM Support for CUDA
+- Support `device(cuda)` tasks in OmpSs-2 programs built with the LLVM compiler
+- Drop support for `device(cuda)` in Mercurium
+- Support both building kernels separately with NVCC and linking them to the final binary or building directly with LLVM
+- Support building PTX binaries and CUDA kernels at runtime when placed in a specific folder (by default nanos6-cuda-kernels)
+- Add a new configuration option for the default CUDA kernels folder `devices.cuda.kernels_folder`
+
+
 ## Version 2.7.1, Fri May 27, 2022
 The 2.7.1 release corresponds to the OmpSs-2 2021.11.1 release. It introduces some bug and code fixes,
 and some minor improvements
