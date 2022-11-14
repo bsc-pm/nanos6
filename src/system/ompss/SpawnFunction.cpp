@@ -82,38 +82,26 @@ void SpawnFunction::spawnFunction(
 		auto it = itAndBool.first;
 		taskInfo = &(it->second);
 
+		// Check whether it is a new task info
 		if (itAndBool.second) {
-			// New task info
+			// Make sure all task info's fields are initialized to zero
+			std::memset(taskInfo, 0, sizeof(nanos6_task_info_t));
+
+			// Allocate memory for the task impl info
 			taskInfo->implementations = (nanos6_task_implementation_info_t *)
-				malloc(sizeof(nanos6_task_implementation_info_t));
+				calloc(1, sizeof(nanos6_task_implementation_info_t));
 			assert(taskInfo->implementations != nullptr);
 
 			taskInfo->implementation_count = 1;
 			taskInfo->implementations[0].run = SpawnFunction::spawnedFunctionWrapper;
 			taskInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
-			taskInfo->register_depinfo = nullptr;
-
-			// The completion callback will be called when the task is destroyed
-			taskInfo->destroy_args_block = SpawnFunction::spawnedFunctionDestructor;
 
 			// Use a copy since we do not know the actual lifetime of label
 			taskInfo->implementations[0].task_type_label = it->first.second.c_str();
 			taskInfo->implementations[0].declaration_source = "Spawned Task";
-			taskInfo->implementations[0].get_constraints = nullptr;
 
-			// Explicitely initialize the rest of fields
-			taskInfo->num_symbols = 0;
-			taskInfo->onready_action = nullptr;
-			taskInfo->get_priority = nullptr;
-			taskInfo->duplicate_args_block = nullptr;
-			taskInfo->reduction_initializers = nullptr;
-			taskInfo->reduction_combiners = nullptr;
-			taskInfo->task_type_data = nullptr;
-			taskInfo->iter_condition = nullptr;
-			taskInfo->num_args = 0;
-			taskInfo->sizeof_table = nullptr;
-			taskInfo->offset_table = nullptr;
-			taskInfo->arg_idx_table = nullptr;
+			// The completion callback will be called when the task is destroyed
+			taskInfo->destroy_args_block = SpawnFunction::spawnedFunctionDestructor;
 		}
 	}
 
