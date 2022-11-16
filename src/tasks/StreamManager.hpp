@@ -62,13 +62,12 @@ private:
 		stream_executors_t::iterator it = _executors.find(streamId);
 		if (it == _executors.end()) {
 			// Executor's taskinfo
-			// Executor's args block
-			nanos6_task_info_t *executorInfo = (nanos6_task_info_t *) malloc(sizeof(nanos6_task_info_t));
+			nanos6_task_info_t *executorInfo = (nanos6_task_info_t *) calloc(1, sizeof(nanos6_task_info_t));
 			assert(executorInfo != nullptr);
 
 			// Fill in the executor's taskinfo
 			executorInfo->implementations = (nanos6_task_implementation_info_t *)
-				malloc(sizeof(nanos6_task_implementation_info_t) * 1);
+				calloc(1, sizeof(nanos6_task_implementation_info_t));
 			assert(executorInfo->implementations != nullptr);
 
 			executorInfo->implementation_count = 1;
@@ -76,21 +75,6 @@ private:
 			executorInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
 			executorInfo->implementations[0].task_type_label = "StreamExecutor";
 			executorInfo->implementations[0].declaration_source = "Stream Executor spawned within the runtime";
-			executorInfo->implementations[0].get_constraints = nullptr;
-			executorInfo->num_symbols = 0;
-			executorInfo->destroy_args_block = nullptr;
-			executorInfo->register_depinfo = nullptr;
-			executorInfo->get_priority = nullptr;
-			executorInfo->onready_action = nullptr;
-			executorInfo->duplicate_args_block = nullptr;
-			executorInfo->reduction_initializers = nullptr;
-			executorInfo->reduction_combiners = nullptr;
-			executorInfo->task_type_data = nullptr;
-			executorInfo->iter_condition = nullptr;
-			executorInfo->num_args = 0;
-			executorInfo->sizeof_table = nullptr;
-			executorInfo->offset_table = nullptr;
-			executorInfo->arg_idx_table = nullptr;
 			size_t flags = 1 << Task::stream_executor_flag;
 
 			// Create the Stream Executor task
@@ -101,6 +85,7 @@ private:
 			);
 			assert(executor != nullptr);
 
+			// Executor's args block
 			StreamExecutorArgsBlock *argsBlock =
 				(StreamExecutorArgsBlock *) executor->getArgsBlock();
 			assert(argsBlock != nullptr);
