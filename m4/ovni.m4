@@ -38,7 +38,7 @@ AC_DEFUN([AC_CHECK_OVNI],
 			AC_CHECK_HEADERS([ovni.h], [], [AC_MSG_ERROR([ovni ovni.h header file not found])])
 			AC_CHECK_LIB([ovni],
 				[ovni_proc_init],
-				[ovni_LIBS="${ovni_LIBS} -lovni -Wl,-rpath=${ac_use_ovni_prefix}/lib"],
+				[ovni_LIBS="${ovni_LIBS} -lovni -Wl,--enable-new-dtags -Wl,-rpath=${ac_use_ovni_prefix}/lib"],
 				[AC_MSG_ERROR([ovni cannot be found])],
 				[${ac_save_LIBS}]
 			)
