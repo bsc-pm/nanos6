@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASKLOOP_HPP
@@ -131,11 +131,6 @@ public:
 	inline bool isTaskloopSource() const override
 	{
 		return _source;
-	}
-
-	inline bool isTaskloopFor() const override
-	{
-		return isTaskfor();
 	}
 
 	static inline size_t computeNumTasks(size_t iterations, size_t grainsize)

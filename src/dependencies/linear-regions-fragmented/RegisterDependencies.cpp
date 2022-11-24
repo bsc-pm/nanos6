@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -27,11 +27,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	if (WEAK && task->isTaskfor()) {
-		std::cerr << "Warning: task loop cannot have weak dependencies. Changing them to strong dependencies." << std::endl;
-	}
-	
-	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isTaskloopSource();
+	bool weak = (WEAK && !task->isFinal()) || task->isTaskloopSource();
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, weak, start, length);
 	
 	if (start == nullptr) {

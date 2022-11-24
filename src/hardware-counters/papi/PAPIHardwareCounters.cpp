@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cstdlib>
@@ -277,16 +277,6 @@ void PAPIHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *)
 		if (ret != PAPI_OK) {
 			FatalErrorHandler::fail(ret, " when unregistering a PAPI thread - ", PAPI_strerror(ret));
 		}
-	}
-}
-
-void PAPIHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *taskCounters)
-{
-	if (_enabled) {
-		PAPITaskHardwareCounters *papiTaskCounters = (PAPITaskHardwareCounters *) taskCounters;
-		assert(papiTaskCounters != nullptr);
-
-		papiTaskCounters->clear();
 	}
 }
 

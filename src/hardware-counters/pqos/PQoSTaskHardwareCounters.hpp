@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef PQOS_TASK_HARDWARE_COUNTERS_HPP
@@ -152,8 +152,7 @@ public:
 				uint64_t childValue;
 				switch (counterType) {
 					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
-						// Only take it into account if the child (most likely taskfor
-						// collaborator) truly participated in the execution
+						// Only take it into account if the child truly participated in the execution
 						childValue = childCounters->getDelta(counterType);
 						if (childValue != 0) {
 							++_numSamples;

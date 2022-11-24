@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TRACKING_POINTS_HPP
@@ -24,15 +24,6 @@ namespace TrackingPoints {
 
 	//    COMMON FLOW OF TASKS/THREADS/CPUS    //
 
-	//! \brief Actions to be taken after a task is reinitialized (commonly Taskfors)
-	//!
-	//! Actions:
-	//! - HWCounters: Notify that the current task has reinitialized
-	//! - Monitoring: Notify that the current task has reinitialized
-	//!
-	//! \param[in] task The reinitialized task
-	void taskReinitialized(Task *task);
-
 	//! \brief Actions to be taken when a task switches to pending status
 	//!
 	//! Actions:
@@ -45,7 +36,7 @@ namespace TrackingPoints {
 	//!
 	//! Actions:
 	//! - HWCounters: Update runtime counters since the task is about to execute
-	//! - Instrument: Notify that a task is about to begin executing (or a taskfor)
+	//! - Instrument: Notify that a task is about to begin executing
 	//! - Monitoring: Notify that a task is about to begin executing
 	//!
 	//! \param[in] task The task about to execute
@@ -65,8 +56,6 @@ namespace TrackingPoints {
 	//! the tasks and all its children have completely finished their execution
 	//!
 	//! Actions:
-	//! - HWCounters: If the task is a taskfor collaborator, combine its counters
-	//!   to the taskfor source
 	//! - Monitoring: Notify that the current task has completely finished
 	//!
 	//! \param[in] task The finished task

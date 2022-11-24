@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef UNSYNC_SCHEDULER_HPP
@@ -57,11 +57,10 @@ public:
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] computePlace the hardware place asking for scheduling orders
-	//! \param[out] hasIncompatibleWork Whether the scheduler has work available but
 	//! incompatible with the computePlace asking
 	//!
 	//! \returns a ready task or nullptr
-	virtual Task *getReadyTask(ComputePlace *computePlace, bool &hasIncompatibleWork) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
 
 protected:
 	//! \brief Add ready task considering NUMA queues

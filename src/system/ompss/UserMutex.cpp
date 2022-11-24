@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -71,36 +71,31 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	// The mutex has already been allocated and cannot change, so skip the atomic part from now on
 	userMutex = userMutexReference.load();
 
-	if (currentTask->isTaskfor()) {
-		// Lock the mutex directly
-		userMutex->spinLock();
-	} else {
-		// Fast path
-		if (userMutex->tryLock()) {
-			goto end;
-		}
-
-		// Acquire the lock if possible. Otherwise queue the task.
-		if (userMutex->lockOrQueue(currentTask)) {
-			// Successful
-			goto end;
-		}
-
-		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
-		Instrument::blockedOnUserMutex(userMutex);
-
-		TaskBlocking::taskBlocks(currentThread, currentTask);
-
-		// Update the CPU since the thread may have migrated
-		computePlace = currentThread->getComputePlace();
-		assert(computePlace != nullptr);
-		Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
-
-		// This in combination with a release from other threads makes their changes visible to this one
-		std::atomic_thread_fence(std::memory_order_acquire);
-
-		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId(), true);
+	// Fast path
+	if (userMutex->tryLock()) {
+		goto end;
 	}
+
+	// Acquire the lock if possible. Otherwise queue the task.
+	if (userMutex->lockOrQueue(currentTask)) {
+		// Successful
+		goto end;
+	}
+
+	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
+	Instrument::blockedOnUserMutex(userMutex);
+
+	TaskBlocking::taskBlocks(currentThread, currentTask);
+
+	// Update the CPU since the thread may have migrated
+	computePlace = currentThread->getComputePlace();
+	assert(computePlace != nullptr);
+	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
+
+	// This in combination with a release from other threads makes their changes visible to this one
+	std::atomic_thread_fence(std::memory_order_acquire);
+
+	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId(), true);
 
 end:
 	Instrument::acquiredUserMutex(userMutex);
@@ -136,7 +131,7 @@ void nanos6_user_unlock(void **handlerPointer)
 		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
 
-		if (!currentTask->isTaskfor() && ThreadManagerPolicy::checkIfUnblockedMustPreemptUnblocker(currentTask, releasedTask, cpu)) {
+		if (ThreadManagerPolicy::checkIfUnblockedMustPreemptUnblocker(currentTask, releasedTask, cpu)) {
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 

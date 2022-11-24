@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_ADD_TASK_HPP
@@ -162,61 +162,6 @@ namespace Instrument {
 			_extraeThreadCountLock.readLock();
 		}
 		ExtraeAPI::emit_CombinedEvents ( &ce );
-		if (_traceAsThreads) {
-			_extraeThreadCountLock.readUnlock();
-		}
-	}
-
-	inline task_id_t enterInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		nanos6_task_info_t *taskInfo,
-		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
-		__attribute__((unused)) size_t flags,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		ThreadLocalData &threadLocal = getThreadLocalData();
-		Extrae::TaskInfo *_extraeTaskInfo = nullptr;
-		if (threadLocal._nestingLevels.empty()) {
-			// This may be an external thread, therefore assume that it is a spawned task
-			_extraeTaskInfo = new Extrae::TaskInfo(taskInfo, 0, context._taskId._taskInfo);
-		} else {
-			_extraeTaskInfo = new Extrae::TaskInfo(taskInfo, threadLocal._nestingLevels.back()+1, context._taskId._taskInfo);
-		}
-
-		// When creating a regular task, we emmit two events: runtime state and code location.
-		// We emmit runtime state as NANOS_CREATION and code location as the method run by the task.
-		// In this case, when adding a collaborator to taskfor, we are only emmitting one event: code location.
-		// We do not emmit runtime state because adding a collaborator does not actually mean creating a task,
-		// since collaborators are already created at scheduler initialization. We are just setting up some
-		// data structures, and so, it is not fine to emmit NANOS_CREATION.
-
-		if (_traceAsThreads) {
-			_extraeThreadCountLock.readLock();
-		}
-
-		ExtraeAPI::emit_SimpleEvent ((extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (extrae_value_t) taskInfo->implementations[0].run);
-
-		if (_traceAsThreads) {
-			_extraeThreadCountLock.readUnlock();
-		}
-
-		return task_id_t(_extraeTaskInfo);
-	}
-
-	inline void exitInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		// As we did not changed the runtime state in "enterInitTaskforCollaborator", we do not have to restore it here.
-		// Thus, emmit only code location.
-
-		if (_traceAsThreads) {
-			_extraeThreadCountLock.readLock();
-		}
-
-		ExtraeAPI::emit_SimpleEvent ((extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (extrae_value_t) nullptr);
-
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}

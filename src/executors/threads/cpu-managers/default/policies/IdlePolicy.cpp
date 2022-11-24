@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "IdlePolicy.hpp"
@@ -15,8 +15,6 @@ void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyH
 	// - If the hint is IDLE_CANDIDATE, we try to idle the current CPU
 	// - If the hint is REQUEST_CPUS, we try to wake up the requested
 	//   number of idle CPUs
-	// - If the hint is HANDLE_TASKFOR, we try to wake up all idle CPUs
-	//   that can collaborate executing it
 	if (hint == IDLE_CANDIDATE) {
 		assert(cpu != nullptr);
 
@@ -31,7 +29,7 @@ void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyH
 			ThreadManager::addIdler(currentThread);
 			currentThread->switchTo(nullptr);
 		}
-	} else if (hint == REQUEST_CPUS) {
+	} else { // hint == REQUEST_CPUS
 		assert(numRequested > 0);
 
 		// At most we will obtain as many idle CPUs as the maximum amount
@@ -46,17 +44,6 @@ void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyH
 
 		// Resume an idle thread for every idle CPU that has awakened
 		for (size_t i = 0; i < numCPUsObtained; ++i) {
-			assert(idleCPUs[i] != nullptr);
-			ThreadManager::resumeIdle(idleCPUs[i]);
-		}
-	} else { // hint = HANDLE_TASKFOR
-		assert(cpu != nullptr);
-
-		std::vector<CPU *> idleCPUs;
-		DefaultCPUManager::getIdleCollaborators(idleCPUs, cpu);
-
-		// Resume an idle thread for every unidled collaborator
-		for (size_t i = 0; i < idleCPUs.size(); ++i) {
 			assert(idleCPUs[i] != nullptr);
 			ThreadManager::resumeIdle(idleCPUs[i]);
 		}

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_STATISTICS_HPP
@@ -93,27 +93,6 @@ public:
 		assert(numEvents == 0 || allocationAddress != nullptr);
 
 		_counterPredictions = (double *) allocationAddress;
-		for (size_t i = 0; i < numEvents; ++i) {
-			_counterPredictions[i] = PREDICTION_UNAVAILABLE;
-		}
-	}
-
-	inline void reinitialize()
-	{
-		_tasktypeStatistics = nullptr;
-		_cost = DEFAULT_COST;
-		_numChildrenAlive = 1;
-		_currentChronometer = null_status;
-		_timePrediction = PREDICTION_UNAVAILABLE;
-		_ancestorHasTimePrediction = false;
-		_completedTime = 0;
-
-		for (size_t i = 0; i < num_status; ++i) {
-			_chronometers[i].restart();
-			_childrenTicks[i] = 0;
-		}
-
-		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
 		for (size_t i = 0; i < numEvents; ++i) {
 			_counterPredictions[i] = PREDICTION_UNAVAILABLE;
 		}

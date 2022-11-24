@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DEFAULT_CPU_MANAGER_HPP
@@ -134,13 +134,6 @@ public:
 	//!
 	//! \return The number of idle CPUs obtained/valid references in the vector
 	static size_t getIdleCPUs(size_t numCPUs, CPU *idleCPUs[]);
-
-	//! \brief Get all the idle CPUs that can collaborate in a taskfor
-	//!
-	//! \param[out] idleCPUs A vector where unidled collaborators are stored
-	//! \param[in] cpu The CPU from which to obtain the taskfor group id
-	static void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
-
 };
 
 #endif // DEFAULT_CPU_MANAGER_HPP

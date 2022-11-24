@@ -44,6 +44,9 @@ public:
 		final_flag=0,
 		if0_flag,
 		taskloop_flag,
+		//! Taskfors are no longer supported. Keep this flag
+		//! because the compiler can still generate taskfors.
+		//! We treat taskfors as normal tasks.
 		taskfor_flag,
 		wait_flag,
 		preallocated_args_block_flag,
@@ -158,16 +161,6 @@ public:
 		void *taskStatistics
 	);
 
-	virtual inline void reinitialize(
-		void *argsBlock,
-		size_t argsBlockSize,
-		nanos6_task_info_t *taskInfo,
-		nanos6_task_invocation_info_t *taskInvokationInfo,
-		Task *parent,
-		Instrument::task_id_t instrumentationTaskId,
-		size_t flags
-	);
-
 	virtual inline ~Task();
 
 	//! Set the address of the arguments block
@@ -209,7 +202,6 @@ public:
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
 		assert(_taskInfo != nullptr);
-		assert(!isTaskfor());
 
 		_taskInfo->implementations[0].run(_argsBlock, (void *)&_deviceEnvironment, translationTable);
 	}
@@ -630,17 +622,6 @@ public:
 		return _flags[taskloop_flag];
 	}
 
-	//! \brief Set or unset the taskfor flag
-	void setTaskfor(bool taskforValue)
-	{
-		_flags[taskfor_flag] = taskforValue;
-	}
-	//! \brief Check if the task is a taskfor
-	bool isTaskfor() const
-	{
-		return _flags[taskfor_flag];
-	}
-
 	inline bool isRunnable() const
 	{
 		return !_flags[Task::non_runnable_flag];
@@ -899,21 +880,6 @@ public:
 	}
 
 	virtual inline bool isTaskloopSource() const
-	{
-		return false;
-	}
-
-	virtual inline bool isTaskloopFor() const
-	{
-		return false;
-	}
-
-	virtual inline bool isTaskforCollaborator() const
-	{
-		return false;
-	}
-
-	virtual inline bool isTaskforSource() const
 	{
 		return false;
 	}

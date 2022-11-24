@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DLB_CPU_MANAGER_HPP
@@ -25,9 +25,6 @@ private:
 
 	//! Spinlock to access shutdown CPUs
 	static SpinLock _shutdownCPUsLock;
-
-	//! A set of collaborator masks per CPU
-	static std::vector<cpu_set_t> _collaboratorMasks;
 
 public:
 
@@ -116,24 +113,6 @@ public:
 		_shutdownCPUs[index] = true;
 		_shutdownCPUsLock.unlock();
 	}
-
-
-	/*    DLB MECHANISM    */
-
-	//! \brief Get a CPU set of all possible collaborators that can collaborate
-	//! with a taskfor owned by a certain CPU
-	//!
-	//! \param[in,out] cpu The CPU that owns the taskfor
-	//!
-	//! \return A CPU set signaling which are its collaborators
-	static inline cpu_set_t getCollaboratorMask(CPU *cpu)
-	{
-		assert(cpu != nullptr);
-
-		// Return the mask of CPUs that can collaborate with 'cpu' in taskfors
-		return _collaboratorMasks[cpu->getIndex()];
-	}
-
 };
 
 

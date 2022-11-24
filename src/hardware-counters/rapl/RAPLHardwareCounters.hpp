@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef RAPL_HARDWARE_COUNTERS_HPP
@@ -83,10 +83,6 @@ public:
 	}
 
 	inline void threadShutdown(ThreadHardwareCountersInterface *) override
-	{
-	}
-
-	inline void taskReinitialized(TaskHardwareCountersInterface *) override
 	{
 	}
 

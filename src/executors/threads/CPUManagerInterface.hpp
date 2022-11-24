@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_INTERFACE_HPP
@@ -42,12 +42,6 @@ protected:
 	//! Indicates the initialization of CPUs has finished
 	static std::atomic<bool> _finishedCPUInitialization;
 
-	//! The chosen number of taskfor groups
-	static ConfigVariable<size_t> _taskforGroups;
-
-	//! Whether we should emit a report with info about the taskfor groups.
-	static ConfigVariable<bool> _taskforGroupsReportEnabled;
-
 	//! The decision-taking policy of the CPU Manager
 	static CPUManagerPolicyInterface *_cpuManagerPolicy;
 
@@ -63,66 +57,10 @@ protected:
 	//! The virtual CPU of the leader thread
 	static CPU *_leaderThreadCPU;
 
-private:
-
-	//! \brief Taskfor-related, get the closest number of taskfor groups
-	//!
-	//! \param[in] numCPUs The number of available CPUs
-	//! \param[in] numGroups The number of groups specified by users
-	//!
-	//! \return The closest number of taskfor groups to numGroups
-	inline size_t getClosestGroupNumber(size_t numCPUs, size_t numGroups) const
-	{
-		size_t result = 0;
-
-		// If the chosen value is impossible, get the closest maximum value
-		if (numGroups == 0) {
-			// 1 group of numCPUs CPUs
-			return 1;
-		} else if (numGroups > numCPUs) {
-			// numCPUs groups of 1 CPU
-			return numCPUs;
-		}
-
-		// The chosen value is somewhat decent, get its closest valid number
-		size_t lower = numGroups - 1;
-		size_t upper = numGroups + 1;
-		while (lower > 0 || upper <= numCPUs) {
-			if ((lower > 0) && (numCPUs % lower == 0)) {
-				result = lower;
-				break;
-			}
-
-			if ((upper <= numCPUs) && (numCPUs % upper == 0)) {
-				result = upper;
-				break;
-			}
-
-			// We should never underflow as we are working with size_t
-			if (lower > 0) {
-				lower--;
-			}
-			upper++;
-		}
-
-		assert((result > 0) && (result <= numCPUs) && (numCPUs % result == 0));
-
-		return result;
-	}
-
 protected:
 
 	//! \brief Instrument-related private function
 	void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
-
-	//! \brief Find the appropriate value for the taskfor groups env var
-	//!
-	//! \param[in] numCPUs The number of CPUs used by the runtime
-	//! \param[in] numNUMANodes The number of NUMA nodes in the system
-	void refineTaskforGroups(size_t numCPUs, size_t numNUMANodes);
-
-	//! \brief Emits a brief report with information of the taskfor groups
-	void reportTaskforGroupsInfo();
 
 public:
 
@@ -165,7 +103,6 @@ public:
 	//! \brief This method is executed after the amount of work in the runtime
 	//! changes. Some common scenarios include:
 	//! - Requesting the resume of idle CPUs (hint = REQUEST_CPUS)
-	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
 	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
 	//! \param[in] cpu The CPU that triggered the call, if any
@@ -285,25 +222,6 @@ public:
 	//!
 	//! \param[in] cpu The CPU object to offer
 	virtual void addShutdownCPU(CPU *cpu) = 0;
-
-
-	/*    TASKFORS    */
-
-	//! \brief Get the number of taskfor groups
-	//!
-	//! \return The number of taskfor groups
-	inline size_t getNumTaskforGroups() const
-	{
-		return _taskforGroups;
-	}
-
-	//! \brief Get the number of CPUs that can collaborate to execute a single
-	//! taskfor. I.e. the number of CPUs per taskfor group
-	inline size_t getNumCPUsPerTaskforGroup() const
-	{
-		return _cpus.size() / _taskforGroups;
-	}
-
 };
 
 

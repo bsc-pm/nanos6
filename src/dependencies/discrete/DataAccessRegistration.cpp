@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -78,16 +78,14 @@ namespace DataAccessRegistration {
 				&& !fromBusyThread
 				&& !successorExists
 			) {
-				// Find the best immediate successor, which must be:
-				// - highest priority
-				// - not a taskfor source
-				// On priority tie, grab the first one
+				// Find the best immediate successor, which must be highest priority. On priority tie,
+				// grab the first one
 				long bestPriority = INT_MIN;
 				int bestIS = -1;
 				Task **successors = list.getArray();
 
 				for (int k = 0; k < (int)list.size(); ++k) {
-					if (successors[k]->getPriority() > bestPriority && !successors[k]->isTaskforSource()) {
+					if (successors[k]->getPriority() > bestPriority) {
 						bestPriority = successors[k]->getPriority();
 						bestIS = k;
 					}
@@ -767,7 +765,7 @@ namespace DataAccessRegistration {
 		assert(computePlace != nullptr);
 		assert(task->isRunnable());
 
-		TaskDataAccesses &accessStruct = (task->isTaskfor() ? task->getParent()->getDataAccesses() : task->getDataAccesses());
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
 		if (!accessStruct.hasDataAccesses())

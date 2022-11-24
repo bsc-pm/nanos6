@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CTFTRACEPOINTS_HPP
@@ -35,8 +35,6 @@ namespace Instrument {
 
 	void tp_task_label(const char *taskLabel, const char *taskSource, ctf_tasktype_id_t taskTypeId);
 	void tp_task_start(ctf_task_id_t taskId);
-	void tp_taskfor_init_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId);
-	void tp_taskfor_init_exit();
 
 	void tp_task_block();
 	void tp_task_unblock();

@@ -30,7 +30,6 @@
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -50,6 +49,9 @@ Task *AddTask::createTask(
 	size_t numDependencies,
 	bool fromUserCode
 ) {
+	// Taskfors are no longer supported
+	assert(!(flags & nanos6_taskfor_task));
+
 	Task *task = nullptr;
 	Task *creator = nullptr;
 	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
@@ -70,19 +72,13 @@ Task *AddTask::createTask(
 		while (Throttle::engage(creator, workerThread));
 	}
 
-	bool isTaskfor = flags & nanos6_taskfor_task;
 	bool isTaskloop = flags & nanos6_taskloop_task;
-	bool isTaskloopFor = (isTaskloop && isTaskfor);
 	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
 	size_t originalArgsBlockSize = argsBlockSize;
 	size_t taskSize;
 
-	// A taskloop for construct enables both taskloop and taskfor flags, but we must
-	// create a taskloop. Notice we first check the taskloop condition
-	if (isTaskloop || isTaskloopFor) {
+	if (isTaskloop) {
 		taskSize = sizeof(Taskloop);
-	} else if (isTaskfor) {
-		taskSize = sizeof(Taskfor);
 	} else if (isStreamExecutor) {
 		taskSize = sizeof(StreamExecutor);
 	} else {
@@ -128,17 +124,8 @@ Task *AddTask::createTask(
 	void *taskStatisticsAddress = (taskStatisticsSize > 0) ?
 		(char *) task + taskSize + taskAccessesSize + taskCountersSize : nullptr;
 
-	if (isTaskloop || isTaskloopFor) {
+	if (isTaskloop) {
 		new (task) Taskloop(argsBlock, originalArgsBlockSize,
-			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
-	} else if (isTaskfor) {
-		// Taskfors are always final
-		flags |= nanos6_final_task;
-		// Taskfors already feature the wait property
-		flags &= ~nanos6_waiting_task;
-
-		new (task) Taskfor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
 			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	} else if (isStreamExecutor) {

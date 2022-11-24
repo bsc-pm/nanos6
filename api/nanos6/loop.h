@@ -30,9 +30,9 @@ typedef struct {
 	size_t chunksize;
 } nanos6_loop_bounds_t;
 
-//! \brief Allocate space for a taskloop/taskfor/taskloopfor and its parameters
+//! \brief Allocate space for a taskloop and its parameters
 //!
-//! This function creates a taskloop/taskfor/taskloopfor and allocates space for its parameters.
+//! This function creates a taskloop and allocates space for its parameters.
 //! After calling it, the user code should fill out the block of data stored in args_block_pointer,
 //! and call nanos6_submit_task with the contents stored in task_pointer.
 //!
@@ -43,7 +43,7 @@ typedef struct {
 //! \param[in,out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call. Input if flags contains nanos6_preallocated_args_block, out otherwise
 //! \param[out] task_pointer a pointer to a location to store the task handler
 //! \param[in] flags the flags of the task
-//! \param[in] num_deps the expected number of dependencies of this taskfor or a taskloop child or -1 if undefined
+//! \param[in] num_deps the expected number of dependencies of a taskloop child or -1 if undefined
 //! \param[in] lower_bound The lower bound of the iteration space (inclusive)
 //! \param[in] upper_bound The upper bound of the iteration space (exclusive)
 //! \param[in] grainsize The minimum number of iterations which should be executed by a task
@@ -75,7 +75,7 @@ void nanos6_create_loop(
 //! \param[in,out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call. Input if flags contains nanos6_preallocated_args_block, out otherwise
 //! \param[out] task_pointer a pointer to a location to store the task handler
 //! \param[in] flags the flags of the task
-//! \param[in] num_deps the expected number of dependencies of this taskfor or a taskloop child or -1 if undefined
+//! \param[in] num_deps the expected number of dependencies of this taskiter or -1 if undefined
 //! \param[in] lower_bound The lower bound of the iteration space (inclusive)
 //! \param[in] upper_bound The upper bound of the iteration space (exclusive)
 //! \param[in] unroll The number of times the created taskiter construct should be unrolled

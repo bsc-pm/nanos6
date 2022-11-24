@@ -133,30 +133,6 @@ The scheduling infrastructure provides the following configuration variables to 
 * `scheduler.immediate_successor`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
 * `scheduler.priority`: Boolean indicating whether the scheduler should consider the task priorities defined by the user in the task's priority clause. **Enabled** by default.
 
-### Task worksharings options
-
-Worksharing tasks are a special type of tasks that can only be applied to for-loops.
-The key point of worksharing tasks is their ability to run concurrently on different threads, similarly to OpenMP parallel fors.
-In contrast, worksharing tasks do not force all the threads to collaborate neither introduce any kind of barrier.
-
-An example is shown below:
-
-```c
-#pragma oss task for chunksize(1024) inout(array[0;N]) in(a)
-for (int i = 0; i < N; ++i) {
-    array[i] += a;
-}
-```
-
-In our implementation, worksharing tasks are executed by taskfor groups.
-Taskfor groups are composed by a set of available CPUs.
-Each available CPU on the system is assigned to a specific taskfor group.
-Then, a worksharing task is assigned to a particular taskfor group, so it can be run by at most as many CPUs (also known as collaborators) as that taskfor group has.
-Users can set the number of groups (and so, implicitly, the number of collaborators) by setting the ``taskfor.groups`` configuration variable.
-By default, there are as many groups as NUMA nodes in the system.
-
-Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
-
 ## Benchmarking, tracing, debugging and other options
 
 There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -20,7 +20,6 @@
 
 boost::dynamic_bitset<> DLBCPUManager::_shutdownCPUs;
 SpinLock DLBCPUManager::_shutdownCPUsLock;
-std::vector<cpu_set_t> DLBCPUManager::_collaboratorMasks;
 
 
 void DLBCPUManager::preinitialize()
@@ -57,12 +56,6 @@ void DLBCPUManager::preinitialize()
 	assert(_cpuManagerPolicy != nullptr);
 
 
-	//    TASKFOR GROUPS    //
-
-	// FIXME-TODO: Find an appropriate mechanism to set the env var
-	_taskforGroups.setValue(1);
-
-
 	//    CPU MANAGER STRUCTURES    //
 
 	// Find the maximum system CPU id
@@ -76,10 +69,8 @@ void DLBCPUManager::preinitialize()
 		}
 	}
 
-	// Initialize the vector of CPUs, the vector of collaborator masks and
-	// the vector that maps system to virtual CPU ids
+	// Initialize the vector of CPUs and the vector that maps system to virtual CPU ids
 	_cpus.resize(numCPUs);
-	_collaboratorMasks.resize(numCPUs);
 	_systemToVirtualCPUId.resize(maxSystemCPUId + 1);
 
 	// Initialize each CPU's fields
@@ -96,11 +87,6 @@ void DLBCPUManager::preinitialize()
 		cpu->setIndex(i);
 		_systemToVirtualCPUId[systemId] = i;
 
-		// FIXME-TODO: Since we cannot control when external CPUs are returned,
-		// we set all CPUs to the same group so regardless of the group, there
-		// will be available CPUs to execute any taskfor
-		cpu->setGroupId(0);
-
 		// If the CPU is not owned by this process, mark it as such
 		if (!CPU_ISSET(systemId, &_cpuMask)) {
 			cpu->setOwned(false);
@@ -111,29 +97,7 @@ void DLBCPUManager::preinitialize()
 	}
 	assert(firstCPUFound);
 
-	// After initializing CPU fields, initialize each collaborator mask
-	for (size_t i = 0; i < numCPUs; ++i) {
-		CPU *cpu = (CPU *) cpus[i];
-		assert(cpu != nullptr);
-
-		size_t groupId = cpu->getGroupId();
-		CPU_ZERO(&_collaboratorMasks[i]);
-
-		for (size_t j = 0; j < numCPUs; ++j) {
-			CPU *collaborator = (CPU *) cpus[j];
-			assert(collaborator != nullptr);
-
-			if (collaborator->getGroupId() == groupId) {
-				// Mark that CPU 'j' is a collaborator of CPU 'i'
-				CPU_SET(j, &_collaboratorMasks[i]);
-			}
-		}
-	}
-
 	CPUManagerInterface::reportInformation(maxSystemCPUId + 1, numNUMANodes);
-	if (_taskforGroupsReportEnabled) {
-		CPUManagerInterface::reportTaskforGroupsInfo();
-	}
 
 	// All CPUs are unavailable for the shutdown process at the start
 	_shutdownCPUs.resize(numCPUs);

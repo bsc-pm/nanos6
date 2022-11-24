@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HARDWARE_COUNTERS_HPP
@@ -117,11 +117,6 @@ public:
 	//! \param[out] task The task to create structures for
 	//! \param[in] enabled Whether to create structures and monitor this task
 	static void taskCreated(Task *task, bool enabled = true);
-
-	//! \brief Reinitialize all hardware counter structures for a task
-	//!
-	//! \param[out] task The task to reinitialize structures for
-	static void taskReinitialized(Task *task);
 
 	//! \brief Combine the events of two tasks
 	//!

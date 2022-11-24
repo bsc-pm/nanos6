@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HARDWARE_COUNTERS_INTERFACE_HPP
@@ -30,11 +30,6 @@ public:
 	//!
 	//! \param[out] threadCounters The hardware counter structures to initialize
 	virtual void threadShutdown(ThreadHardwareCountersInterface *threadCounters) = 0;
-
-	//! \brief Reinitialize all hardware counter structures for a task
-	//!
-	//! \param[out] taskCounters The hardware counter structure to reinitialize
-	virtual void taskReinitialized(TaskHardwareCountersInterface *taskCounters) = 0;
 
 	//! \brief Update and read hardware counters for a task
 	//!

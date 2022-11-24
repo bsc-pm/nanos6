@@ -124,7 +124,6 @@ public:
 	//! \brief This method is executed after the amount of work in the runtime
 	//! changes. Some common scenarios include:
 	//! - Requesting the resume of idle CPUs (hint = REQUEST_CPUS)
-	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
 	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
 	//! \param[in] cpu The CPU that triggered the call, if any
@@ -316,29 +315,6 @@ public:
 
 		return _cpuManager->getShutdownCPU();
 	}
-
-
-	/*    TASKFORS    */
-
-	//! \brief Get the number of taskfor groups
-	//!
-	//! \return The number of taskfor groups
-	static inline size_t getNumTaskforGroups()
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getNumTaskforGroups();
-	}
-
-	//! \brief Get the number of CPUs that can collaborate to execute a single
-	//! taskfor. I.e. the number of CPUs per taskfor group
-	static inline size_t getNumCPUsPerTaskforGroup()
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getNumCPUsPerTaskforGroup();
-	}
-
 };
 
 

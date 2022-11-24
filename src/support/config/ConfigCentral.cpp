@@ -133,7 +133,8 @@ ConfigCentral::ConfigCentral() :
 	registerOption<string_t>("scheduler.policy", "fifo");
 	registerOption<bool_t>("scheduler.priority", true);
 
-	// Taskfor
+	// Taskfor. Not supported but do not fail if these options
+	// are present.
 	registerOption<integer_t>("taskfor.groups", 1);
 	registerOption<bool_t>("taskfor.report", false);
 

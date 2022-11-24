@@ -124,27 +124,6 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 
-	task_id_t enterInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) nanos6_task_info_t *taskInfo,
-		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
-		__attribute__((unused)) size_t flags,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		// Verbose instrumentation does not instrument task fors
-		task_id_t taskId = 0;
-
-		return taskId;
-	}
-
-	void exitInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		// Verbose instrumentation does not instrument task fors
-	}
-
 	void registeredNewSpawnedTaskType(
 		__attribute__((unused)) nanos6_task_info_t *taskInfo
 	) {

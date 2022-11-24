@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef PAPI_HARDWARE_COUNTERS_HPP
@@ -104,8 +104,6 @@ public:
 	void threadInitialized(ThreadHardwareCountersInterface *threadCounters) override;
 
 	void threadShutdown(ThreadHardwareCountersInterface *) override;
-
-	void taskReinitialized(TaskHardwareCountersInterface *taskCounters) override;
 
 	void updateTaskCounters(
 		ThreadHardwareCountersInterface *threadCounters,

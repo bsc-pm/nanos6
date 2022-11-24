@@ -121,11 +121,6 @@ void WorkerThread::body()
 				switchTo(assignedThread);
 			} else {
 				Instrument::workerThreadObtainedTask();
-				// If the task is a taskfor, the CPUManager may want to unidle
-				// collaborators to help execute it
-				if (_task->isTaskfor()) {
-					CPUManager::executeCPUManagerPolicy(cpu, HANDLE_TASKFOR, 0);
-				}
 
 				if (_task->isIf0()) {
 					// An if0 task executed outside of the implicit taskwait of its parent (i.e. not inline)
@@ -170,27 +165,6 @@ void WorkerThread::handleTask(CPU *cpu, bool)
 
 	Instrument::enterHandleTask();
 
-	// Only for source taskfors
-	if (_task->isTaskforSource()) {
-		Taskfor *source = (Taskfor *) _task;
-
-		// The scheduler set the chunk on the CPU preallocated taskfor
-		if (cpu->getPreallocatedTaskfor()->getMyChunk() >= 0) {
-			Taskfor *collaborator = LoopGenerator::createCollaborator(source, cpu);
-			assert(collaborator->isRunnable());
-			assert(collaborator->getMyChunk() >= 0);
-
-			_task = collaborator;
-		} else {
-			// The taskfor source has no chunks available
-			bool finished = source->notifyCollaboratorHasFinished();
-			if (finished) {
-				TaskFinalization::disposeTask(_task);
-			}
-			_task = nullptr;
-		}
-	}
-
 	// Execute the task
 	if (_task != nullptr) {
 		executeTask(cpu);
@@ -213,12 +187,7 @@ void WorkerThread::executeTask(CPU *cpu)
 	_task->setThread(this);
 	_task->setMemoryPlace(memoryPlace);
 
-	Instrument::task_id_t taskId;
-	if (_task->isTaskforCollaborator()) {
-		taskId = _task->getParent()->getInstrumentationTaskId();
-	} else {
-		taskId = _task->getInstrumentationTaskId();
-	}
+	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
 	Instrument::ThreadInstrumentationContext instrumentationContext(
 		taskId, cpu->getInstrumentationId(), _instrumentationId
 	);

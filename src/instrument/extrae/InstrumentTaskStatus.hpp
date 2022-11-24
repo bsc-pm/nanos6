@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_TASK_STATUS_HPP
@@ -89,20 +89,6 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		taskId._taskInfo->_priority = priority;
-	}
-
-	inline void taskforCollaboratorIsExecuting(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-	}
-
-	inline void taskforCollaboratorStopped(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
 	}
 }
 
