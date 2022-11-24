@@ -138,9 +138,6 @@ void WorkerThread::body()
 			}
 			CPUManager::checkIfMustReturnCPU(this);
 		} else {
-			// Execute polling services
-			// PollingAPI::handleServices();
-
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}

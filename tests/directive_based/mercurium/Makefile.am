@@ -232,27 +232,6 @@ endif
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
-# Inhibit linker optimization flag since it is not supported by Mercurium with CUDA
-test_cuda_flags = --cuda -fno-lto
-
-# Serialize compilation of tests since Mercurium seems to ignore the --parallel flag
-# when compiling CUDA programs
-if USE_CUDA
-.NOTPARALLEL:
-endif
-
-.cu.o:
-	$(CXX) -c -o $@ $<
-
-cuda_saxpy_mercurium_debug_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
-cuda_saxpy_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
-cuda_saxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags) $(test_cuda_flags)
-
-cuda_saxpy_mercurium_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
-cuda_saxpy_mercurium_test_CPPFLAGS = -DNDEBUG
-cuda_saxpy_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
-cuda_saxpy_mercurium_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
-
 blocking_mercurium_debug_test_SOURCES = ../blocking/blocking.cpp
 blocking_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 blocking_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
