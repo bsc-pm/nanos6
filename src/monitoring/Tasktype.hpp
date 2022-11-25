@@ -1,11 +1,11 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef TASK_INFO_HPP
-#define TASK_INFO_HPP
+#ifndef TASKTYPE_HPP
+#define TASKTYPE_HPP
 
 #include <atomic>
 #include <map>
@@ -13,8 +13,8 @@
 
 #include <nanos6/task-info-registration.h>
 
+#include "TasktypeStatistics.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "tasks/TasktypeData.hpp"
 
 
 struct TasktypeId {
@@ -31,7 +31,7 @@ struct TasktypeId {
 	}
 
 	//! \brief Overloaded lesser-operator for task_type_map_t
-	//! Duplicated TaskInfos have the same label or the same declaration
+	//! Duplicated Tasktypes have the same label or the same declaration
 	//! source, thus we must overload the operator to act this way
 	bool operator<(const TasktypeId &other) const
 	{
@@ -71,15 +71,15 @@ struct TasktypeId {
 	}
 };
 
-class TaskInfo {
+class Tasktype {
 
 private:
 
 	//! A map with task type data
-	typedef std::map<TasktypeId, TasktypeData> task_type_map_t;
+	typedef std::map<TasktypeId, TasktypeStatistics> task_type_map_t;
 	static task_type_map_t _tasktypes;
 
-	//! SpinLock to register taskinfos
+	//! SpinLock to register tasktypes
 	static SpinLock _lock;
 
 	//! Keep track of the number of unlabeled tasktypes
@@ -87,10 +87,10 @@ private:
 
 public:
 
-	//! \brief Register the taskinfo of a type of task
+	//! \brief Register a new tasktype
 	//!
-	//! \param[in,out] taskInfo A pointer to the taskinfo
-	static bool registerTaskInfo(nanos6_task_info_t *taskInfo);
+	//! \param[in,out] taskInfo A pointer to a taskinfo
+	static void registerTasktype(nanos6_task_info_t *taskInfo);
 
 	//! \brief Traverse all tasktypes and apply a certain function for each of them
 	//!
@@ -103,9 +103,9 @@ public:
 		for (auto &tasktype : _tasktypes) {
 			const std::string &label = tasktype.first._taskLabel;
 			const std::string &source = tasktype.first._taskDeclarationSource;
-			TasktypeData &tasktypeData = tasktype.second;
+			TasktypeStatistics &tasktypeStatistics = tasktype.second;
 
-			functionToApply(label, source, tasktypeData);
+			functionToApply(label, source, tasktypeStatistics);
 		}
 
 		_lock.unlock();
@@ -113,4 +113,4 @@ public:
 
 };
 
-#endif // TASK_INFO_HPP
+#endif // TASKTYPE_HPP

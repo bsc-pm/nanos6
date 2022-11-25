@@ -16,10 +16,10 @@
 #include "AddTask.hpp"
 #include "SpawnFunction.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/TaskInfo.hpp"
 
 #include <InstrumentAddTask.hpp>
 
@@ -102,13 +102,16 @@ void SpawnFunction::spawnFunction(
 
 			// The completion callback will be called when the task is destroyed
 			taskInfo->destroy_args_block = SpawnFunction::spawnedFunctionDestructor;
+			
+			// Since it is a new taskinfo, register it in the Instrumentation
+			Instrument::registeredNewSpawnedTaskType(taskInfo);
+			
+			// If a taskinfo is created and it is new, we notify Monitoring so
+			// a new type is created. If the taskinfo is not new, it will exist
+			// and it is being used, so we don't need to call registerTasktype
+			Monitoring::registerTasktype(taskInfo);
 		}
 	}
-
-	// Register the new task info
-	bool newTaskType = TaskInfo::registerTaskInfo(taskInfo);
-	if (newTaskType)
-		Instrument::registeredNewSpawnedTaskType(taskInfo);
 
 	// Create the task representing the spawned function
 	Task *task = AddTask::createTask(

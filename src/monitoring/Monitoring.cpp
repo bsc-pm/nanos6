@@ -11,6 +11,7 @@
 #include "Monitoring.hpp"
 #include "MonitoringSupport.hpp"
 #include "TaskMonitor.hpp"
+#include "Tasktype.hpp"
 #include "TasktypeStatistics.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
@@ -18,7 +19,6 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "support/JsonFile.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/TaskInfo.hpp"
 
 
 ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled");
@@ -165,9 +165,8 @@ size_t Monitoring::getPredictedCPUUsage(size_t time)
 		double currentWorkload = 0.0;
 		size_t currentActiveInstances = 0;
 		size_t currentPredictionlessInstances = 0;
-		TaskInfo::processAllTasktypes(
-			[&](const std::string &, const std::string &, TasktypeData &tasktypeData) {
-				TasktypeStatistics &statistics = tasktypeData.getTasktypeStatistics();
+		Tasktype::processAllTasktypes(
+			[&](const std::string &, const std::string &, TasktypeStatistics &statistics) {
 				Chrono completedChrono(statistics.getCompletedTime());
 				double completedTime = ((double) completedChrono);
 				size_t accumulatedCost = statistics.getAccumulatedCost();
@@ -202,9 +201,8 @@ double Monitoring::getPredictedElapsedTime()
 		assert(_cpuMonitor != nullptr);
 
 		double currentWorkload = 0.0;
-		TaskInfo::processAllTasktypes(
-			[&](const std::string &, const std::string &, TasktypeData &tasktypeData) {
-				TasktypeStatistics &statistics = tasktypeData.getTasktypeStatistics();
+		Tasktype::processAllTasktypes(
+			[&](const std::string &, const std::string &, TasktypeStatistics &statistics) {
 				Chrono completedChrono(statistics.getCompletedTime());
 				double completedTime = ((double) completedChrono);
 				size_t accumulatedCost = statistics.getAccumulatedCost();
@@ -269,15 +267,14 @@ void Monitoring::loadMonitoringWisdom()
 		[&](const std::string &label, const JsonNode<> &metricsNode) {
 			// For each tasktype in the file, process all current registered
 			// tasktypes to check if we must copy the wisdom data into them
-			TaskInfo::processAllTasktypes(
-				[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
+			Tasktype::processAllTasktypes(
+				[&](const std::string &taskLabel, const std::string &, TasktypeStatistics &tasktypeStatistics) {
 					if (taskLabel == label) {
 						// Labels coincide, first copy Monitoring data
 						if (metricsNode.dataExists("NORMALIZED_COST")) {
 							double metricValue = 0.0;
 							bool converted = metricsNode.getData("NORMALIZED_COST", metricValue);
 							if (converted) {
-								TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 								tasktypeStatistics.insertNormalizedTime(metricValue);
 							}
 						}
@@ -292,7 +289,6 @@ void Monitoring::loadMonitoringWisdom()
 								double metricValue = 0.0;
 								bool converted = metricsNode.getData(metricLabel, metricValue);
 								if (converted) {
-									TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 									tasktypeStatistics.insertNormalizedCounter(i, metricValue);
 								}
 							}
@@ -315,8 +311,8 @@ void Monitoring::storeMonitoringWisdom()
 	std::vector<std::pair<std::string, JsonNode<double>>> nodesToSave;
 
 	// Process all the tasktypes and gather Monitoring and Hardware Counters metrics
-	TaskInfo::processAllTasktypes(
-		[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
+	Tasktype::processAllTasktypes(
+		[&](const std::string &taskLabel, const std::string &, TasktypeStatistics &tasktypeStatistics) {
 			// If the file already contains this tasktype as a node, retreive
 			// its inner node instead of creating a new one
 			JsonNode<double> tasktypeNode;
@@ -325,7 +321,6 @@ void Monitoring::storeMonitoringWisdom()
 			}
 
 			// Retreive monitoring statistics
-			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 			double value = tasktypeStatistics.getTimingRollingAverage();
 			if (tasktypeNode.dataExists("NORMALIZED_COST")) {
 				tasktypeNode.replaceData("NORMALIZED_COST", value);

@@ -406,6 +406,7 @@ common_sources = \
 	src/memory/numa/NUMAManager.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
+	src/monitoring/Tasktype.cpp \
 	src/monitoring/TasktypeStatistics.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
@@ -1263,6 +1264,7 @@ noinst_HEADERS = \
 	src/monitoring/MonitoringSupport.hpp \
 	src/monitoring/TaskMonitor.hpp \
 	src/monitoring/TaskStatistics.hpp \
+	src/monitoring/Tasktype.hpp \
 	src/monitoring/TasktypeStatistics.hpp \
 	src/scheduling/LocalScheduler.hpp \
 	src/scheduling/ReadyQueue.hpp \
@@ -1339,7 +1341,6 @@ noinst_HEADERS = \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/TaskImplementation.hpp \
-	src/tasks/TaskInfo.hpp \
 	src/tasks/Taskloop.hpp \
 	src/tasks/TasktypeData.hpp \
 	src/version/VersionInfo.hpp \

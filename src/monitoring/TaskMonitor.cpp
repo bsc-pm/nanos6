@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 
+#include "Monitoring.hpp"
 #include "MonitoringSupport.hpp"
 #include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
@@ -18,7 +19,6 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
-
 
 void TaskMonitor::taskCreated(Task *task, Task *parent) const
 {
@@ -47,8 +47,8 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 	TasktypeData *tasktypeData = task->getTasktypeData();
 	if (tasktypeData != nullptr) {
 		// Predict timing metrics
-		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
-		double timePrediction = tasktypeStatistics.getTimingPrediction(cost);
+		TasktypeStatistics *tasktypeStatistics = tasktypeData->getTasktypeStatistics();
+		double timePrediction = tasktypeStatistics->getTimingPrediction(cost);
 		if (timePrediction != PREDICTION_UNAVAILABLE) {
 			taskStatistics->setTimePrediction(timePrediction);
 		}
@@ -56,23 +56,23 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		// Predict hardware counter metrics
 		size_t numEnabledCounters = HardwareCounters::getNumEnabledCounters();
 		for (size_t i = 0; i < numEnabledCounters; ++i) {
-			double counterPrediction = tasktypeStatistics.getCounterPrediction(i, cost);
+			double counterPrediction = tasktypeStatistics->getCounterPrediction(i, cost);
 			if (counterPrediction != PREDICTION_UNAVAILABLE) {
 				taskStatistics->setCounterPrediction(i, counterPrediction);
 			}
 		}
 
 		// Set the task's tasktype statistics for future references
-		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
+		taskStatistics->setTasktypeStatistics(tasktypeStatistics);
 	} else if (task->getLabel() == "main") {
 		// Create mockup statistics for the main task
-		TaskInfo::registerTaskInfo(task->getTaskInfo());
+		Monitoring::registerTasktype(task->getTaskInfo());
 
 		tasktypeData = task->getTasktypeData();
 		assert(tasktypeData != nullptr);
 
-		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
-		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
+		TasktypeStatistics *tasktypeStatistics = tasktypeData->getTasktypeStatistics();
+		taskStatistics->setTasktypeStatistics(tasktypeStatistics);
 	}
 }
 
@@ -222,10 +222,8 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 	stream << "|       TASK STATISTICS       |\n";
 	stream << "+-----------------------------+\n";
 
-	TaskInfo::processAllTasktypes(
-		[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
-			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
-
+	Tasktype::processAllTasktypes(
+		[&](const std::string &taskLabel, const std::string &, TasktypeStatistics &tasktypeStatistics) {
 			// Display monitoring-related statistics
 			size_t numInstances = tasktypeStatistics.getTimingNumInstances();
 			if (numInstances) {
