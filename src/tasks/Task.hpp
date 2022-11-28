@@ -30,7 +30,7 @@ struct StreamFunctionCallback;
 class ComputePlace;
 class MemoryPlace;
 class TaskStatistics;
-class TasktypeData;
+class TaskInfoData;
 class WorkerThread;
 
 #pragma GCC diagnostic push
@@ -860,12 +860,11 @@ public:
 		return _flags[onready_completed_flag];
 	}
 
-	inline TasktypeData *getTasktypeData() const
+	inline TaskInfoData *getTaskInfoData() const
 	{
 		if (_taskInfo != nullptr) {
-			return (TasktypeData *) _taskInfo->task_type_data;
+			return (TaskInfoData *) _taskInfo->task_type_data;
 		}
-
 		return nullptr;
 	}
 

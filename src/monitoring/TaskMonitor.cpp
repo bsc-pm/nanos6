@@ -18,7 +18,8 @@
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/TaskInfo.hpp"
+#include "tasks/TaskInfoManager.hpp"
+
 
 void TaskMonitor::taskCreated(Task *task, Task *parent) const
 {
@@ -43,37 +44,26 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		);
 	}
 
-	// Predict metrics using past data
-	TasktypeData *tasktypeData = task->getTasktypeData();
-	if (tasktypeData != nullptr) {
-		// Predict timing metrics
-		TasktypeStatistics *tasktypeStatistics = tasktypeData->getTasktypeStatistics();
-		double timePrediction = tasktypeStatistics->getTimingPrediction(cost);
-		if (timePrediction != PREDICTION_UNAVAILABLE) {
-			taskStatistics->setTimePrediction(timePrediction);
-		}
+	TaskInfoData *taskInfoData = task->getTaskInfoData();
 
-		// Predict hardware counter metrics
-		size_t numEnabledCounters = HardwareCounters::getNumEnabledCounters();
-		for (size_t i = 0; i < numEnabledCounters; ++i) {
-			double counterPrediction = tasktypeStatistics->getCounterPrediction(i, cost);
-			if (counterPrediction != PREDICTION_UNAVAILABLE) {
-				taskStatistics->setCounterPrediction(i, counterPrediction);
-			}
-		}
-
-		// Set the task's tasktype statistics for future references
-		taskStatistics->setTasktypeStatistics(tasktypeStatistics);
-	} else if (task->getLabel() == "main") {
-		// Create mockup statistics for the main task
-		Monitoring::registerTasktype(task->getTaskInfo());
-
-		tasktypeData = task->getTasktypeData();
-		assert(tasktypeData != nullptr);
-
-		TasktypeStatistics *tasktypeStatistics = tasktypeData->getTasktypeStatistics();
-		taskStatistics->setTasktypeStatistics(tasktypeStatistics);
+	// Predict timing metrics using past data
+	TasktypeStatistics *tasktypeStatistics = taskInfoData->getTasktypeStatistics();
+	double timePrediction = tasktypeStatistics->getTimingPrediction(cost);
+	if (timePrediction != PREDICTION_UNAVAILABLE) {
+		taskStatistics->setTimePrediction(timePrediction);
 	}
+
+	// Predict hardware counter metrics using past data
+	size_t numEnabledCounters = HardwareCounters::getNumEnabledCounters();
+	for (size_t i = 0; i < numEnabledCounters; ++i) {
+		double counterPrediction = tasktypeStatistics->getCounterPrediction(i, cost);
+		if (counterPrediction != PREDICTION_UNAVAILABLE) {
+			taskStatistics->setCounterPrediction(i, counterPrediction);
+		}
+	}
+
+	// Set the task's tasktype statistics for future references
+	taskStatistics->setTasktypeStatistics(tasktypeStatistics);
 }
 
 void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) const

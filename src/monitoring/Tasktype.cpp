@@ -8,7 +8,7 @@
 #include <string>
 
 #include "Tasktype.hpp"
-#include "tasks/TasktypeData.hpp"
+#include "tasks/TaskInfoManager.hpp"
 
 
 Tasktype::task_type_map_t Tasktype::_tasktypes;
@@ -51,8 +51,8 @@ void Tasktype::registerTasktype(nanos6_task_info_t *taskInfo)
 
 	// Save a ref of the tasktype statistics in the tasktype data of the taskinfo
 	task_type_map_t::iterator it = emplacedElement.first;
-	TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-	assert(tasktypeData != nullptr);
+	TaskInfoData *taskInfoData = (TaskInfoData *) taskInfo->task_type_data;
+	assert(taskInfoData != nullptr);
 	
-	tasktypeData->setTasktypeStatistics(&(it->second));
+	taskInfoData->setTasktypeStatistics(&(it->second));
 }
