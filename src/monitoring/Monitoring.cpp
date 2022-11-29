@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <config.h>
@@ -36,9 +36,7 @@ size_t Monitoring::_predictedCPUUsage(0);
 void Monitoring::preinitialize()
 {
 	if (_enabled) {
-		// Create the task monitor before the CPUManager is initialized.
-		// This is due to per-CPU preallocated taskfors needing task monitoring
-		// to be enabled before they are constructed
+		// Create the task monitor before the CPUManager is initialized
 		_taskMonitor = new TaskMonitor();
 		assert(_taskMonitor != nullptr);
 
@@ -104,16 +102,6 @@ void Monitoring::taskCreated(Task *task)
 		// Populate task statistic structures and predict metrics
 		Task *parent = task->getParent();
 		_taskMonitor->taskCreated(task, parent);
-	}
-}
-
-void Monitoring::taskReinitialized(Task *task)
-{
-	if (_enabled) {
-		assert(_taskMonitor != nullptr);
-
-		// Reset task statistics
-		_taskMonitor->taskReinitialized(task);
 	}
 }
 

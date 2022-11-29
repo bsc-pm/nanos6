@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HOST_UNSYNC_SCHEDULER_HPP
@@ -11,22 +11,12 @@
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "scheduling/ready-queues/ReadyQueueDeque.hpp"
 #include "scheduling/ready-queues/ReadyQueueMap.hpp"
-#include "support/Containers.hpp"
-
-class Taskfor;
 
 class HostUnsyncScheduler : public UnsyncScheduler {
-	typedef Container::vector<Taskfor *> taskfor_group_slots_t;
-
-	taskfor_group_slots_t _groupSlots;
-
 public:
 	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority) :
 		UnsyncScheduler(policy, enablePriority)
 	{
-		size_t groups = CPUManager::getNumTaskforGroups();
-		_groupSlots = taskfor_group_slots_t(groups, nullptr);
-
 		_deadlineTasks = new DeadlineQueue(policy);
 		assert(_deadlineTasks != nullptr);
 
@@ -60,11 +50,10 @@ public:
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] computePlace The hardware place asking for scheduling orders
-	//! \param[out] hasIncompatibleWork Whether the scheduler has work available but
 	//! incompatible with the computePlace asking
 	//!
 	//! \returns A ready task or nullptr
-	Task *getReadyTask(ComputePlace *computePlace, bool &hasIncompatibleWork);
+	Task *getReadyTask(ComputePlace *computePlace);
 };
 
 #endif // HOST_UNSYNC_SCHEDULER_HPP

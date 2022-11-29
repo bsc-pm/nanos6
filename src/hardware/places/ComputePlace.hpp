@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef COMPUTE_PLACE_HPP
@@ -20,7 +20,6 @@
 
 class MemoryPlace;
 class Task;
-class Taskfor;
 
 //! \brief A class that represents a place where code can be executed either directly, or in a sub-place within
 class ComputePlace {
@@ -29,15 +28,6 @@ private:
 
 	//! Accessible from this compute place
 	memory_places_t _memoryPlaces;
-
-	//! Preallocated taskfor to be used as taskfor collaborator
-	Taskfor *_preallocatedTaskfor;
-
-	//! Preallocated argsBlock for the taskfor collaborator
-	void *_preallocatedArgsBlock;
-
-	//! The size of the preallocated argsBlock
-	size_t _preallocatedArgsBlockSize;
 
 	//! Whether this cpu is owned by the runtime
 	bool _owned;
@@ -64,9 +54,18 @@ protected:
 	CPUDependencyData _dependencyData;
 
 public:
-	ComputePlace(int index, nanos6_device_t type, bool owned = true);
+	ComputePlace(int index, nanos6_device_t type, bool owned = true) :
+		_owned(owned),
+		_randomEngine(index),
+		_firstSuccessor(nullptr),
+		_index(index),
+		_type(type)
+	{
+	}
 
-	virtual ~ComputePlace();
+	virtual ~ComputePlace()
+	{
+	}
 
 	inline size_t getMemoryPlacesCount() const
 	{
@@ -81,14 +80,6 @@ public:
 		}
 		return nullptr;
 	}
-
-	//! \brief returns the preallocated taskfor of this ComputePlace.
-	inline Taskfor *getPreallocatedTaskfor()
-	{
-		return _preallocatedTaskfor;
-	}
-
-	void *getPreallocatedArgsBlock(size_t requiredSize);
 
 	inline int getIndex() const
 	{

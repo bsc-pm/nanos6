@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "DefaultCPUActivation.hpp"
@@ -73,45 +73,13 @@ void DefaultCPUManager::preinitialize()
 	_cpus.resize(numAvailableCPUs);
 	_systemToVirtualCPUId.resize(numSystemCPUs);
 
-	// Find the appropriate value for taskfor groups
-	std::vector<int> availableNUMANodes(numNUMANodes, 0);
-	for (size_t i = 0; i < numCPUs; i++) {
-		CPU *cpu = (CPU *) cpus[i];
-		assert(cpu != nullptr);
-
-		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-			size_t NUMANodeId = cpu->getNumaNodeId();
-			availableNUMANodes[NUMANodeId]++;
-		}
-	}
-
-	size_t numValidNUMANodes = 0;
-	for (size_t i = 0; i < numNUMANodes; i++) {
-		if (availableNUMANodes[i] > 0) {
-			numValidNUMANodes++;
-		}
-	}
-	refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
-
 	// Initialize each CPU's fields
-	size_t groupId = 0;
 	size_t virtualCPUId = 0;
-	size_t numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
-	assert(numCPUsPerTaskforGroup > 0);
 
 	for (size_t i = 0; i < numCPUs; ++i) {
 		CPU *cpu = (CPU *) cpus[i];
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-			// Check if this CPU goes into another group
-			if (numCPUsPerTaskforGroup == 0) {
-				numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups()) - 1;
-				++groupId;
-			} else {
-				--numCPUsPerTaskforGroup;
-			}
-
 			cpu->setIndex(virtualCPUId);
-			cpu->setGroupId(groupId);
 			_cpus[virtualCPUId] = cpu;
 			++virtualCPUId;
 		} else {
@@ -125,9 +93,6 @@ void DefaultCPUManager::preinitialize()
 	_firstCPUId = 0;
 
 	CPUManagerInterface::reportInformation(numSystemCPUs, numNUMANodes);
-	if (_taskforGroupsReportEnabled) {
-		CPUManagerInterface::reportTaskforGroupsInfo();
-	}
 
 	// Initialize idle CPU structures
 	_idleCPUs.resize(numAvailableCPUs);
@@ -311,46 +276,4 @@ size_t DefaultCPUManager::getIdleCPUs(
 
 	return numObtainedCPUs;
 }
-
-void DefaultCPUManager::getIdleCollaborators(
-	std::vector<CPU *> &idleCPUs,
-	ComputePlace *cpu
-) {
-	assert(cpu != nullptr);
-
-	size_t numObtainedCollaborators = 0;
-	size_t groupId = ((CPU *) cpu)->getGroupId();
-
-	_idleCPUsLock.lock();
-
-	boost::dynamic_bitset<>::size_type id = _idleCPUs.find_first();
-	while (id != boost::dynamic_bitset<>::npos) {
-		CPU *collaborator = _cpus[id];
-		assert(collaborator != nullptr);
-
-		if (groupId == collaborator->getGroupId()) {
-			// Mark the CPU as active
-			_idleCPUs[id] = false;
-
-			// Place the CPU in the vector
-			idleCPUs.push_back(collaborator);
-			++numObtainedCollaborators;
-		}
-
-		// Iterate to the next idle CPU
-		id = _idleCPUs.find_next(id);
-	}
-
-	// Decrease the counter of idle CPUs by the obtained amount
-	assert(_numIdleCPUs >= numObtainedCollaborators);
-	_numIdleCPUs -= numObtainedCollaborators;
-
-	_idleCPUsLock.unlock();
-
-	for (size_t i = 0; i < numObtainedCollaborators; ++i) {
-		// Runtime Tracking Point - A cpu becomes active
-		TrackingPoints::cpuBecomesActive(idleCPUs[i]);
-	}
-}
-
 

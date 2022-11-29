@@ -102,32 +102,6 @@ namespace Instrument {
 		}
 	}
 
-	inline task_id_t enterInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		nanos6_task_info_t *taskInfo,
-		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
-		__attribute__((unused)) size_t flags,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		ctf_task_id_t taskId;
-		ctf_tasktype_id_t taskTypeId;
-
-		task_id_t task_id(true);
-		taskId = task_id._taskId;
-		taskTypeId = ctfGetTaskTypeId(taskInfo);
-		tp_taskfor_init_enter(taskTypeId, taskId);
-
-		return task_id;
-	}
-
-	inline void exitInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		tp_taskfor_init_exit();
-	}
-
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
 	{
 		const char *label = taskInfo->implementations[0].task_type_label;

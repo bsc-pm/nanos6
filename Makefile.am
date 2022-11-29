@@ -444,7 +444,6 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Task.cpp \
-	src/tasks/Taskfor.cpp \
 	src/tasks/TaskInfo.cpp \
 	src/tasks/Taskloop.cpp
 
@@ -1339,7 +1338,6 @@ noinst_HEADERS = \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
-	src/tasks/Taskfor.hpp \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/TaskInfo.hpp \
 	src/tasks/Taskloop.hpp \

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_TASK_STATUS_HPP
@@ -78,16 +78,6 @@ namespace Instrument {
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	//! \param[in] priority the new priority
 	void taskHasNewPriority(task_id_t taskId, long priority, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-
-	//! \brief Indicates that the task is currently being executed as a collaborator of a taskfor
-	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
-	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
-	void taskforCollaboratorIsExecuting(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-
-	//! \brief Indicates that the taskfor collaborator has stopped
-	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
-	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
-	void taskforCollaboratorStopped(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 }
 
 

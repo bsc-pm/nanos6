@@ -10,7 +10,6 @@
 
 #include "AddTask.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
 
 void nanos6_create_loop(
@@ -35,10 +34,14 @@ void nanos6_create_loop(
 		FatalErrorHandler::fail("No hardware associated for task device type", deviceType);
 	}
 
-	// The compiler passes either the num deps of a single child or -1. However, the parent taskloop
-	// must register as many deps as num_deps * numTasks
-	bool isTaskloop = flags & nanos6_taskloop_task;
-	if (num_deps != (size_t) -1 && isTaskloop) {
+	// Taskfor is no longer supported. Only accept taskloops
+	if (flags & nanos6_taskfor_task) {
+		FatalErrorHandler::fail("Taskfor no longer supported");
+	}
+
+	// The compiler passes either the num deps of a single child or -1. However, the parent
+	// taskloop must register as many deps as num_deps * numTasks
+	if (num_deps != (size_t) -1) {
 		size_t numTasks = Taskloop::computeNumTasks((upper_bound - lower_bound), grainsize);
 		num_deps *= numTasks;
 	}
@@ -54,14 +57,9 @@ void nanos6_create_loop(
 	*args_block_pointer = task->getArgsBlock();
 
 	assert(task != nullptr);
-	assert(task->isTaskfor() || task->isTaskloop());
+	assert(task->isTaskloop());
 
-	if (task->isTaskloop()) {
-		Taskloop *taskloop = (Taskloop *) task;
-		taskloop->initialize(lower_bound, upper_bound, grainsize, chunksize);
-	} else {
-		Taskfor *taskfor = (Taskfor *) task;
-		taskfor->initialize(lower_bound, upper_bound, chunksize);
-	}
+	Taskloop *taskloop = (Taskloop *) task;
+	taskloop->initialize(lower_bound, upper_bound, grainsize, chunksize);
 }
 

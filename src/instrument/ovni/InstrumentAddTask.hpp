@@ -89,35 +89,6 @@ namespace Instrument {
 		Ovni::submitTaskExit();
 	}
 
-	inline task_id_t enterInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		nanos6_task_info_t *taskInfo,
-		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
-		__attribute__((unused)) size_t flags,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		Ovni::enterCreateTask();
-
-		uint32_t taskId;
-		uint32_t taskTypeId;
-
-		task_id_t task_id;
-		taskId = task_id.assignNewId();
-		taskTypeId = getTaskTypeId(taskInfo);
-
-		Ovni::taskCreate(taskId, taskTypeId);
-
-		return task_id;
-	}
-
-	inline void exitInitTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		Ovni::exitCreateTask();
-	}
-
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
 	{
 		assert(taskInfo != nullptr);

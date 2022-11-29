@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "CTFTracepoints.hpp"
@@ -33,8 +33,6 @@ static CTFAPI::CTFEvent *eventTaskSubmitTaskContextEnter;
 static CTFAPI::CTFEvent *eventTaskSubmitTaskContextExit;
 static CTFAPI::CTFEvent *eventTaskSubmitOtherContextEnter;
 static CTFAPI::CTFEvent *eventTaskSubmitOtherContextExit;
-static CTFAPI::CTFEvent *eventTaskforInitEnter;
-static CTFAPI::CTFEvent *eventTaskforInitExit;
 static CTFAPI::CTFEvent *eventTaskStart;
 static CTFAPI::CTFEvent *eventTaskBlock;
 static CTFAPI::CTFEvent *eventTaskUnblock;
@@ -170,15 +168,6 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 		"nanos6:task_start",
 		"\t\tuint32_t _id;\n",
 		CTFAPI::CTFContextRuntimeHWC
-	));
-	eventTaskforInitEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:taskfor_init_enter",
-		"\t\tuint16_t _type;\n"
-		"\t\tuint32_t _id;\n"
-	));
-	eventTaskforInitExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:taskfor_init_exit",
-		"\t\tuint8_t _dummy;\n"
 	));
 	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_block",
@@ -469,23 +458,6 @@ void Instrument::tp_task_create_oc_exit()
 
 	char dummy = 0;
 	CTFAPI::tracepoint(eventTaskCreateOtherContextExit, dummy);
-}
-
-void Instrument::tp_taskfor_init_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
-{
-	if (!eventTaskforInitEnter->isEnabled())
-		return;
-
-	CTFAPI::tracepoint(eventTaskforInitEnter, taskTypeId, taskId);
-}
-
-void Instrument::tp_taskfor_init_exit()
-{
-	if (!eventTaskforInitExit->isEnabled())
-		return;
-
-	char dummy = 0;
-	CTFAPI::tracepoint(eventTaskforInitExit, dummy);
 }
 
 void Instrument::tp_task_submit_tc_enter()

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "TrackingPoints.hpp"
@@ -10,7 +10,6 @@
 #include "hardware-counters/HardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/Taskfor.hpp"
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentBlockingAPI.hpp>
@@ -23,12 +22,6 @@
 #include <InstrumentThreadManagement.hpp>
 #include <InstrumentUserMutex.hpp>
 
-
-void TrackingPoints::taskReinitialized(Task *task)
-{
-	HardwareCounters::taskReinitialized(task);
-	Monitoring::taskReinitialized(task);
-}
 
 void TrackingPoints::taskIsPending(const Task *task)
 {
@@ -45,18 +38,8 @@ void TrackingPoints::taskIsExecuting(Task *task)
 	HardwareCounters::updateRuntimeCounters();
 
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-	if (task->isTaskforCollaborator()) {
-		bool first = ((Taskfor *) task)->hasFirstChunk();
-		Task *parent = task->getParent();
-		assert(parent != nullptr);
-
-		Instrument::task_id_t parentId = parent->getInstrumentationTaskId();
-		Instrument::startTaskforCollaborator(parentId, taskId, first);
-		Instrument::taskforCollaboratorIsExecuting(parentId, taskId);
-	} else {
-		Instrument::startTask(taskId);
-		Instrument::taskIsExecuting(taskId);
-	}
+	Instrument::startTask(taskId);
+	Instrument::taskIsExecuting(taskId);
 
 	Monitoring::taskChangedStatus(task, executing_status);
 }
@@ -71,18 +54,8 @@ void TrackingPoints::taskCompletedUserCode(Task *task)
 		Monitoring::taskCompletedUserCode(task);
 
 		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (task->isTaskforCollaborator()) {
-			bool last = ((Taskfor *) task)->hasLastChunk();
-			Task *parent = task->getParent();
-			assert(parent != nullptr);
-
-			Instrument::task_id_t parentTaskId = parent->getInstrumentationTaskId();
-			Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
-			Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
-		} else {
-			Instrument::taskIsZombie(taskId);
-			Instrument::endTask(taskId);
-		}
+		Instrument::taskIsZombie(taskId);
+		Instrument::endTask(taskId);
 	} else {
 		Monitoring::taskChangedStatus(task, paused_status);
 		Monitoring::taskCompletedUserCode(task);
@@ -92,17 +65,6 @@ void TrackingPoints::taskCompletedUserCode(Task *task)
 void TrackingPoints::taskFinished(Task *task)
 {
 	assert(task != nullptr);
-
-	// If this is a taskfor collaborator, we must accumulate its counters into the taskfor source
-	if (task->isTaskforCollaborator()) {
-		Taskfor *source = (Taskfor *) task->getParent();
-		assert(source != nullptr);
-		assert(source->isTaskfor() && source->isTaskforSource());
-
-		// Combine the hardware counters of the taskfor collaborator (task)
-		// into the taskfor source (source)
-		HardwareCounters::taskCombineCounters(source, task);
-	}
 
 	// Propagate monitoring actions for this task since it has finished
 	Monitoring::taskFinished(task);

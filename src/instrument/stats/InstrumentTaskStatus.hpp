@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_STATS_TASK_STATUS_HPP
@@ -60,33 +60,6 @@ namespace Instrument {
 
 	inline void taskHasNewPriority(task_id_t, long, InstrumentationContext const &)
 	{
-	}
-
-	inline void taskforCollaboratorIsExecuting(
-		task_id_t,
-		task_id_t collaboratorId,
-		InstrumentationContext const &
-	) {
-		assert(collaboratorId->_currentTimer != nullptr);
-
-		collaboratorId->_currentTimer->continueAt(collaboratorId->_times._executionTime);
-		collaboratorId->_currentTimer = &collaboratorId->_times._executionTime;
-	}
-
-	inline void taskforCollaboratorStopped(
-		task_id_t taskforId,
-		task_id_t collaboratorId,
-		InstrumentationContext const &
-	) {
-		assert(collaboratorId->_currentTimer != nullptr);
-
-		collaboratorId->_currentTimer->continueAt(collaboratorId->_times._zombieTime);
-		collaboratorId->_currentTimer = &collaboratorId->_times._zombieTime;
-
-		// Synchronization required
-		taskforId->_lock.lock();
-		taskforId->_times._executionTime += collaboratorId->_times._executionTime;
-		taskforId->_lock.unlock();
 	}
 }
 

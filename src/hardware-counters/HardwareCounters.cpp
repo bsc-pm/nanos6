@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "CPUHardwareCounters.hpp"
@@ -220,26 +220,6 @@ void HardwareCounters::taskCreated(Task *task, bool enabled)
 		// After the task is created, initialize (construct) hardware counters
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
 		taskCounters.initialize(enabled);
-	}
-}
-
-void HardwareCounters::taskReinitialized(Task *task)
-{
-	if (_anyBackendEnabled) {
-		assert(task != nullptr);
-
-		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-		if (_enabled[HWCounters::PAPI_BACKEND]) {
-			assert(_papiBackend != nullptr);
-
-			_papiBackend->taskReinitialized(taskCounters.getPAPICounters());
-		}
-
-		if (_enabled[HWCounters::PQOS_BACKEND]) {
-			assert(_pqosBackend != nullptr);
-
-			_pqosBackend->taskReinitialized(taskCounters.getPQoSCounters());
-		}
 	}
 }
 

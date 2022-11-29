@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -217,16 +217,6 @@ void PQoSHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *threa
 			ret != PQOS_RETVAL_OK,
 			ret, " when stopping hardware counters for a thread"
 		);
-	}
-}
-
-void PQoSHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *taskCounters)
-{
-	if (_enabled) {
-		PQoSTaskHardwareCounters *pqosCounters = (PQoSTaskHardwareCounters *) taskCounters;
-		assert(pqosCounters != nullptr);
-
-		pqosCounters->clear();
 	}
 }
 

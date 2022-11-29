@@ -48,24 +48,12 @@ base_tests += \
 	dep-wait.clang.test \
 	simple-commutative.clang.test \
 	commutative-stencil.clang.test \
-	task-for-multiaxpy.clang.test \
-	task-for-dep-multiaxpy.clang.test \
-	task-for-nonpod.clang.test \
-	task-for-nqueens.clang.test \
-	task-for-wait.clang.test \
 	taskloop-multiaxpy.clang.test \
 	taskloop-dep-multiaxpy.clang.test \
 	taskloop-nested-dep-multiaxpy.clang.test \
 	taskloop-nonpod.clang.test \
 	taskloop-nqueens.clang.test \
-	taskloop-wait.clang.test \
-	taskloop-for-multiaxpy.clang.test \
-	taskloop-for-dep-multiaxpy.clang.test \
-	taskloop-for-nested-dep-multiaxpy.clang.test \
-	taskloop-for-nonpod.clang.test \
-	taskloop-for-nqueens.clang.test \
-	taskloop-for-reduction.clang.test \
-	taskloop-for-wait.clang.test
+	taskloop-wait.clang.test
 
 if USE_CUDA
 base_tests += cuda-saxpy.clang.test
@@ -114,13 +102,7 @@ discrete_tests += \
 	discrete-taskloop-dep-multiaxpy.clang.test \
 	discrete-taskloop-nested-dep-multiaxpy.clang.test \
 	discrete-taskloop-nonpod.clang.test \
-	discrete-taskloop-nqueens.clang.test \
-	discrete-taskloop-for-multiaxpy.clang.test \
-	discrete-taskloop-for-dep-multiaxpy.clang.test \
-	discrete-taskloop-for-nested-dep-multiaxpy.clang.test \
-	discrete-taskloop-for-nonpod.clang.test \
-	discrete-taskloop-for-nqueens.clang.test \
-	discrete-taskloop-for-reduction.clang.test
+	discrete-taskloop-nqueens.clang.test
 
 numa_tests += \
 	numa-allocations.clang.test \
@@ -146,24 +128,12 @@ base_tests +=  \
 	dep-wait.clang.debug.test \
 	simple-commutative.clang.debug.test \
 	commutative-stencil.clang.debug.test \
-	task-for-multiaxpy.clang.debug.test \
-	task-for-dep-multiaxpy.clang.debug.test \
-	task-for-nonpod.clang.debug.test \
-	task-for-nqueens.clang.debug.test \
-	task-for-wait.clang.debug.test \
 	taskloop-multiaxpy.clang.debug.test \
 	taskloop-dep-multiaxpy.clang.debug.test \
 	taskloop-nested-dep-multiaxpy.clang.debug.test \
 	taskloop-nonpod.clang.debug.test \
 	taskloop-nqueens.clang.debug.test \
-	taskloop-wait.clang.debug.test \
-	taskloop-for-multiaxpy.clang.debug.test \
-	taskloop-for-dep-multiaxpy.clang.debug.test \
-	taskloop-for-nested-dep-multiaxpy.clang.debug.test \
-	taskloop-for-nonpod.clang.debug.test \
-	taskloop-for-nqueens.clang.debug.test \
-	taskloop-for-reduction.clang.debug.test \
-	taskloop-for-wait.clang.debug.test
+	taskloop-wait.clang.debug.test
 
 if USE_CUDA
 base_tests += cuda-saxpy.clang.debug.test
@@ -210,13 +180,7 @@ discrete_tests += \
 	discrete-taskloop-dep-multiaxpy.clang.debug.test \
 	discrete-taskloop-nested-dep-multiaxpy.clang.debug.test \
 	discrete-taskloop-nonpod.clang.debug.test \
-	discrete-taskloop-nqueens.clang.debug.test \
-	discrete-taskloop-for-multiaxpy.clang.debug.test \
-	discrete-taskloop-for-dep-multiaxpy.clang.debug.test \
-	discrete-taskloop-for-nested-dep-multiaxpy.clang.debug.test \
-	discrete-taskloop-for-nonpod.clang.debug.test \
-	discrete-taskloop-for-nqueens.clang.debug.test \
-	discrete-taskloop-for-reduction.clang.debug.test
+	discrete-taskloop-nqueens.clang.debug.test
 
 numa_tests += \
 	numa-allocations.clang.debug.test \
@@ -429,51 +393,6 @@ commutative_stencil_clang_test_CPPFLAGS = -DNDEBUG
 commutative_stencil_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 commutative_stencil_clang_test_LDFLAGS = $(test_common_ldflags)
 
-task_for_multiaxpy_clang_debug_test_SOURCES = ../task-for/task-for-multiaxpy.cpp
-task_for_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-task_for_multiaxpy_clang_test_SOURCES = ../task-for/task-for-multiaxpy.cpp
-task_for_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-task_for_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-task_for_dep_multiaxpy_clang_debug_test_SOURCES = ../task-for/task-for-dep-multiaxpy.cpp
-task_for_dep_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_dep_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-task_for_dep_multiaxpy_clang_test_SOURCES = ../task-for/task-for-dep-multiaxpy.cpp
-task_for_dep_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-task_for_dep_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_dep_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-task_for_nonpod_clang_debug_test_SOURCES = ../task-for/task-for-nonpod.cpp
-task_for_nonpod_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-task_for_nonpod_clang_test_SOURCES = ../task-for/task-for-nonpod.cpp
-task_for_nonpod_clang_test_CPPFLAGS = -DNDEBUG
-task_for_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
-
-task_for_nqueens_clang_debug_test_SOURCES = ../task-for/task-for-nqueens.cpp
-task_for_nqueens_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-task_for_nqueens_clang_test_SOURCES = ../task-for/task-for-nqueens.cpp
-task_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
-task_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
-
-task_for_wait_clang_debug_test_SOURCES = ../task-for/task-for-wait.cpp
-task_for_wait_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_wait_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-task_for_wait_clang_test_SOURCES = ../task-for/task-for-wait.cpp
-task_for_wait_clang_test_CPPFLAGS = -DNDEBUG
-task_for_wait_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-task_for_wait_clang_test_LDFLAGS = $(test_common_ldflags)
-
 taskloop_multiaxpy_clang_debug_test_SOURCES = ../taskloop/taskloop-multiaxpy.cpp
 taskloop_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -572,123 +491,6 @@ discrete_taskloop_nqueens_clang_test_SOURCES = ../discrete-taskloop/taskloop-nqu
 discrete_taskloop_nqueens_clang_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_multiaxpy_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-multiaxpy.cpp
-taskloop_for_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_multiaxpy_clang_test_SOURCES = ../taskloop-for/taskloop-for-multiaxpy.cpp
-taskloop_for_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_dep_multiaxpy_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-dep-multiaxpy.cpp
-taskloop_for_dep_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_dep_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_dep_multiaxpy_clang_test_SOURCES = ../taskloop-for/taskloop-for-dep-multiaxpy.cpp
-taskloop_for_dep_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_dep_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_dep_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_nested_dep_multiaxpy_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-nested-dep-multiaxpy.cpp
-taskloop_for_nested_dep_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_nested_dep_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_nested_dep_multiaxpy_clang_test_SOURCES = ../taskloop-for/taskloop-for-nested-dep-multiaxpy.cpp
-taskloop_for_nested_dep_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_nested_dep_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_nested_dep_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_nonpod_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-nonpod.cpp
-taskloop_for_nonpod_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_nonpod_clang_test_SOURCES = ../taskloop-for/taskloop-for-nonpod.cpp
-taskloop_for_nonpod_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_nqueens_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-nqueens.cpp
-taskloop_for_nqueens_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_nqueens_clang_test_SOURCES = ../taskloop-for/taskloop-for-nqueens.cpp
-taskloop_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_reduction_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
-taskloop_for_reduction_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_reduction_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_reduction_clang_test_SOURCES = ../taskloop-for/taskloop-for-reduction.cpp
-taskloop_for_reduction_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_reduction_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_reduction_clang_test_LDFLAGS = $(test_common_ldflags)
-
-taskloop_for_wait_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-wait.cpp
-taskloop_for_wait_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_wait_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-taskloop_for_wait_clang_test_SOURCES = ../taskloop-for/taskloop-for-wait.cpp
-taskloop_for_wait_clang_test_CPPFLAGS = -DNDEBUG
-taskloop_for_wait_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-taskloop_for_wait_clang_test_LDFLAGS = $(test_common_ldflags)
-
-discrete_taskloop_for_multiaxpy_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
-discrete_taskloop_for_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-discrete_taskloop_for_multiaxpy_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-multiaxpy.cpp
-discrete_taskloop_for_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-discrete_taskloop_for_dep_multiaxpy_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-dep-multiaxpy.cpp
-discrete_taskloop_for_dep_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_dep_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-discrete_taskloop_for_dep_multiaxpy_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-dep-multiaxpy.cpp
-discrete_taskloop_for_dep_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_dep_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_dep_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-discrete_taskloop_for_nested_dep_multiaxpy_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nested-dep-multiaxpy.cpp
-discrete_taskloop_for_nested_dep_multiaxpy_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_nested_dep_multiaxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-discrete_taskloop_for_nested_dep_multiaxpy_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nested-dep-multiaxpy.cpp
-discrete_taskloop_for_nested_dep_multiaxpy_clang_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_nested_dep_multiaxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_nested_dep_multiaxpy_clang_test_LDFLAGS = $(test_common_ldflags)
-
-discrete_taskloop_for_nonpod_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nonpod.cpp
-discrete_taskloop_for_nonpod_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-discrete_taskloop_for_nonpod_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nonpod.cpp
-discrete_taskloop_for_nonpod_clang_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
-
-discrete_taskloop_for_nqueens_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nqueens.cpp
-discrete_taskloop_for_nqueens_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-discrete_taskloop_for_nqueens_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nqueens.cpp
-discrete_taskloop_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
-
-discrete_taskloop_for_reduction_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
-discrete_taskloop_for_reduction_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_reduction_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-discrete_taskloop_for_reduction_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-reduction.cpp
-discrete_taskloop_for_reduction_clang_test_CPPFLAGS = -DNDEBUG
-discrete_taskloop_for_reduction_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
-discrete_taskloop_for_reduction_clang_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_clang_debug_test_SOURCES = ../linear-regions/lr-nonest.cpp
 lr_nonest_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)

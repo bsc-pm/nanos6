@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include "ExecutionSteps.hpp"
@@ -29,33 +29,5 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		exit_task_step_t *exitTaskStep = new exit_task_step_t(context);
 		_executionSequence.push_back(exitTaskStep);
-	}
-
-	void startTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) bool first, InstrumentationContext const &context)
-	{
-		assert(_taskToInfoMap.find(taskforId) != _taskToInfoMap.end());
-		task_info_t &taskforInfo = _taskToInfoMap[taskforId];
-
-		std::lock_guard<SpinLock> guard(_graphLock);
-		if (taskforInfo._state == INITIAL) {
-			enter_task_step_t *enterTaskStep = new enter_task_step_t(context);
-			_executionSequence.push_back(enterTaskStep);
-			taskforInfo._state = STARTED;
-		}
-		assert(taskforInfo._state == STARTED);
-	}
-
-	void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, bool last, InstrumentationContext const &context)
-	{
-		if (last) {
-			assert(_taskToInfoMap.find(taskforId) != _taskToInfoMap.end());
-			task_info_t &taskforInfo = _taskToInfoMap[taskforId];
-
-			std::lock_guard<SpinLock> guard(_graphLock);
-			assert(taskforInfo._state == STARTED);
-			exit_task_step_t *exitTaskStep = new exit_task_step_t(context);
-			_executionSequence.push_back(exitTaskStep);
-			taskforInfo._state = FINISHED;
-		}
 	}
 }

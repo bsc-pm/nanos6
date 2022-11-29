@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_MONITOR_HPP
@@ -32,11 +32,6 @@ public:
 	//! \param[in,out] task The task
 	//! \param[in,out] parent The task's parent
 	void taskCreated(Task *task, Task *parent) const;
-
-	//! \brief Re-initialize a task's monitoring statistics
-	//!
-	//! \param[out] taks The task
-	void taskReinitialized(Task *task) const;
 
 	//! \brief Start time monitoring for a task
 	//!

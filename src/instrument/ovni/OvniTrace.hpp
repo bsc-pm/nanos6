@@ -166,9 +166,6 @@ namespace Instrument {
 		// Task creation
 		ALIAS_TRACEPOINT(2, enterCreateTask, "6C[")
 		ALIAS_TRACEPOINT(2, exitCreateTask, "6C]")
-		// Task for
-		ALIAS_TRACEPOINT(2, startTaskfor, "6O[")
-		ALIAS_TRACEPOINT(2, stopTaskfor, "6O]")
 		// Task body
 		ALIAS_TRACEPOINT(2, taskBodyEnter, "6t[")
 		ALIAS_TRACEPOINT(2, taskBodyExit, "6t]")

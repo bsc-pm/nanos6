@@ -10,7 +10,6 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "support/BitManipulation.hpp"
-#include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -44,86 +43,4 @@ std::vector<MemoryPlace *> ComputePlace::getMemoryPlaces()
 	}
 
 	return mems;
-}
-
-ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
-	_owned(owned),
-	_randomEngine(index),
-	_firstSuccessor(nullptr),
-	_index(index),
-	_type(type)
-{
-	TaskDataAccessesInfo taskAccessInfo(0);
-
-	// Allocate space for monitoring statistics and hardware counters in different
-	// calls to avoid the free by getPreallocatedArgsBlock
-	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
-	taskCountersSize += BitManipulation::fixAlignment(taskCountersSize, DATA_ALIGNMENT_SIZE);
-
-	size_t taskStatisticsSize = Monitoring::getAllocationSize();
-	taskStatisticsSize += BitManipulation::fixAlignment(taskStatisticsSize, DATA_ALIGNMENT_SIZE);
-
-	void *taskCountersAddress = (taskCountersSize > 0) ? malloc(taskCountersSize) : nullptr;
-	void *taskStatisticsAddress = (taskStatisticsSize > 0) ? malloc(taskStatisticsSize) : nullptr;
-
-	// Allocate preallocated taskfor
-	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,
-		Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task,
-		taskAccessInfo, taskCountersAddress, taskStatisticsAddress, true);
-	_preallocatedArgsBlockSize = 1024;
-
-	// MemoryAllocator is still not available, so use malloc
-	_preallocatedArgsBlock = malloc(_preallocatedArgsBlockSize);
-	FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr,
-		"Insufficient memory for preallocatedArgsBlock");
-
-	HardwareCounters::taskCreated(_preallocatedTaskfor);
-	Monitoring::taskCreated(_preallocatedTaskfor);
-}
-
-ComputePlace::~ComputePlace()
-{
-	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
-	assert(taskfor != nullptr);
-
-	// Retreive the allocation addresses for monitoring statistics and hw counters before deleting
-	const TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
-	void *taskCountersAddress = taskCounters.getAllocationAddress();
-	TaskStatistics *taskStatisticsAddress = taskfor->getTaskStatistics();
-
-	delete taskfor;
-
-	// Delete monitoring and hw counters
-	if (taskCountersAddress != nullptr) {
-		free(taskCountersAddress);
-	}
-
-	if (taskStatisticsAddress != nullptr) {
-		free(taskStatisticsAddress);
-	}
-
-	// First allocation (1024) is done using malloc
-	if (_preallocatedArgsBlockSize == 1024) {
-		free(_preallocatedArgsBlock);
-	} else {
-		MemoryAllocator::free(_preallocatedArgsBlock, _preallocatedArgsBlockSize);
-	}
-}
-
-void *ComputePlace::getPreallocatedArgsBlock(size_t requiredSize)
-{
-	if (requiredSize > _preallocatedArgsBlockSize) {
-		// First allocation (1024) was done using malloc
-		if (_preallocatedArgsBlockSize == 1024) {
-			free(_preallocatedArgsBlock);
-		} else {
-			MemoryAllocator::free(_preallocatedArgsBlock, _preallocatedArgsBlockSize);
-		}
-
-		_preallocatedArgsBlockSize = requiredSize;
-		_preallocatedArgsBlock = MemoryAllocator::alloc(_preallocatedArgsBlockSize);
-		FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr,
-			"Insufficient memory for preallocatedArgsBlock");
-	}
-	return _preallocatedArgsBlock;
 }

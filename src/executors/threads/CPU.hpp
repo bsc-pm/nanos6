@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_HPP
@@ -63,7 +63,6 @@ private:
 
 	size_t _systemCPUId;
 	size_t _NUMANodeId;
-	size_t _groupId;
 
 	//! The CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
@@ -172,16 +171,6 @@ public:
 	pthread_attr_t *getPthreadAttr()
 	{
 		return &_pthreadAttr;
-	}
-
-	void setGroupId(size_t groupId)
-	{
-		_groupId = groupId;
-	}
-
-	size_t getGroupId() const
-	{
-		return _groupId;
 	}
 
 	inline CPUHardwareCounters &getHardwareCounters()

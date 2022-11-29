@@ -47,13 +47,6 @@
 	# obtain a "busy_iters per CPU" metric for each individual CPU to busy-wait for
 	busy_iters = 240000
 
-[taskfor]
-	# Choose the total number of CPU groups that will execute the worksharing tasks (taskfors). Default
-	# is none (not set), which means that the runtime will create one taskfor group per NUMA node
-	# groups = 1
-	# Indicate whether should print the taskfor groups information
-	report = false
-
 [throttle]
 	# Enable throttle to stop creating tasks when certain conditions are met. Default is false
 	enabled = false

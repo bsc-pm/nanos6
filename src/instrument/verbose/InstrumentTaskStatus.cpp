@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -139,13 +139,5 @@ namespace Instrument {
 		logEntry->_contents << " <-> TaskPriorityChanged: " << taskId << " priority:" << priority;
 
 		addLogEntry(logEntry);
-	}
-
-	void taskforCollaboratorIsExecuting(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) InstrumentationContext const &context) {
-		// Verbose instrumentation does not instrument task fors
-	}
-
-	void taskforCollaboratorStopped(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) InstrumentationContext const &context) {
-		// Verbose instrumentation does not instrument task fors
 	}
 }

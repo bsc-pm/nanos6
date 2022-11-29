@@ -36,24 +36,6 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
-
-	inline void startTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) bool first,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		Ovni::startTaskfor();
-	}
-
-	inline void endTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
-		__attribute__((unused)) bool last,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		Ovni::stopTaskfor();
-	}
 }
 
 

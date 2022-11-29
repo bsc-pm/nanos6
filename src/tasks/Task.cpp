@@ -17,10 +17,6 @@ void Task::runOnready(WorkerThread *currentThread)
 	assert(_taskInfo != nullptr);
 	assert(_taskInfo->onready_action != nullptr);
 
-	if (isTaskfor()) {
-		FatalErrorHandler::fail("Taskfors do not support onready action clause");
-	}
-
 	Task *currentTask = currentThread->unassignTask();
 	currentThread->setTask(this);
 

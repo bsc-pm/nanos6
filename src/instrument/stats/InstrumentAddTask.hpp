@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_STATS_ADD_TASK_HPP
@@ -54,24 +54,6 @@ namespace Instrument {
 	inline void exitSubmitTask(
 		task_id_t,
 		bool,
-		InstrumentationContext const &
-	) {
-	}
-
-	inline task_id_t enterInitTaskforCollaborator(
-		task_id_t,
-		nanos6_task_info_t *taskInfo,
-		nanos6_task_invocation_info_t *,
-		size_t,
-		InstrumentationContext const &context
-	) {
-		Stats::TaskTypeAndTimes *taskTypeAndTimes = new Stats::TaskTypeAndTimes(taskInfo, (context._taskId != task_id_t()));
-
-		return taskTypeAndTimes;
-	}
-
-	inline void exitInitTaskforCollaborator(
-		task_id_t, task_id_t,
 		InstrumentationContext const &
 	) {
 	}

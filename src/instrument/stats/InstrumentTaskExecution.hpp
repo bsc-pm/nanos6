@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_STATS_TASK_EXECUTION_HPP
@@ -34,14 +34,6 @@ namespace Instrument {
 		taskInfo += taskId->_times;
 
 		delete taskId;
-	}
-
-	inline void startTaskforCollaborator(task_id_t, task_id_t, bool, InstrumentationContext const &)
-	{
-	}
-
-	inline void endTaskforCollaborator(task_id_t, task_id_t, bool, InstrumentationContext const &)
-	{
 	}
 }
 
