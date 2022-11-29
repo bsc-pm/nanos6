@@ -406,6 +406,7 @@ common_sources = \
 	src/memory/numa/NUMAManager.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
+	src/monitoring/Tasktype.cpp \
 	src/monitoring/TasktypeStatistics.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
@@ -444,7 +445,7 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Task.cpp \
-	src/tasks/TaskInfo.cpp \
+	src/tasks/TaskInfoManager.cpp \
 	src/tasks/Taskloop.cpp
 
 common_sources += $(universal_debug_sources)
@@ -1263,6 +1264,7 @@ noinst_HEADERS = \
 	src/monitoring/MonitoringSupport.hpp \
 	src/monitoring/TaskMonitor.hpp \
 	src/monitoring/TaskStatistics.hpp \
+	src/monitoring/Tasktype.hpp \
 	src/monitoring/TasktypeStatistics.hpp \
 	src/scheduling/LocalScheduler.hpp \
 	src/scheduling/ReadyQueue.hpp \
@@ -1338,10 +1340,9 @@ noinst_HEADERS = \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
+	src/tasks/TaskInfoManager.hpp \
 	src/tasks/TaskImplementation.hpp \
-	src/tasks/TaskInfo.hpp \
 	src/tasks/Taskloop.hpp \
-	src/tasks/TasktypeData.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \

@@ -6,8 +6,7 @@
 
 #include "InstrumentInitAndShutdown.hpp"
 #include "executors/threads/CPUManager.hpp"
-#include "tasks/TaskInfo.hpp"
-#include "tasks/TasktypeData.hpp"
+#include "tasks/TaskInfoManager.hpp"
 #include "OvniTrace.hpp"
 
 
@@ -33,12 +32,12 @@ void Instrument::shutdown()
 
 void Instrument::preinitFinished()
 {
-	// Emit an event per each registered task type with its label and source
-	TaskInfo::processAllTasktypes(
-		[&](const std::string &tasktypeLabel, const std::string &, TasktypeData &tasktypeData) {
-			TasktypeInstrument &instrumentId = tasktypeData.getInstrumentationId();
+	// Emit an event per each registered task info with its label
+	TaskInfoManager::processAllTaskInfos(
+		[&](const nanos6_task_info_t *, TaskInfoData &taskInfoData) {
+			TasktypeInstrument &instrumentId = taskInfoData.getInstrumentationId();
 			uint32_t tasktypeId = instrumentId.assignNewId();
-			Ovni::typeCreate(tasktypeId, tasktypeLabel.c_str());
+			Ovni::typeCreate(tasktypeId, taskInfoData.getTaskTypeLabel().c_str());
 		}
 	);
 }

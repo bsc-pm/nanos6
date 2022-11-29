@@ -11,26 +11,18 @@
 
 #include "CTFTracepoints.hpp"
 #include "InstrumentTaskId.hpp"
-#include "tasks/TasktypeData.hpp"
-
+#include "InstrumentTasktypeData.hpp"
 #include "instrument/api/InstrumentAddTask.hpp"
+#include "tasks/TaskInfoManager.hpp"
 
 namespace Instrument {
 
 	inline ctf_tasktype_id_t ctfGetTaskTypeId(nanos6_task_info_t *taskInfo)
 	{
 		assert(taskInfo->task_type_data);
-		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
+		TaskInfoData *taskInfoData = (TaskInfoData *) taskInfo->task_type_data;
+		TasktypeInstrument &instrumentId = taskInfoData->getInstrumentationId();
 		return instrumentId.id;
-	}
-
-	inline ctf_tasktype_id_t ctfAutoSetTaskTypeId(nanos6_task_info_t *taskInfo)
-	{
-		assert(taskInfo->task_type_data);
-		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
-		return instrumentId.autoAssingId();
 	}
 
 	inline task_id_t enterCreateTask(
@@ -104,10 +96,15 @@ namespace Instrument {
 
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
 	{
-		const char *label = taskInfo->implementations[0].task_type_label;
-		const char *source = taskInfo->implementations[0].declaration_source;
-		ctf_tasktype_id_t taskTypeId = ctfAutoSetTaskTypeId(taskInfo);
-		tp_task_label(label, source, taskTypeId);
+		assert(taskInfo != nullptr);
+		assert(taskInfo->task_type_data != nullptr);
+
+		TaskInfoData *taskInfoData = (TaskInfoData *) taskInfo->task_type_data;
+		TasktypeInstrument &instrumentId = taskInfoData->getInstrumentationId();
+		ctf_tasktype_id_t taskTypeId = instrumentId.autoAssignId();
+
+		tp_task_label(taskInfoData->getTaskTypeLabel().c_str(),
+			taskInfoData->getTaskDeclarationSource().c_str(), taskTypeId);
 	}
 
 	inline void enterSpawnFunction(bool taskRuntimeTransition)

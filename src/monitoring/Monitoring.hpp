@@ -11,6 +11,7 @@
 
 #include "MonitoringSupport.hpp"
 #include "TaskStatistics.hpp"
+#include "Tasktype.hpp"
 #include "support/config/ConfigVariable.hpp"
 
 
@@ -81,6 +82,12 @@ public:
 	static inline bool isEnabled()
 	{
 		return _enabled;
+	}
+	
+	//! \brief Check and register a Tasktype after registering a taskinfo
+	static inline void registerTasktype(nanos6_task_info_t *task_info)
+	{
+		Tasktype::registerTasktype(task_info);
 	}
 
 

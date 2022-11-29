@@ -11,9 +11,9 @@
 
 #include "OvniTrace.hpp"
 #include "InstrumentTaskId.hpp"
-#include "tasks/TasktypeData.hpp"
-
+#include "InstrumentTasktypeData.hpp"
 #include "instrument/api/InstrumentAddTask.hpp"
+#include "tasks/TaskInfoManager.hpp"
 
 namespace Instrument {
 
@@ -21,17 +21,10 @@ namespace Instrument {
 	{
 		assert(taskInfo != nullptr);
 		assert(taskInfo->task_type_data);
-		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
-		return instrumentId._taskTypeId;
-	}
 
-	inline uint32_t autoSetTaskTypeId(nanos6_task_info_t *taskInfo)
-	{
-		assert(taskInfo->task_type_data);
-		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
-		return instrumentId.assignNewId();
+		TaskInfoData *taskInfoData = (TaskInfoData *) taskInfo->task_type_data;
+		TasktypeInstrument &instrumentId = taskInfoData->getInstrumentationId();
+		return instrumentId._taskTypeId;
 	}
 
 	inline task_id_t enterCreateTask(
@@ -92,9 +85,13 @@ namespace Instrument {
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
 	{
 		assert(taskInfo != nullptr);
-		uint32_t taskTypeId = autoSetTaskTypeId(taskInfo);
-		const char *label = taskInfo->implementations[0].task_type_label;
-		Ovni::typeCreate(taskTypeId, label);
+		assert(taskInfo->task_type_data != nullptr);
+
+		TaskInfoData *taskInfoData = (TaskInfoData *) taskInfo->task_type_data;
+		TasktypeInstrument &instrumentId = taskInfoData->getInstrumentationId();
+		uint32_t taskTypeId = instrumentId.assignNewId();
+
+		Ovni::typeCreate(taskTypeId, taskInfoData->getTaskTypeLabel().c_str());
 	}
 
 	inline void enterSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)

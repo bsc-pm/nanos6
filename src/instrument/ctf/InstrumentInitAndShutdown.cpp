@@ -29,8 +29,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "memory/numa/NUMAManager.hpp"
-#include "tasks/TaskInfo.hpp"
-#include "tasks/TasktypeData.hpp"
+#include "tasks/TaskInfoManager.hpp"
 
 
 //static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFUserMetadata *metadata)
@@ -302,12 +301,13 @@ void Instrument::shutdown()
 
 void Instrument::preinitFinished()
 {
-	// emit an event per each registered task type with its label and source
-	TaskInfo::processAllTasktypes(
-		[&](const std::string &tasktypeLabel, const std::string &tasktypeSource, TasktypeData &tasktypeData) {
-			TasktypeInstrument &instrumentId = tasktypeData.getInstrumentationId();
-			ctf_tasktype_id_t tasktypeId = instrumentId.autoAssingId();
-			tp_task_label(tasktypeLabel.c_str(), tasktypeSource.c_str(), tasktypeId);
+	// Emit an event per each registered task info with its label and declaration source
+	TaskInfoManager::processAllTaskInfos(
+		[&](const nanos6_task_info_t *, TaskInfoData &taskInfoData) {
+			TasktypeInstrument &instrumentId = taskInfoData.getInstrumentationId();
+			ctf_tasktype_id_t tasktypeId = instrumentId.autoAssignId();
+			tp_task_label(taskInfoData.getTaskTypeLabel().c_str(),
+				taskInfoData.getTaskDeclarationSource().c_str(), tasktypeId);
 		}
 	);
 }
