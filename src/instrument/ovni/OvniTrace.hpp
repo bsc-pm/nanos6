@@ -150,10 +150,14 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(2, unregisterAccessesEnter, "6Du")
 		ALIAS_TRACEPOINT(2, unregisterAccessesExit, "6DU")
 		// Memory
-		ALIAS_TRACEPOINT(3, memoryAllocEnter, "6Ma")
-		ALIAS_TRACEPOINT(3, memoryAllocExit, "6MA")
-		ALIAS_TRACEPOINT(3, memoryFreeEnter, "6Mf")
-		ALIAS_TRACEPOINT(3, memoryFreeExit, "6MF")
+		// Cannot ensure the ovni thread is initialized because the
+		// memory allocator can be called by the loader when creating
+		// space for static variables, before Nanos6 initializes the
+		// instrumentation.
+		ALIAS_TRACEPOINT_MAYBE(3, memoryAllocEnter, "6Ma")
+		ALIAS_TRACEPOINT_MAYBE(3, memoryAllocExit, "6MA")
+		ALIAS_TRACEPOINT_MAYBE(3, memoryFreeEnter, "6Mf")
+		ALIAS_TRACEPOINT_MAYBE(3, memoryFreeExit, "6MF")
 		// Blocking
 		ALIAS_TRACEPOINT(2, blockEnter, "6Bb")
 		ALIAS_TRACEPOINT(2, blockExit, "6BB")
