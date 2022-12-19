@@ -104,13 +104,13 @@ int main(int argc, char **argv)
 	/* WARM-UP */
 	/***********/
 
-	// Unfortunately mercurium does not support atomics
 	volatile int warmupCounter = 0;
 
 	for (int t = 0; t < numCPUs; ++t) {
 		#pragma oss task shared(warmupCounter, numCPUs)
 		{
-			__sync_fetch_and_add(&warmupCounter, 1);
+			#pragma oss atomic
+			warmupCounter++;
 
 			while (warmupCounter < numCPUs) {
 				usleep(100);
