@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 	/* WARM-UP */
 	/***********/
 
-	volatile int warmupCounter = 0;
+	int warmupCounter = 0;
 
 	for (int t = 0; t < numCPUs; ++t) {
 		#pragma oss task shared(warmupCounter, numCPUs)
