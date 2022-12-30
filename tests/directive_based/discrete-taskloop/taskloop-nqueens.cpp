@@ -47,7 +47,8 @@ static inline int check_attack(const int col, const int row, sol_t sol)
 void solve(int n, const int col, sol_node_t& sol)
 {
 	if (col == n) {
-		__sync_fetch_and_add(&count, 1);
+		#pragma oss atomic
+		count++;
 	} else {
 		#pragma oss taskloop grainsize(grainsize) final(final_depth < col)
 		for (int row = 0; row < n; row++) {
