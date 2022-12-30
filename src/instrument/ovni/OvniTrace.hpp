@@ -276,6 +276,14 @@ namespace Instrument {
 			emitGeneric(2, "6W*", tid);
 		}
 
+		static void checkVersion()
+		{
+			// Make sure the current libovni version loaded at run-time is compatible
+			// with the libovni that the runtime was compiled against. This should be
+			// the first call to ovni
+			ovni_version_check();
+		}
+
 		static void procInit()
 		{
 			char hostname[HOST_NAME_MAX + 1];

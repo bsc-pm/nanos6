@@ -15,7 +15,11 @@ namespace Instrument {
 	inline void mainThreadBegin()
 	{
 		// We use the mainThreadBegin to initialize ovni, as is the
-		// earliest point we can instrument.
+		// earliest point we can instrument
+
+		// Check the ovni version before calling any other ovni function
+		Ovni::checkVersion();
+
 		Ovni::procInit();
 		Ovni::threadInit();
 		Ovni::threadExecute(-1, -1, 0);
@@ -26,7 +30,7 @@ namespace Instrument {
 	inline void mainThreadEnd()
 	{
 		// Similarly, we use the mainThreadEnd as the last possible
-		// point where we stop the thread and process.
+		// point where we stop the thread and process
 		Ovni::threadTypeEnd('M');
 		Ovni::threadEnd();
 		Ovni::procFini();
