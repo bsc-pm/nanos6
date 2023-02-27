@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DELEGATION_LOCK_HPP
@@ -19,6 +19,7 @@
 #include "Padding.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <InstrumentWorkerThread.hpp>
 
 template <typename T>
 class DelegationLock {
@@ -112,9 +113,14 @@ public:
 		const uint64_t id = head % _size;
 
 		// Wait until it is our turn
-		while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
-			spinWait();
+		if (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
+			Instrument::workerIdle(true);
+
+			while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
+				spinWait();
+			}
 		}
+
 		spinWaitRelease();
 
 		std::atomic_thread_fence(std::memory_order_acquire);
@@ -143,9 +149,14 @@ public:
 		_waitQueue[id]._cpuId.store(head + cpuIndex, std::memory_order_relaxed);
 
 		// Wait until it is our turn or someone else has served us an item
-		while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
-			spinWait();
+		if (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
+			Instrument::workerIdle(true);
+
+			while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
+				spinWait();
+			}
 		}
+
 		spinWaitRelease();
 
 		// Prevent reordering of loads respect to other processes.

@@ -179,6 +179,7 @@ private:
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
 				Instrument::enterProcessReadyTasks();
+				Instrument::workerIdle(false);
 				_addQueues[i].consume_all(
 					[&](Task *task) {
 						// Add the task to the unsync scheduler
@@ -189,6 +190,7 @@ private:
 						task->setComputePlace(nullptr);
 					}
 				);
+				Instrument::workerIdle(true);
 				Instrument::exitProcessReadyTasks();
 			}
 		}

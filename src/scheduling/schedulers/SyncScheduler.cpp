@@ -31,6 +31,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We acquired the lock and we have to serve tasks
 	Instrument::schedulerLockBecomesServer();
+	Instrument::workerIdle(true);
 	setServingTasks(true);
 
 	// The idea is to always keep a compute place inside the following scheduling loop

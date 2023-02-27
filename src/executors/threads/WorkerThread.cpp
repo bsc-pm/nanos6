@@ -133,6 +133,7 @@ void WorkerThread::body()
 
 				switchTo(assignedThread);
 			} else {
+				Instrument::workerIdle(false);
 				Instrument::workerThreadObtainedTask();
 
 				if (_task->isIf0()) {
@@ -151,6 +152,7 @@ void WorkerThread::body()
 			}
 			CPUManager::checkIfMustReturnCPU(this);
 		} else {
+			Instrument::workerIdle(true);
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}
