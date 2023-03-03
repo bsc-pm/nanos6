@@ -114,6 +114,8 @@ public:
 
 		// Wait until it is our turn
 		if (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
+			// The worker will stop being idle when it receives a task
+			// in WorkerThread::body()
 			Instrument::workerIdle(true);
 
 			while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
@@ -150,6 +152,8 @@ public:
 
 		// Wait until it is our turn or someone else has served us an item
 		if (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
+			// The worker will stop being idle when it receives a task
+			// in WorkerThread::body()
 			Instrument::workerIdle(true);
 
 			while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {

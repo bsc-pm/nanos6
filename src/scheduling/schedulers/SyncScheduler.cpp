@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "SyncScheduler.hpp"
@@ -31,6 +31,8 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We acquired the lock and we have to serve tasks
 	Instrument::schedulerLockBecomesServer();
+	// Serving tasks is considered idle time except when
+	// processing ready tasks.
 	Instrument::workerIdle(true);
 	setServingTasks(true);
 

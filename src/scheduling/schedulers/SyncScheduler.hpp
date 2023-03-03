@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYNC_SCHEDULER_HPP
@@ -179,6 +179,8 @@ private:
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
 				Instrument::enterProcessReadyTasks();
+				// Serving tasks is considered idle time except when
+				// processing ready tasks.
 				Instrument::workerIdle(false);
 				_addQueues[i].consume_all(
 					[&](Task *task) {
