@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1142,18 +1142,16 @@ namespace DataAccessRegistration {
 		processSatisfiedCommutativeOriginators(hpDependencyData);
 
 		Task *immediateSuccessor = nullptr;
-		bool searchForIS = !fromBusyThread && (computePlace->getFirstSuccessor() == nullptr);
-		// bool searchForIS = false;
+		bool searchForIS = (!fromBusyThread && computePlace != nullptr
+			&& computePlace->getFirstSuccessor() == nullptr);
 
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
-		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
-			assert(satisfiedOriginator != 0);
+		for (Task *task : hpDependencyData._satisfiedOriginators) {
+			assert(task != nullptr);
 
 			ComputePlace *computePlaceHint = nullptr;
-			if (computePlace != nullptr) {
-				if (computePlace->getType() == satisfiedOriginator->getDeviceType()) {
-					computePlaceHint = computePlace;
-				}
+			if (computePlace != nullptr && computePlace->getType() == task->getDeviceType()) {
+				computePlaceHint = computePlace;
 			}
 
 			ReadyTaskHint schedulingHint = SIBLING_TASK_HINT;
@@ -1161,15 +1159,14 @@ namespace DataAccessRegistration {
 				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
 			}
 
-			if (searchForIS &&
-				satisfiedOriginator->getDeviceType() == nanos6_host_device &&
-				(!immediateSuccessor || satisfiedOriginator->getPriority() > immediateSuccessor->getPriority())) {
+			if (searchForIS && task->getDeviceType() == nanos6_host_device
+				&& (!immediateSuccessor || task->getPriority() > immediateSuccessor->getPriority())) {
 				if (immediateSuccessor)
 					Scheduler::addReadyTask(immediateSuccessor, computePlaceHint, schedulingHint);
 
-				immediateSuccessor = satisfiedOriginator;
+				immediateSuccessor = task;
 			} else {
-				Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint, schedulingHint);
+				Scheduler::addReadyTask(task, computePlaceHint, schedulingHint);
 			}
 		}
 
