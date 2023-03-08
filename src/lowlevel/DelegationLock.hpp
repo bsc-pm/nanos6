@@ -10,6 +10,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -40,13 +41,13 @@ private:
 		T _item;
 	};
 
+	static constexpr uint64_t IDLE_SPINS_THRESHOLD = 1024;
+
 #ifndef NDEBUG
 	//! The amount of threads currently waiting in the lock. Align the field
 	//! so that it does not interfere with the rest of fields
 	alignas(CACHELINE_SIZE * 2) std::atomic<size_t> _subscribedThreads;
 #endif
-
-protected:
 
 	//! Keep these fields on the same cacheline since they are not modified
 	alignas(CACHELINE_SIZE) Padded<Node> *_waitQueue;
@@ -113,17 +114,7 @@ public:
 		const uint64_t id = head % _size;
 
 		// Wait until it is our turn
-		if (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
-			// The worker will stop being idle when it receives a task
-			// in WorkerThread::body()
-			Instrument::workerIdle(true);
-
-			while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
-				spinWait();
-			}
-		}
-
-		spinWaitRelease();
+		busyWaitWhile(_waitQueue[id]._ticket, std::equal_to<uint64_t>{}, head);
 
 		std::atomic_thread_fence(std::memory_order_acquire);
 	}
@@ -151,17 +142,7 @@ public:
 		_waitQueue[id]._cpuId.store(head + cpuIndex, std::memory_order_relaxed);
 
 		// Wait until it is our turn or someone else has served us an item
-		if (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
-			// The worker will stop being idle when it receives a task
-			// in WorkerThread::body()
-			Instrument::workerIdle(true);
-
-			while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
-				spinWait();
-			}
-		}
-
-		spinWaitRelease();
+		busyWaitWhile(_waitQueue[id]._ticket, std::less<uint64_t>{}, head);
 
 		// Prevent reordering of loads respect to other processes.
 		// On weak memory models, the write to _waitQueue[id]._ticket can be seen
@@ -270,6 +251,32 @@ public:
 	{
 		_items[cpuIndex]._item = item;
 		_items[cpuIndex]._ticket = _next;
+	}
+
+private:
+	template <typename ContOp>
+	static inline void busyWaitWhile(
+		std::atomic<uint64_t> &variable, ContOp contOp, const uint64_t expected
+	) {
+		uint64_t spins = 0;
+		uint64_t value = variable.load(std::memory_order_relaxed);
+		while (contOp(value, expected) && spins++ < IDLE_SPINS_THRESHOLD) {
+			spinWait();
+			value = variable.load(std::memory_order_relaxed);
+		}
+
+		if (contOp(value, expected)) {
+			// The worker will stop being idle when it receives a task or
+			// becomes the server
+			Instrument::workerIdle();
+
+			while (contOp(value, expected)) {
+				spinWait();
+				value = variable.load(std::memory_order_relaxed);
+			}
+		}
+
+		spinWaitRelease();
 	}
 };
 

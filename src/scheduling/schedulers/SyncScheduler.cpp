@@ -22,8 +22,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	if (!_lock.lockOrDelegate(computePlaceIdx, task)) {
 		// Someone else acquired the lock and assigned us work
 		if (task) {
+			Instrument::workerUseful();
 			Instrument::exitSchedulerLockAsClient(task->getInstrumentationTaskId());
 		} else {
+			Instrument::workerIdle();
 			Instrument::exitSchedulerLockAsClient();
 		}
 		return task;
@@ -31,9 +33,11 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We acquired the lock and we have to serve tasks
 	Instrument::schedulerLockBecomesServer();
-	// Serving tasks is considered idle time except when
-	// processing ready tasks.
-	Instrument::workerIdle(true);
+
+	// Consider serving time as useful while we have ready tasks on the scheduler. The
+	// server will become idle when we find no ready task
+	Instrument::workerUseful();
+
 	setServingTasks(true);
 
 	// The idea is to always keep a compute place inside the following scheduling loop
@@ -61,8 +65,12 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			// Try to get a ready task from the scheduler
 			task = _scheduler->getReadyTask(waitingComputePlace);
 
-			if (task != nullptr)
+			if (task) {
+				Instrument::workerUseful();
 				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
+			} else {
+				Instrument::workerIdle();
+			}
 
 			// If we are using the hybrid/busy policy, avoid assigning tasks even if
 			// none are found, so that threads do not spin in their body to avoid
@@ -95,10 +103,14 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We are stopping to serve tasks
 	setServingTasks(false);
-	if (task)
+
+	if (task) {
+		Instrument::workerUseful();
 		Instrument::exitSchedulerLockAsServer(task->getInstrumentationTaskId());
-	else
+	} else {
+		Instrument::workerIdle();
 		Instrument::exitSchedulerLockAsServer();
+	}
 
 	// Release the lock so another compute place can serve tasks
 	_lock.unlock();

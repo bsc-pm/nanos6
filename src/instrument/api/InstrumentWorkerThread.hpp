@@ -15,8 +15,11 @@ namespace Instrument {
 	//! This function is called when the current worker thread obtains a task
 	void workerThreadObtainedTasks();
 
-	//! Called when the thread enters or exits the idle state.
-	void workerIdle(bool isIdle);
+	//! This function is called when the thread enters the idle state
+	void workerIdle();
+
+	//! This function is called when the thread enters the useful state
+	void workerUseful();
 
 	//! This function is called when the current worker thread starts busy waiting
 	void workerThreadBusyWaits();

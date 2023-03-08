@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SCHEDULER_HPP
@@ -12,6 +12,7 @@
 #include "tasks/Task.hpp"
 
 #include <InstrumentScheduler.hpp>
+#include <InstrumentWorkerThread.hpp>
 
 
 class Scheduler {
@@ -71,6 +72,12 @@ public:
 	//! actions (e.g., it is busy doing other work), it can pass true to the parameter
 	//! fromBusyThread
 	//!
+	//! This function can alter the instrumentation state of the calling worker thread
+	//! depending on whether a ready task was found, the spinning/waiting time, etc. In
+	//! this instrumentation context, the worker thread will return from this function
+	//! as idle if no ready task is returned. Otherwise, the thread will return in the
+	//! useful state if the function returns a valid ready task.
+	//!
 	//! \param computePlace the target compute place that wants to execute a task
 	//! \param currentThread the current running thread
 	//! \param fromBusyThread whether the thread should not run multiple onready actions
@@ -95,6 +102,12 @@ public:
 				task = nullptr;
 			}
 		} while (retry);
+
+		// Make sure the worker thread is reported as idle if no task is returned. This
+		// is needed because we may have executed the onready clause function above and
+		// found out the task was not ready yet
+		if (task == nullptr)
+			Instrument::workerIdle();
 
 		return task;
 	}

@@ -178,10 +178,16 @@ private:
 	{
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
+				// The worker thread is useful when processing ready tasks. Do
+				// not switch the state to idle before returning. There are two
+				// kinds of threads that can enter here: (1) the server thread
+				// and (2) a worker thread inserting ready tasks. The server
+				// thread (1) should be considered useful during and after
+				// processing tasks. An inserting worker thread (2) will already
+				// be in the busy state.
 				Instrument::enterProcessReadyTasks();
-				// Serving tasks is considered idle time except when
-				// processing ready tasks.
-				Instrument::workerIdle(false);
+				Instrument::workerUseful();
+
 				_addQueues[i].consume_all(
 					[&](Task *task) {
 						// Add the task to the unsync scheduler
@@ -192,7 +198,6 @@ private:
 						task->setComputePlace(nullptr);
 					}
 				);
-				Instrument::workerIdle(true);
 				Instrument::exitProcessReadyTasks();
 			}
 		}

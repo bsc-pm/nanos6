@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -16,6 +16,7 @@
 
 #include <DataAccessRegistration.hpp>
 #include <DataAccessRegistrationImplementation.hpp>
+#include <InstrumentWorkerThread.hpp>
 
 
 ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned");
@@ -37,8 +38,11 @@ void CUDAAccelerator::acceleratorServiceLoop()
 			// Launch as many ready device tasks as possible
 			while (_streamPool.streamAvailable()) {
 				Task *task = Scheduler::getReadyTask(_computePlace, currentThread);
-				if (task == nullptr)
+				if (task == nullptr) {
+					// The scheduler might have reported the thread as idle
+					Instrument::workerUseful();
 					break;
+				}
 
 				runTask(task);
 			}

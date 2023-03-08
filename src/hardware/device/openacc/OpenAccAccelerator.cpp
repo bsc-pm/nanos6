@@ -1,15 +1,16 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "OpenAccAccelerator.hpp"
-
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/BlockingAPI.hpp"
+
+#include <InstrumentWorkerThread.hpp>
 
 
 ConfigVariable<bool> OpenAccAccelerator::_pinnedPolling("devices.openacc.polling.pinned");
@@ -29,8 +30,11 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 			// Launch as many ready device tasks as possible
 			while (isQueueAvailable()) {
 				Task *task = Scheduler::getReadyTask(_computePlace, currentThread);
-				if (task == nullptr)
+				if (task == nullptr) {
+					// The scheduler might have reported the thread as idle
+					Instrument::workerUseful();
 					break;
+				}
 
 				runTask(task);
 			}

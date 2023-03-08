@@ -41,7 +41,11 @@ namespace Instrument {
 		}
 	}
 
-	inline void workerIdle(bool)
+	inline void workerIdle()
+	{
+	}
+
+	inline void workerUseful()
 	{
 	}
 
