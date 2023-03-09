@@ -12,7 +12,6 @@
 #include <atomic>
 #include <cassert>
 #include <cstring>
-#include <iostream>
 #include <pthread.h>
 
 #include "CPUManager.hpp"

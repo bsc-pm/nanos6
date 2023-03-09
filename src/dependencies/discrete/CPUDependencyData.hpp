@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_DEPENDENCY_DATA_HPP
@@ -25,9 +25,9 @@ public:
 	static size_t _actualChunkSize;
 
 private:
-	static const size_t _schedulerChunkSize = 256;
+	static constexpr size_t MAX_SCHEDULER_CHUNKSIZE = 256;
 
-	Task *_array[_schedulerChunkSize];
+	Task *_array[MAX_SCHEDULER_CHUNKSIZE];
 
 	size_t _count;
 
@@ -53,6 +53,17 @@ public:
 		_array[_count++] = task;
 	}
 
+	inline void erase(size_t pos)
+	{
+		assert(pos < _count);
+
+		// Move the last element (if any) to the erased position
+		if (pos < _count - 1)
+			_array[pos] = _array[_count - 1];
+
+		--_count;
+	}
+
 	inline Task **getArray()
 	{
 		return &_array[0];
@@ -60,7 +71,7 @@ public:
 
 	static inline size_t getMaxChunkSize()
 	{
-		return _schedulerChunkSize;
+		return MAX_SCHEDULER_CHUNKSIZE;
 	}
 };
 

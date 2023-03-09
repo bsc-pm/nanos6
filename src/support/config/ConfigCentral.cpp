@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 
@@ -129,7 +129,7 @@ ConfigCentral::ConfigCentral() :
 	registerOption<string_t>("numa.tracking", "auto");
 
 	// Scheduler
-	registerOption<float_t>("scheduler.immediate_successor", true);
+	registerOption<float_t>("scheduler.immediate_successor", 1.0);
 	registerOption<string_t>("scheduler.policy", "fifo");
 	registerOption<bool_t>("scheduler.priority", true);
 
