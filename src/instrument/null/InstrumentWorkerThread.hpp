@@ -14,8 +14,8 @@ namespace Instrument {
 
 	inline void workerThreadSpins() {}
 	inline void workerThreadObtainedTask() {}
-	inline void workerIdle() {}
-	inline void workerUseful() {}
+	inline void workerProgressing() {}
+	inline void workerResting() {}
 	inline void workerThreadBusyWaits() {}
 	inline void workerThreadBegin() {}
 	inline void workerThreadEnd() {}

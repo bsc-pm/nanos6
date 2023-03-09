@@ -138,8 +138,9 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(2, suspendExit, "6WS")
 		ALIAS_TRACEPOINT(2, resumeEnter, "6Wr")
 		ALIAS_TRACEPOINT(2, resumeExit, "6WR")
-		ALIAS_TRACEPOINT(2, idleEnter, "6Wi")
-		ALIAS_TRACEPOINT(2, idleExit, "6WI")
+		// Worker progressing/resting
+		ALIAS_TRACEPOINT(2, workerProgressing, "6Pp")
+		ALIAS_TRACEPOINT(2, workerResting, "6Pr")
 		// Submit
 		ALIAS_TRACEPOINT(2, submitTaskEnter, "6U[")
 		ALIAS_TRACEPOINT(2, submitTaskExit, "6U]")

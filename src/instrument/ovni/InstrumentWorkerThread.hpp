@@ -15,21 +15,21 @@ namespace Instrument {
 	inline void workerThreadSpins() {}
 	inline void workerThreadObtainedTask() {}
 
-	inline void workerIdle()
+	inline void workerProgressing()
 	{
 		ThreadLocalData &tld = getThreadLocalData();
-		if (!tld._isIdle) {
-			tld._isIdle = true;
-			Ovni::idleEnter();
+		if (!tld._isProgressing) {
+			tld._isProgressing = true;
+			Ovni::workerProgressing();
 		}
 	}
 
-	inline void workerUseful()
+	inline void workerResting()
 	{
 		ThreadLocalData &tld = getThreadLocalData();
-		if (tld._isIdle) {
-			tld._isIdle = false;
-			Ovni::idleExit();
+		if (tld._isProgressing) {
+			tld._isProgressing = false;
+			Ovni::workerResting();
 		}
 	}
 

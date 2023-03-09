@@ -114,7 +114,7 @@ public:
 		const uint64_t id = head % _size;
 
 		// Wait until it is our turn
-		busyWaitWhile(_waitQueue[id]._ticket, std::equal_to<uint64_t>{}, head);
+		waitWhile<std::equal_to<uint64_t>>(_waitQueue[id]._ticket, head);
 
 		std::atomic_thread_fence(std::memory_order_acquire);
 	}
@@ -142,7 +142,7 @@ public:
 		_waitQueue[id]._cpuId.store(head + cpuIndex, std::memory_order_relaxed);
 
 		// Wait until it is our turn or someone else has served us an item
-		busyWaitWhile(_waitQueue[id]._ticket, std::less<uint64_t>{}, head);
+		waitWhile<std::less<uint64_t>>(_waitQueue[id]._ticket, head);
 
 		// Prevent reordering of loads respect to other processes.
 		// On weak memory models, the write to _waitQueue[id]._ticket can be seen
@@ -254,25 +254,39 @@ public:
 	}
 
 private:
-	template <typename ContOp>
-	static inline void busyWaitWhile(
-		std::atomic<uint64_t> &variable, ContOp contOp, const uint64_t expected
-	) {
+	//! \brief Busy wait while a condition is true
+	//!
+	//! The function performs a busy wait while a condition is true on
+	//! atomic variable named operandA. The condition can be controlled
+	//! by the operandA, the operandB, the CompareOperator template
+	//! parameter. The CompareOperator is the operator used in the while
+	//! condition to keep spinning
+	//!
+	//! In the instrumentation context, the worker thread is marked as
+	//! resting after IDLE_SPINS_THRESHOLD spins
+	//!
+	//! \param operandA An atomic integer variable acting as the first operand
+	//! \param operandB An integer constant acting as the second operand
+	template <typename CompareOperator>
+	static inline void waitWhile(std::atomic<uint64_t> &operandA, const uint64_t operandB)
+	{
+		CompareOperator compOp;
+
 		uint64_t spins = 0;
-		uint64_t value = variable.load(std::memory_order_relaxed);
-		while (contOp(value, expected) && spins++ < IDLE_SPINS_THRESHOLD) {
+		uint64_t value = operandA.load(std::memory_order_relaxed);
+		while (compOp(value, operandB) && spins++ < IDLE_SPINS_THRESHOLD) {
 			spinWait();
-			value = variable.load(std::memory_order_relaxed);
+			value = operandA.load(std::memory_order_relaxed);
 		}
 
-		if (contOp(value, expected)) {
+		if (compOp(value, operandB)) {
 			// The worker will stop being idle when it receives a task or
 			// becomes the server
-			Instrument::workerIdle();
+			Instrument::workerResting();
 
-			while (contOp(value, expected)) {
+			while (compOp(value, operandB)) {
 				spinWait();
-				value = variable.load(std::memory_order_relaxed);
+				value = operandA.load(std::memory_order_relaxed);
 			}
 		}
 

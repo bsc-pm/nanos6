@@ -155,7 +155,7 @@ public:
 
 			if ((numTasks > count) && _lock.tryLock()) {
 				// Process queues before pushing new tasks
-				processReadyTasks();
+				processReadyTasks(/* not from server */ false);
 				_lock.unlock();
 			}
 		}
@@ -174,19 +174,19 @@ private:
 	//! the lock-free queues (one per NUMA) to the definitive ready
 	//! task queue. Note this function must be called with the lock
 	//! of the scheduler acquired
-	inline void processReadyTasks()
+	//!
+	//! \param fromServer Whether the progress comes from a server thread
+	inline void processReadyTasks(bool fromServer)
 	{
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
-				// The worker thread is useful when processing ready tasks. Do
-				// not switch the state to idle before returning. There are two
-				// kinds of threads that can enter here: (1) the server thread
-				// and (2) a worker thread inserting ready tasks. The server
-				// thread (1) should be considered useful during and after
-				// processing tasks. An inserting worker thread (2) will already
-				// be in the busy state.
 				Instrument::enterProcessReadyTasks();
-				Instrument::workerUseful();
+
+				// A worker thread acting as server must switch to progressing
+				// if it processes any ready task. The server will switch back
+				// to idle in the server loop (if necessary)
+				if (fromServer)
+					Instrument::workerProgressing();
 
 				_addQueues[i].consume_all(
 					[&](Task *task) {

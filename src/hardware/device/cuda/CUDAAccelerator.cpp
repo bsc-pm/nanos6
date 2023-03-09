@@ -39,8 +39,8 @@ void CUDAAccelerator::acceleratorServiceLoop()
 			while (_streamPool.streamAvailable()) {
 				Task *task = Scheduler::getReadyTask(_computePlace, currentThread);
 				if (task == nullptr) {
-					// The scheduler might have reported the thread as idle
-					Instrument::workerUseful();
+					// The scheduler might have reported the thread as resting
+					Instrument::workerProgressing();
 					break;
 				}
 

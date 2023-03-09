@@ -31,8 +31,8 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 			while (isQueueAvailable()) {
 				Task *task = Scheduler::getReadyTask(_computePlace, currentThread);
 				if (task == nullptr) {
-					// The scheduler might have reported the thread as idle
-					Instrument::workerUseful();
+					// The scheduler might have reported the thread as resting
+					Instrument::workerProgressing();
 					break;
 				}
 

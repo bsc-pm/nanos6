@@ -41,11 +41,11 @@ namespace Instrument {
 		}
 	}
 
-	inline void workerIdle()
+	inline void workerProgressing()
 	{
 	}
 
-	inline void workerUseful()
+	inline void workerResting()
 	{
 	}
 

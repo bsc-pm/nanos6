@@ -22,10 +22,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	if (!_lock.lockOrDelegate(computePlaceIdx, task)) {
 		// Someone else acquired the lock and assigned us work
 		if (task) {
-			Instrument::workerUseful();
+			Instrument::workerProgressing();
 			Instrument::exitSchedulerLockAsClient(task->getInstrumentationTaskId());
 		} else {
-			Instrument::workerIdle();
+			Instrument::workerResting();
 			Instrument::exitSchedulerLockAsClient();
 		}
 		return task;
@@ -34,9 +34,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	// We acquired the lock and we have to serve tasks
 	Instrument::schedulerLockBecomesServer();
 
-	// Consider serving time as useful while we have ready tasks on the scheduler. The
-	// server will become idle when we find no ready task
-	Instrument::workerUseful();
+	// Consider the thread is progressing when starting the serving. We do
+	// not know yet if there are ready tasks, so the worker might switch to
+	// resting in loop below
+	Instrument::workerProgressing();
 
 	setServingTasks(true);
 
@@ -51,7 +52,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 		size_t servingIters = 0;
 
 		// Move ready tasks from add queues to the unsynchronized scheduler
-		processReadyTasks();
+		processReadyTasks(/* from server */ true);
 
 		// Serve the rest of computes places that are waiting
 		while (servingIters < _maxServingIters && !_lock.empty()) {
@@ -66,10 +67,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			task = _scheduler->getReadyTask(waitingComputePlace);
 
 			if (task) {
-				Instrument::workerUseful();
+				Instrument::workerProgressing();
 				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
 			} else {
-				Instrument::workerIdle();
+				Instrument::workerResting();
 			}
 
 			// If we are using the hybrid/busy policy, avoid assigning tasks even if
@@ -105,10 +106,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	setServingTasks(false);
 
 	if (task) {
-		Instrument::workerUseful();
+		Instrument::workerProgressing();
 		Instrument::exitSchedulerLockAsServer(task->getInstrumentationTaskId());
 	} else {
-		Instrument::workerIdle();
+		Instrument::workerResting();
 		Instrument::exitSchedulerLockAsServer();
 	}
 

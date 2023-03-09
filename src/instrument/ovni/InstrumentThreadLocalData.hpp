@@ -12,11 +12,11 @@
 namespace Instrument {
 	struct ThreadLocalData {
 		InstrumentationContext _context;
-		bool _isIdle;
+		bool _isProgressing;
 
 		ThreadLocalData() :
 			_context(),
-			_isIdle(false)
+			_isProgressing(true)
 		{
 		}
 	};

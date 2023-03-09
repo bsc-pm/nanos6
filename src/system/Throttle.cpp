@@ -156,8 +156,8 @@ bool Throttle::engage(Task *creator, WorkerThread *workerThread)
 		workerThread->restoreTask(creator);
 		return true;
 	} else {
-		// The scheduler might have reported the thread as idle
-		Instrument::workerUseful();
+		// The scheduler might have reported the thread as resting
+		Instrument::workerProgressing();
 
 		// There is nothing else to do. Let's run a taskwait then
 		TaskWait::taskWait("Throttle");

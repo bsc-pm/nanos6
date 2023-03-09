@@ -75,8 +75,8 @@ public:
 	//! This function can alter the instrumentation state of the calling worker thread
 	//! depending on whether a ready task was found, the spinning/waiting time, etc. In
 	//! this instrumentation context, the worker thread will return from this function
-	//! as idle if no ready task is returned. Otherwise, the thread will return in the
-	//! useful state if the function returns a valid ready task.
+	//! as resting if no ready task is returned. Otherwise, the thread will return in
+	//! the progressing state if the function returns a valid ready task.
 	//!
 	//! \param computePlace the target compute place that wants to execute a task
 	//! \param currentThread the current running thread
@@ -103,11 +103,11 @@ public:
 			}
 		} while (retry);
 
-		// Make sure the worker thread is reported as idle if no task is returned. This
-		// is needed because we may have executed the onready clause function above and
-		// found out the task was not ready yet
+		// Make sure the worker thread is reported as resting if no task is returned.
+		// This is needed because we may have executed the onready clause function
+		// above and found out the task was not ready yet
 		if (task == nullptr)
-			Instrument::workerIdle();
+			Instrument::workerResting();
 
 		return task;
 	}
