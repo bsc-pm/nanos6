@@ -115,7 +115,7 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized-discrete-verbose.la \
 	libnanos6-optimized-regions-verbose.la
 
-noinst_LIBRARIES = libnanos6-main-wrapper.a libnanos6-library-mode.a
+noinst_LTLIBRARIES = libnanos6-main-wrapper.la libnanos6-library-mode.la
 lib_OBJECTS = nanos6-main-wrapper.o nanos6-library-mode.o
 
 
@@ -139,7 +139,7 @@ if ANDROID
 main_interception += loader/intercept-main-android.c
 endif
 
-libnanos6_main_wrapper_a_SOURCES = \
+libnanos6_main_wrapper_la_SOURCES = \
 	$(main_interception) \
 	loader/api-versions.c \
 	loader/api-versions.h \
@@ -150,25 +150,27 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h
 
-libnanos6_main_wrapper_a_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
+libnanos6_main_wrapper_la_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
+libnanos6_main_wrapper_la_LDFLAGS = -static
 
 
-nanos6-main-wrapper.o: libnanos6-main-wrapper.a
-	$(AM_V_LD)$(LD) -r --whole-archive libnanos6-main-wrapper.a -o nanos6-main-wrapper.o
+nanos6-main-wrapper.o: libnanos6-main-wrapper.la
+	$(AM_V_LD)$(LD) -r --whole-archive $(top_builddir)/.libs/libnanos6-main-wrapper.a -o nanos6-main-wrapper.o
 
 
-libnanos6_library_mode_a_SOURCES = \
+libnanos6_library_mode_la_SOURCES = \
 	$(library_interception) \
 	loader/api-versions.c \
 	loader/api-versions.h \
 	loader/device_strings.c \
 	loader/library-mode-init.c
 
-libnanos6_library_mode_a_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
+libnanos6_library_mode_la_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
+libnanos6_library_mode_la_LDFLAGS = -static
 
 
-nanos6-library-mode.o: libnanos6-library-mode.a
-	$(AM_V_LD)$(LD) -r --whole-archive libnanos6-library-mode.a -o nanos6-library-mode.o
+nanos6-library-mode.o: libnanos6-library-mode.la
+	$(AM_V_LD)$(LD) -r --whole-archive $(top_builddir)/.libs/libnanos6-library-mode.a -o nanos6-library-mode.o
 
 
 #
