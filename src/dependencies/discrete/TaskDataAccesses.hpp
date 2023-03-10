@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_DATA_ACCESSES_HPP
@@ -200,19 +200,23 @@ struct TaskDataAccesses {
 		}
 	}
 
-	inline bool forAll(std::function<bool(void *, DataAccess *)> callback)
+	template <typename ProcessorType>
+	inline bool forAll(ProcessorType processor)
 	{
 		if (_accessMap != nullptr) {
 			access_map_t::iterator itAccess = _accessMap->begin();
 
 			while (itAccess != _accessMap->end()) {
-				if (!callback(itAccess->first, &itAccess->second))
+				bool cont = processor(itAccess->first, &itAccess->second);
+				if (!cont)
 					return false;
+
 				itAccess++;
 			}
 		} else {
 			for (size_t i = 0; i < getRealAccessNumber(); ++i) {
-				if (!callback(_addressArray[i], &_accessArray[i]))
+				bool cont = processor(_addressArray[i], &_accessArray[i]);
+				if (!cont)
 					return false;
 			}
 		}
