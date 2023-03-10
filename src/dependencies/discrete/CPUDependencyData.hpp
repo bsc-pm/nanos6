@@ -20,19 +20,19 @@
 
 class Task;
 
-class SatisfiedOriginatorList {
+class TaskList {
 public:
 	static size_t _actualChunkSize;
 
 private:
-	static constexpr size_t MAX_SCHEDULER_CHUNKSIZE = 256;
+	static constexpr size_t MAX_CHUNKSIZE = 256;
 
-	Task *_array[MAX_SCHEDULER_CHUNKSIZE];
+	Task *_array[MAX_CHUNKSIZE];
 
 	size_t _count;
 
 public:
-	inline SatisfiedOriginatorList() :
+	inline TaskList() :
 		_count(0)
 	{
 	}
@@ -45,6 +45,12 @@ public:
 	inline void clear()
 	{
 		_count = 0;
+	}
+
+	inline Task *get(size_t pos)
+	{
+		assert(pos < _count);
+		return _array[pos];
 	}
 
 	inline void add(Task *task)
@@ -71,20 +77,20 @@ public:
 
 	static inline size_t getMaxChunkSize()
 	{
-		return MAX_SCHEDULER_CHUNKSIZE;
+		return MAX_CHUNKSIZE;
 	}
 };
 
 struct CPUDependencyData {
-	typedef SatisfiedOriginatorList satisfied_originator_list_t;
+	typedef TaskList task_list_t;
 	typedef Container::deque<Task *> commutative_satisfied_list_t;
-	typedef Container::deque<Task *> deletable_originator_list_t;
 
 	//! Tasks whose accesses have been satisfied after ending a task
-	satisfied_originator_list_t _satisfiedOriginators[nanos6_device_t::nanos6_device_type_num];
+	task_list_t _satisfiedOriginators[nanos6_device_t::nanos6_device_type_num];
+	task_list_t _deletableOriginators;
+
 	size_t _satisfiedOriginatorCount;
 
-	deletable_originator_list_t _deletableOriginators;
 	commutative_satisfied_list_t _satisfiedCommutativeOriginators;
 	mailbox_t _mailBox;
 
@@ -96,8 +102,8 @@ struct CPUDependencyData {
 
 	CPUDependencyData()
 		: _satisfiedOriginators(),
-		_satisfiedOriginatorCount(0),
 		_deletableOriginators(),
+		_satisfiedOriginatorCount(0),
 		_satisfiedCommutativeOriginators(),
 		_mailBox(),
 		_bytesInNUMA(nullptr)
@@ -118,38 +124,64 @@ struct CPUDependencyData {
 
 	inline bool empty() const
 	{
-		for (const satisfied_originator_list_t &list : _satisfiedOriginators)
+		for (const task_list_t &list : _satisfiedOriginators)
 			if (list.size() > 0)
 				return false;
 
-		return _deletableOriginators.empty() && _mailBox.empty() && _satisfiedCommutativeOriginators.empty();
+		if (_deletableOriginators.size() > 0)
+			return false;
+
+		return _mailBox.empty() && _satisfiedCommutativeOriginators.empty();
 	}
 
 	inline void addSatisfiedOriginator(Task *task, int deviceType)
 	{
 		assert(task != nullptr);
-		assert(_satisfiedOriginatorCount < (size_t) satisfied_originator_list_t::_actualChunkSize);
+		assert(_satisfiedOriginatorCount < (size_t) task_list_t::_actualChunkSize);
 		_satisfiedOriginatorCount++;
 		_satisfiedOriginators[deviceType].add(task);
 	}
 
-	inline bool full() const
+	inline void addDeletableOriginator(Task *task)
 	{
-		assert(satisfied_originator_list_t::_actualChunkSize != 0);
-		return (_satisfiedOriginatorCount == satisfied_originator_list_t::_actualChunkSize);
+		assert(task != nullptr);
+		assert(_deletableOriginators.size() < (size_t) task_list_t::_actualChunkSize);
+		_deletableOriginators.add(task);
 	}
 
-	inline satisfied_originator_list_t &getSatisfiedOriginators(int device)
+	inline bool fullSatisfiedOriginators() const
+	{
+		assert(task_list_t::_actualChunkSize != 0);
+		return (_satisfiedOriginatorCount == task_list_t::_actualChunkSize);
+	}
+
+	inline bool fullDeletableOriginators() const
+	{
+		assert(task_list_t::_actualChunkSize != 0);
+		return (_deletableOriginators.size() == task_list_t::_actualChunkSize);
+	}
+
+	inline task_list_t &getSatisfiedOriginators(int device)
 	{
 		return _satisfiedOriginators[device];
 	}
 
+	inline task_list_t &getDeletableOriginators()
+	{
+		return _deletableOriginators;
+	}
+
 	inline void clearSatisfiedOriginators()
 	{
-		for (satisfied_originator_list_t &list : _satisfiedOriginators)
+		for (task_list_t &list : _satisfiedOriginators)
 			list.clear();
 
 		_satisfiedOriginatorCount = 0;
+	}
+
+	inline void clearDeletableOriginators()
+	{
+		_deletableOriginators.clear();
 	}
 
 	inline void initBytesInNUMA(int numNUMANodes)
