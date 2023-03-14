@@ -51,7 +51,7 @@ namespace DataAccessRegistration {
 	static inline void releaseReductionInfo(ReductionInfo *info);
 
 	static inline void decreaseDeletableCountOrDelete(Task *originator,
-		CPUDependencyData::deletable_originator_list_t &deletableOriginators);
+		CPUDependencyData &hpDependencyData);
 
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
@@ -125,12 +125,16 @@ namespace DataAccessRegistration {
 		// As there is no "task garbage collection", the runtime will only destruct the tasks for us if we mark them as
 		// not needed on the unregisterTaskDataAccesses call, so this takes care on tasks ended anywhere else.
 
-		for (Task *deletableOriginator : hpDependencyData._deletableOriginators) {
+		auto &list = hpDependencyData.getDeletableOriginators();
+
+		for (size_t t = 0; t < list.size(); ++t) {
+			Task *deletableOriginator = list.get(t);
 			assert(deletableOriginator != nullptr);
+
 			TaskFinalization::disposeTask(deletableOriginator);
 		}
 
-		hpDependencyData._deletableOriginators.clear();
+		hpDependencyData.clearDeletableOriginators();
 	}
 
 	static inline void satisfyTask(
@@ -147,7 +151,7 @@ namespace DataAccessRegistration {
 
 			hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
 
-			if (hpDependencyData.full())
+			if (hpDependencyData.fullSatisfiedOriginators())
 				processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
 		}
 	}
@@ -232,7 +236,7 @@ namespace DataAccessRegistration {
 					Task *task = next.to->getOriginator();
 					assert(!task->getDataAccesses().hasBeenDeleted());
 					assert(next.to != next.from);
-					decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
+					decreaseDeletableCountOrDelete(task, hpDependencyData);
 				}
 			}
 
@@ -265,7 +269,7 @@ namespace DataAccessRegistration {
 			if (dispose) {
 				Task *task = next.from->getOriginator();
 				assert(!task->getDataAccesses().hasBeenDeleted());
-				decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
+				decreaseDeletableCountOrDelete(task, hpDependencyData);
 			}
 		}
 	}
@@ -330,7 +334,7 @@ namespace DataAccessRegistration {
 			propagateMessages(hpDependencyData, mailBox, reductionInfo, computePlace, fromBusyThread);
 			assert(!dispose);
 		} else if (dispose) {
-			decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
+			decreaseDeletableCountOrDelete(task, hpDependencyData);
 		}
 	}
 
@@ -423,7 +427,7 @@ namespace DataAccessRegistration {
 			m.from = m.to = access;
 			m.flagsAfterPropagation = ACCESS_PARENT_DONE;
 			if (access->applyPropagated(m))
-				decreaseDeletableCountOrDelete(access->getOriginator(), hpDependencyData._deletableOriginators);
+				decreaseDeletableCountOrDelete(access->getOriginator(), hpDependencyData);
 
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 			if (reductionInfo != nullptr) {
@@ -629,7 +633,7 @@ namespace DataAccessRegistration {
 					assert(!dispose);
 
 					if (dispose)
-						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
+						decreaseDeletableCountOrDelete(parentTask, hpDependencyData);
 				} else {
 					schedule = true;
 					fromCurrent = access->applySingle(
@@ -652,7 +656,7 @@ namespace DataAccessRegistration {
 
 				dispose = predecessor->applyPropagated(message);
 				if (dispose)
-					decreaseDeletableCountOrDelete(predecessor->getOriginator(), hpDependencyData._deletableOriginators);
+					decreaseDeletableCountOrDelete(predecessor->getOriginator(), hpDependencyData);
 			}
 
 			// The homeNode couldn't be propagated, check it in the directory
@@ -708,11 +712,14 @@ namespace DataAccessRegistration {
 	}
 
 	static inline void decreaseDeletableCountOrDelete(Task *originator,
-		CPUDependencyData::deletable_originator_list_t &deletableOriginators)
+		CPUDependencyData &hpDependencyData)
 	{
 		if (originator->getDataAccesses().decreaseDeletableCount()) {
 			if (originator->decreaseRemovalBlockingCount()) {
-				deletableOriginators.push_back(originator); // Ensure destructor is called
+				hpDependencyData.addDeletableOriginator(originator);
+
+				if (hpDependencyData.fullDeletableOriginators())
+					processDeletableOriginators(hpDependencyData);
 			}
 		}
 	}
