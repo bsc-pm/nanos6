@@ -147,6 +147,7 @@ ConfigCentral::ConfigCentral() :
 
 	// Turbo
 	registerOption<bool_t>("turbo.enabled", false);
+	registerOption<bool_t>("turbo.warmup", true);
 
 	// Version details
 	registerOption<bool_t>("version.debug", false);

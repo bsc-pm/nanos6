@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TURBO_SETTINGS_HPP
@@ -12,7 +12,10 @@
 #include <xmmintrin.h>
 #endif
 
+#include <atomic>
+
 #include "support/config/ConfigVariable.hpp"
+#include <MemoryAllocator.hpp>
 
 
 class TurboSettings {
@@ -35,6 +38,18 @@ public:
 
 	static void shutdown()
 	{
+	}
+
+	static bool isWarmupEnabled()
+	{
+		static ConfigVariable<bool> warmup("turbo.warmup");
+		return warmup.getValue();
+	}
+
+	static void warmupPhase()
+	{
+		void *ptr = MemoryAllocator::alloc(4096);
+		MemoryAllocator::free(ptr, 4096);
 	}
 };
 

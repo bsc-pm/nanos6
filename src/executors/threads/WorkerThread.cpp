@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -21,6 +21,7 @@
 #include "WorkerThread.hpp"
 #include "dependencies/SymbolTranslation.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "lowlevel/TurboSettings.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/TrackingPoints.hpp"
@@ -33,6 +34,7 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentWorkerThread.hpp>
 
+std::atomic<int> WorkerThread::_initializedThreads;
 
 void WorkerThread::initialize()
 {
@@ -50,10 +52,22 @@ void WorkerThread::initialize()
 	// Runtime Tracking Point - A thread is initializing
 	TrackingPoints::threadInitialized(this, cpu);
 
+	// At this point we're in the initial CPU
+	// Perform warm-up phase if required
+	if (TurboSettings::isWarmupEnabled())
+		TurboSettings::warmupPhase();
+
+	_initializedThreads.fetch_add(1, std::memory_order_relaxed);
+
 	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
-}
 
+	if (TurboSettings::isWarmupEnabled()) {
+		while (getInitializedThreads() < CPUManager::getAvailableCPUs())
+			spinWait();
+		spinWaitRelease();
+	}
+}
 
 void WorkerThread::body()
 {
