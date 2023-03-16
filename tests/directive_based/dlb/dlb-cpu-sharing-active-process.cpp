@@ -1,11 +1,12 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cstdlib>       /* getenv */
 #include <cstring>       /* strcmp */
+#include <unistd.h>      /* usleep */
 
 #include <nanos6/debug.h>
 
@@ -40,18 +41,16 @@ void cpuComputation(long numCPUs)
 	Timer timer;
 	timer.start();
 
-	// Wait until the number of acquired CPUs reaches numCPUs - 2
-	// (minus 2 since the passive process should keep one for the
-	// main task plus another for the scheduling loop)
+	// Wait until the number of acquired CPUs reaches numCPUs - 2 (minus 2 since
+	// the passive process should keep one for the main task plus another for the
+	// scheduling loop)
 	while (numBusyCPUs.load() < (numCPUs - 2)) {
-		// Spin for a bit
-		int spins = 0;
-		while (spins != MAX_SPINS) {
-			++spins;
-		}
+		// Sleep for 1 millisecond. Avoid consuming CPU time. Otherwise, we end up
+		// being killed for exceeding the CPU time limit per process in some machines
+		usleep(1000);
 
-		// Wait for 1 seconds max
-		if (timer.lap() > 1000000) {
+		// Wait for 5 seconds max
+		if (timer.lap() > 5000000) {
 			return;
 		}
 	}
