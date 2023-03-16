@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef WORKER_THREAD_HPP
@@ -54,6 +54,9 @@ private:
 	//! in chain within each thread
 	std::default_random_engine _ISGenerator;
 	std::uniform_real_distribution<float> _ISDistribution;
+
+	//! Number of initialized WorkerThread
+	static std::atomic<int> _initializedThreads;
 
 public:
 	WorkerThread() = delete;
@@ -109,6 +112,12 @@ public:
 
 	//! \brief Restores a task that was previously assigned to this thread
 	inline void restoreTask(Task *task);
+
+	//! \brief Gets the number of initialized threads
+	static inline int getInitializedThreads()
+	{
+		return _initializedThreads.load(std::memory_order_relaxed);
+	}
 };
 
 

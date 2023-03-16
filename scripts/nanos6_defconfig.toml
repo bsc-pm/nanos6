@@ -1,6 +1,6 @@
 # This file is part of Nanos6 and is licensed under the terms contained in the COPYING file
 #
-# Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+# Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 
 # The Nanos6 default configuration file. More details about the configuration options and the possible
 # values are available on the OmpSs-2 User Guide (https://pm.bsc.es/ftp/ompss-2/doc/user-guide/) or on
@@ -24,6 +24,15 @@
 	# results. It enables flush-to-zero (FZ) and denormals are zero (DAZ) optimizations in Intel®
 	# processors. Default is false
 	enabled = false
+	# Enable a warm-up of the memory allocation arenas for worker threads. This will enable a "warmup"
+	# phase when worker threads are first created, which basically implies performing memory allocation.
+	# When using Jemalloc, the first memory allocation on each thread may incur performance penalties,
+	# and for some Linux kernel versions it will serialize the initialization of workers. This has negative
+	# effects on application performance, since the application will start running while workers are
+	# performing the first memory allocation.
+	# This option will prevent this effect. The initialization time of the runtime will be higher, but
+	# once the "main" starts everything will be ready. Default is true
+	warmup = true
 
 [scheduler]
 	# Choose the task scheduling policy. Default is "fifo"
