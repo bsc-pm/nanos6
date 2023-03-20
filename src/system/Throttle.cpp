@@ -1,12 +1,10 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
-
-#include <MemoryAllocator.hpp>
 
 #include "DataAccessRegistration.hpp"
 #include "Throttle.hpp"
@@ -14,6 +12,10 @@
 #include "system/ompss/TaskBlocking.hpp"
 #include "system/ompss/TaskWait.hpp"
 #include "tasks/Task.hpp"
+
+#include <InstrumentWorkerThread.hpp>
+#include <MemoryAllocator.hpp>
+
 
 int Throttle::_pressure;
 ConfigVariable<bool> Throttle::_enabled("throttle.enabled");
@@ -154,6 +156,9 @@ bool Throttle::engage(Task *creator, WorkerThread *workerThread)
 		workerThread->restoreTask(creator);
 		return true;
 	} else {
+		// The scheduler might have reported the thread as resting
+		Instrument::workerProgressing();
+
 		// There is nothing else to do. Let's run a taskwait then
 		TaskWait::taskWait("Throttle");
 		return false;

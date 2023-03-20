@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_OVNI_THREAD_LOCAL_DATA_HPP
@@ -12,11 +12,11 @@
 namespace Instrument {
 	struct ThreadLocalData {
 		InstrumentationContext _context;
-		bool _hungry;
+		bool _isProgressing;
 
 		ThreadLocalData() :
 			_context(),
-			_hungry(false)
+			_isProgressing(true)
 		{
 		}
 	};

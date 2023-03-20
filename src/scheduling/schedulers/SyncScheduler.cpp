@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "SyncScheduler.hpp"
@@ -22,8 +22,10 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	if (!_lock.lockOrDelegate(computePlaceIdx, task)) {
 		// Someone else acquired the lock and assigned us work
 		if (task) {
+			Instrument::workerProgressing();
 			Instrument::exitSchedulerLockAsClient(task->getInstrumentationTaskId());
 		} else {
+			Instrument::workerResting();
 			Instrument::exitSchedulerLockAsClient();
 		}
 		return task;
@@ -31,6 +33,12 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We acquired the lock and we have to serve tasks
 	Instrument::schedulerLockBecomesServer();
+
+	// Consider the thread is progressing when starting the serving. We do
+	// not know yet if there are ready tasks, so the worker might switch to
+	// resting in loop below
+	Instrument::workerProgressing();
+
 	setServingTasks(true);
 
 	// The idea is to always keep a compute place inside the following scheduling loop
@@ -44,7 +52,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 		size_t servingIters = 0;
 
 		// Move ready tasks from add queues to the unsynchronized scheduler
-		processReadyTasks();
+		processReadyTasks(/* from server */ true);
 
 		// Serve the rest of computes places that are waiting
 		while (servingIters < _maxServingIters && !_lock.empty()) {
@@ -58,8 +66,12 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			// Try to get a ready task from the scheduler
 			task = _scheduler->getReadyTask(waitingComputePlace);
 
-			if (task != nullptr)
+			if (task) {
+				Instrument::workerProgressing();
 				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
+			} else {
+				Instrument::workerResting();
+			}
 
 			// If we are using the hybrid/busy policy, avoid assigning tasks even if
 			// none are found, so that threads do not spin in their body to avoid
@@ -92,10 +104,14 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We are stopping to serve tasks
 	setServingTasks(false);
-	if (task)
+
+	if (task) {
+		Instrument::workerProgressing();
 		Instrument::exitSchedulerLockAsServer(task->getInstrumentationTaskId());
-	else
+	} else {
+		Instrument::workerResting();
 		Instrument::exitSchedulerLockAsServer();
+	}
 
 	// Release the lock so another compute place can serve tasks
 	_lock.unlock();

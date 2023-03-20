@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_WORKERTHREAD_HPP
@@ -14,6 +14,12 @@ namespace Instrument {
 
 	//! This function is called when the current worker thread obtains a task
 	void workerThreadObtainedTasks();
+
+	//! This function is called when the thread enters the progressing state
+	void workerProgressing();
+
+	//! This function is called when the thread enters the resting state
+	void workerResting();
 
 	//! This function is called when the current worker thread starts busy waiting
 	void workerThreadBusyWaits();

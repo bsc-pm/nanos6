@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2021-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2021-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef OVNI_TRACE_HPP
@@ -138,6 +138,9 @@ namespace Instrument {
 		ALIAS_TRACEPOINT(2, suspendExit, "6WS")
 		ALIAS_TRACEPOINT(2, resumeEnter, "6Wr")
 		ALIAS_TRACEPOINT(2, resumeExit, "6WR")
+		// Worker progressing/resting
+		ALIAS_TRACEPOINT(2, workerProgressing, "6Pp")
+		ALIAS_TRACEPOINT(2, workerResting, "6Pr")
 		// Submit
 		ALIAS_TRACEPOINT(2, submitTaskEnter, "6U[")
 		ALIAS_TRACEPOINT(2, submitTaskExit, "6U]")

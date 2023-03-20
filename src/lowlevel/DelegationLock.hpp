@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DELEGATION_LOCK_HPP
@@ -10,6 +10,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -19,6 +20,7 @@
 #include "Padding.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <InstrumentWorkerThread.hpp>
 
 template <typename T>
 class DelegationLock {
@@ -39,13 +41,14 @@ private:
 		T _item;
 	};
 
+	//! Number of spins that a thread must do until it is considered idle
+	static constexpr uint64_t IDLE_SPINS_THRESHOLD = 1;
+
 #ifndef NDEBUG
 	//! The amount of threads currently waiting in the lock. Align the field
 	//! so that it does not interfere with the rest of fields
 	alignas(CACHELINE_SIZE * 2) std::atomic<size_t> _subscribedThreads;
 #endif
-
-protected:
 
 	//! Keep these fields on the same cacheline since they are not modified
 	alignas(CACHELINE_SIZE) Padded<Node> *_waitQueue;
@@ -112,10 +115,7 @@ public:
 		const uint64_t id = head % _size;
 
 		// Wait until it is our turn
-		while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
-			spinWait();
-		}
-		spinWaitRelease();
+		waitWhile<std::equal_to<uint64_t>>(_waitQueue[id]._ticket, head);
 
 		std::atomic_thread_fence(std::memory_order_acquire);
 	}
@@ -143,10 +143,7 @@ public:
 		_waitQueue[id]._cpuId.store(head + cpuIndex, std::memory_order_relaxed);
 
 		// Wait until it is our turn or someone else has served us an item
-		while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
-			spinWait();
-		}
-		spinWaitRelease();
+		waitWhile<std::less<uint64_t>>(_waitQueue[id]._ticket, head);
 
 		// Prevent reordering of loads respect to other processes.
 		// On weak memory models, the write to _waitQueue[id]._ticket can be seen
@@ -255,6 +252,46 @@ public:
 	{
 		_items[cpuIndex]._item = item;
 		_items[cpuIndex]._ticket = _next;
+	}
+
+private:
+	//! \brief Busy wait while a condition is true
+	//!
+	//! The function performs a busy wait while a condition is true on
+	//! atomic variable named operandA. The condition can be controlled
+	//! by the operandA, the operandB, the CompareOperator template
+	//! parameter. The CompareOperator is the operator used in the while
+	//! condition to keep spinning
+	//!
+	//! In the instrumentation context, the worker thread is marked as
+	//! resting after IDLE_SPINS_THRESHOLD spins
+	//!
+	//! \param operandA An atomic integer variable acting as the first operand
+	//! \param operandB An integer constant acting as the second operand
+	template <typename CompareOperator>
+	static inline void waitWhile(std::atomic<uint64_t> &operandA, const uint64_t operandB)
+	{
+		CompareOperator compOp;
+
+		uint64_t spins = 0;
+		uint64_t value = operandA.load(std::memory_order_relaxed);
+		while (compOp(value, operandB) && spins++ < IDLE_SPINS_THRESHOLD) {
+			spinWait();
+			value = operandA.load(std::memory_order_relaxed);
+		}
+
+		if (compOp(value, operandB)) {
+			// The worker will stop being idle when it receives a task or
+			// becomes the server
+			Instrument::workerResting();
+
+			while (compOp(value, operandB)) {
+				spinWait();
+				value = operandA.load(std::memory_order_relaxed);
+			}
+		}
+
+		spinWaitRelease();
 	}
 };
 

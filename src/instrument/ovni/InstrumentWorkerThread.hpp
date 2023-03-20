@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_OVNI_WORKERTHREAD_HPP
@@ -14,6 +14,25 @@ namespace Instrument {
 
 	inline void workerThreadSpins() {}
 	inline void workerThreadObtainedTask() {}
+
+	inline void workerProgressing()
+	{
+		ThreadLocalData &tld = getThreadLocalData();
+		if (!tld._isProgressing) {
+			tld._isProgressing = true;
+			Ovni::workerProgressing();
+		}
+	}
+
+	inline void workerResting()
+	{
+		ThreadLocalData &tld = getThreadLocalData();
+		if (tld._isProgressing) {
+			tld._isProgressing = false;
+			Ovni::workerResting();
+		}
+	}
+
 	inline void workerThreadBusyWaits() {}
 
 	inline void workerThreadBegin()

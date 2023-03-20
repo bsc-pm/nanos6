@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYNC_SCHEDULER_HPP
@@ -155,7 +155,7 @@ public:
 
 			if ((numTasks > count) && _lock.tryLock()) {
 				// Process queues before pushing new tasks
-				processReadyTasks();
+				processReadyTasks(/* not from server */ false);
 				_lock.unlock();
 			}
 		}
@@ -174,11 +174,20 @@ private:
 	//! the lock-free queues (one per NUMA) to the definitive ready
 	//! task queue. Note this function must be called with the lock
 	//! of the scheduler acquired
-	inline void processReadyTasks()
+	//!
+	//! \param fromServer Whether the progress comes from a server thread
+	inline void processReadyTasks(bool fromServer)
 	{
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
 				Instrument::enterProcessReadyTasks();
+
+				// A worker thread acting as server must switch to progressing
+				// if it processes any ready task. The server will switch back
+				// to idle in the server loop (if necessary)
+				if (fromServer)
+					Instrument::workerProgressing();
+
 				_addQueues[i].consume_all(
 					[&](Task *task) {
 						// Add the task to the unsync scheduler
