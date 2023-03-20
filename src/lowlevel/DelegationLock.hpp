@@ -41,7 +41,8 @@ private:
 		T _item;
 	};
 
-	static constexpr uint64_t IDLE_SPINS_THRESHOLD = 1024;
+	//! Number of spins that a thread must do until it is considered idle
+	static constexpr uint64_t IDLE_SPINS_THRESHOLD = 1;
 
 #ifndef NDEBUG
 	//! The amount of threads currently waiting in the lock. Align the field
