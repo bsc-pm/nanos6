@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DLB_CPU_MANAGER_HPP
@@ -21,12 +21,16 @@ class DLBCPUManager : public CPUManagerInterface {
 private:
 
 	//! CPUs available to be used for shutdown purposes
-	static boost::dynamic_bitset<> _shutdownCPUs;
+	boost::dynamic_bitset<> _shutdownCPUs;
 
 	//! Spinlock to access shutdown CPUs
-	static SpinLock _shutdownCPUsLock;
+	SpinLock _shutdownCPUsLock;
 
 public:
+
+	DLBCPUManager() : CPUManagerInterface()
+	{
+	}
 
 	/*    CPUMANAGER    */
 

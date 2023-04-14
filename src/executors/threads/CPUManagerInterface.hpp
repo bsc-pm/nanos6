@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_INTERFACE_HPP
@@ -31,31 +31,31 @@ class CPUManagerInterface {
 protected:
 
 	//! A vector of available CPUs
-	static std::vector<CPU *> _cpus;
+	std::vector<CPU *> _cpus;
 
 	//! Map from system to virtual CPU id
-	static std::vector<size_t> _systemToVirtualCPUId;
+	std::vector<size_t> _systemToVirtualCPUId;
 
 	//! The process' CPU mask
-	static cpu_set_t _cpuMask;
+	cpu_set_t _cpuMask;
 
 	//! Indicates the initialization of CPUs has finished
-	static std::atomic<bool> _finishedCPUInitialization;
+	std::atomic<bool> _finishedCPUInitialization;
 
 	//! The decision-taking policy of the CPU Manager
-	static CPUManagerPolicyInterface *_cpuManagerPolicy;
+	CPUManagerPolicyInterface *_cpuManagerPolicy;
 
 	//! The chosen CPU Manager policy
-	static ConfigVariable<std::string> _policyChosen;
+	ConfigVariable<std::string> _policyChosen;
 
 	//! The identifier of the policy
-	static CPUManagerPolicy _policyId;
+	CPUManagerPolicy _policyId;
 
 	//! The virtual id of the first owned CPU of this process
-	static size_t _firstCPUId;
+	size_t _firstCPUId;
 
 	//! The virtual CPU of the leader thread
-	static CPU *_leaderThreadCPU;
+	CPU *_leaderThreadCPU;
 
 protected:
 
@@ -63,6 +63,14 @@ protected:
 	void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
 
 public:
+
+	CPUManagerInterface() :
+		_finishedCPUInitialization(false),
+		_cpuManagerPolicy(nullptr),
+		_policyChosen("cpumanager.policy"),
+		_leaderThreadCPU(nullptr)
+	{
+	}
 
 	virtual ~CPUManagerInterface()
 	{

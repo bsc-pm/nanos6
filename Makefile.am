@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
 # A workaround for http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18744
 am__is_gnu_make = { \
@@ -389,7 +389,6 @@ common_sources = \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUManager.cpp \
-	src/executors/threads/cpu-managers/default/policies/HybridPolicy.cpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/device/Accelerator.cpp \

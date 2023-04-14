@@ -18,10 +18,6 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-boost::dynamic_bitset<> DLBCPUManager::_shutdownCPUs;
-SpinLock DLBCPUManager::_shutdownCPUsLock;
-
-
 void DLBCPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;

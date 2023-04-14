@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2021-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HYBRID_POLICY_HPP
@@ -9,33 +9,23 @@
 
 #include "IdlePolicy.hpp"
 #include "executors/threads/CPUManagerPolicyInterface.hpp"
+#include "executors/threads/cpu-managers/default/DefaultCPUManager.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "support/config/ConfigVariable.hpp"
 
 
-class HybridPolicy : public CPUManagerPolicyInterface {
-
+class HybridPolicy : public IdlePolicy {
 private:
-
-	//! The maximum amount of CPUs in the system
-	size_t _numCPUs;
-
 	//! The maximum number of iterations to wait before assigning a null task.
 	//! This variable refers to the sum of iterations for all CPUs, thus to
 	//! obtain the number per CPU it must be divided by _numCPUs
-	static ConfigVariable<size_t> _numBusyIters;
+	ConfigVariable<size_t> _numBusyIters;
 
 public:
-
-	inline HybridPolicy(size_t numCPUs)
-		: _numCPUs(numCPUs)
+	inline HybridPolicy(DefaultCPUManager &cpuManager, size_t numCPUs) :
+		IdlePolicy(cpuManager, numCPUs),
+		_numBusyIters("cpumanager.busy_iters")
 	{
-	}
-
-	inline void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested = 0)
-	{
-		// The fault behavior is the same as the idle policy
-		IdlePolicy::idlePolicyDefaultExecution(cpu, hint, numRequested, _numCPUs);
 	}
 
 	inline size_t getMaxBusyIterations() const

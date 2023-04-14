@@ -1,15 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "IdlePolicy.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "executors/threads/cpu-managers/default/DefaultCPUManager.hpp"
 
 
-void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested, size_t numCPUs)
+void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested)
 {
 	// NOTE: This policy works as follows:
 	// - If the hint is IDLE_CANDIDATE, we try to idle the current CPU
@@ -18,7 +17,7 @@ void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyH
 	if (hint == IDLE_CANDIDATE) {
 		assert(cpu != nullptr);
 
-		bool cpuIsIdle = DefaultCPUManager::cpuBecomesIdle((CPU *) cpu);
+		bool cpuIsIdle = _cpuManager.cpuBecomesIdle((CPU *) cpu);
 		if (cpuIsIdle) {
 			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 			assert(currentThread != nullptr);
@@ -33,11 +32,11 @@ void IdlePolicy::idlePolicyDefaultExecution(ComputePlace *cpu, CPUManagerPolicyH
 		assert(numRequested > 0);
 
 		// At most we will obtain as many idle CPUs as the maximum amount
-		size_t numCPUsToObtain = std::min(numCPUs, numRequested);
+		size_t numCPUsToObtain = std::min(_numCPUs, numRequested);
 		CPU *idleCPUs[numCPUsToObtain];
 
 		// Try to get as many idle CPUs as we need
-		size_t numCPUsObtained = DefaultCPUManager::getIdleCPUs(
+		size_t numCPUsObtained = _cpuManager.getIdleCPUs(
 			numCPUsToObtain,
 			idleCPUs
 		);

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DEFAULT_CPU_MANAGER_HPP
@@ -15,15 +15,19 @@ class DefaultCPUManager : public CPUManagerInterface {
 private:
 
 	//! Identifies CPUs that are idle
-	static boost::dynamic_bitset<> _idleCPUs;
+	boost::dynamic_bitset<> _idleCPUs;
 
 	//! Spinlock to access idle CPUs
-	static SpinLock _idleCPUsLock;
+	SpinLock _idleCPUsLock;
 
 	//! The current number of idle CPUs, kept atomic through idleCPUsLock
-	static size_t _numIdleCPUs;
+	size_t _numIdleCPUs;
 
 public:
+
+	DefaultCPUManager() : CPUManagerInterface()
+	{
+	}
 
 	/*    CPUMANAGER    */
 
@@ -119,12 +123,12 @@ public:
 	//! \param[in,out] cpu The CPU object to idle
 	//!
 	//! \return Whether the operation was successful
-	static bool cpuBecomesIdle(CPU *cpu);
+	bool cpuBecomesIdle(CPU *cpu);
 
 	//! \brief Try to get any idle CPU
 	//!
 	//! \return A CPU or nullptr
-	static CPU *getIdleCPU();
+	CPU *getIdleCPU();
 
 	//! \brief Get a specific number of idle CPUs
 	//!
@@ -133,7 +137,7 @@ public:
 	//! retreived idle CPUs will be placed
 	//!
 	//! \return The number of idle CPUs obtained/valid references in the vector
-	static size_t getIdleCPUs(size_t numCPUs, CPU *idleCPUs[]);
+	size_t getIdleCPUs(size_t numCPUs, CPU *idleCPUs[]);
 };
 
 #endif // DEFAULT_CPU_MANAGER_HPP
