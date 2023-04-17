@@ -443,47 +443,47 @@ taskloop_wait_mercurium_test_CPPFLAGS = -DNDEBUG
 taskloop_wait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_wait_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
-discrete_taskloop_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop/taskloop-multiaxpy.cpp
+discrete_taskloop_multiaxpy_mercurium_debug_test_SOURCES = ../taskloop/taskloop-multiaxpy.cpp
 discrete_taskloop_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_multiaxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-discrete_taskloop_multiaxpy_mercurium_test_SOURCES = ../discrete-taskloop/taskloop-multiaxpy.cpp
+discrete_taskloop_multiaxpy_mercurium_test_SOURCES = ../taskloop/taskloop-multiaxpy.cpp
 discrete_taskloop_multiaxpy_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_multiaxpy_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_multiaxpy_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
-discrete_taskloop_dep_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop/taskloop-dep-multiaxpy.cpp
+discrete_taskloop_dep_multiaxpy_mercurium_debug_test_SOURCES = ../taskloop/taskloop-dep-multiaxpy.cpp
 discrete_taskloop_dep_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_dep_multiaxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-discrete_taskloop_dep_multiaxpy_mercurium_test_SOURCES = ../discrete-taskloop/taskloop-dep-multiaxpy.cpp
+discrete_taskloop_dep_multiaxpy_mercurium_test_SOURCES = ../taskloop/taskloop-dep-multiaxpy.cpp
 discrete_taskloop_dep_multiaxpy_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_dep_multiaxpy_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_dep_multiaxpy_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
-discrete_taskloop_nested_dep_multiaxpy_mercurium_debug_test_SOURCES = ../discrete-taskloop/taskloop-nested-dep-multiaxpy.cpp
+discrete_taskloop_nested_dep_multiaxpy_mercurium_debug_test_SOURCES = ../taskloop/discrete-taskloop-nested-dep-multiaxpy.cpp
 discrete_taskloop_nested_dep_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nested_dep_multiaxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-discrete_taskloop_nested_dep_multiaxpy_mercurium_test_SOURCES = ../discrete-taskloop/taskloop-nested-dep-multiaxpy.cpp
+discrete_taskloop_nested_dep_multiaxpy_mercurium_test_SOURCES = ../taskloop/discrete-taskloop-nested-dep-multiaxpy.cpp
 discrete_taskloop_nested_dep_multiaxpy_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_nested_dep_multiaxpy_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nested_dep_multiaxpy_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
-discrete_taskloop_nonpod_mercurium_debug_test_SOURCES = ../discrete-taskloop/taskloop-nonpod.cpp
+discrete_taskloop_nonpod_mercurium_debug_test_SOURCES = ../taskloop/taskloop-nonpod.cpp
 discrete_taskloop_nonpod_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nonpod_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-discrete_taskloop_nonpod_mercurium_test_SOURCES = ../discrete-taskloop/taskloop-nonpod.cpp
+discrete_taskloop_nonpod_mercurium_test_SOURCES = ../taskloop/taskloop-nonpod.cpp
 discrete_taskloop_nonpod_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_nonpod_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nonpod_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
-discrete_taskloop_nqueens_mercurium_debug_test_SOURCES = ../discrete-taskloop/taskloop-nqueens.cpp
+discrete_taskloop_nqueens_mercurium_debug_test_SOURCES = ../taskloop/taskloop-nqueens.cpp
 discrete_taskloop_nqueens_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nqueens_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-discrete_taskloop_nqueens_mercurium_test_SOURCES = ../discrete-taskloop/taskloop-nqueens.cpp
+discrete_taskloop_nqueens_mercurium_test_SOURCES = ../taskloop/taskloop-nqueens.cpp
 discrete_taskloop_nqueens_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_taskloop_nqueens_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_taskloop_nqueens_mercurium_test_LDFLAGS = $(test_common_ldflags)
@@ -644,11 +644,11 @@ discrete_simple_commutative_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_simple_commutative_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_simple_commutative_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
-discrete_red_stress_mercurium_debug_test_SOURCES = ../discrete/discrete-red-stress.cpp
+discrete_red_stress_mercurium_debug_test_SOURCES = ../reductions/red-stress.cpp
 discrete_red_stress_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_red_stress_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-discrete_red_stress_mercurium_test_SOURCES = ../discrete/discrete-red-stress.cpp
+discrete_red_stress_mercurium_test_SOURCES = ../reductions/red-stress.cpp
 discrete_red_stress_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_red_stress_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_red_stress_mercurium_test_LDFLAGS = $(test_common_ldflags)
