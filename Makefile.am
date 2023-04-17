@@ -1224,6 +1224,7 @@ noinst_HEADERS = \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
+	src/lowlevel/MultiConditionVariable.hpp \
 	src/lowlevel/PaddedSpinLock.hpp \
 	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/Padding.hpp \

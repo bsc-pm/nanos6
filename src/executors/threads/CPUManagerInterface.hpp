@@ -8,6 +8,7 @@
 #define CPU_MANAGER_INTERFACE_HPP
 
 #include <atomic>
+#include <algorithm>
 #include <cassert>
 #include <mutex>
 #include <sched.h>
@@ -101,6 +102,19 @@ public:
 	{
 		return _finishedCPUInitialization;
 	}
+
+	//! \brief Check whether the CPU should enter the sponge mode
+	//!
+	//! To abosrb system noise, the user can specify some CPUs to enter in sponge
+	//! mode, where the CPU is left without any computation. The system may then
+	//! use this CPU for running system or third-party software threads.
+	virtual bool isSpongeCPU(CPU *cpu) const = 0;
+
+	//! \brief Enter the sponge mode in a CPU
+	//!
+	//! This function assumes the current thread has been assigned (exclusively) to
+	//! the sponge CPU and will block its execution until the runtime finalizes
+	virtual void enterSpongeMode(CPU *cpu) = 0;
 
 	//! \brief Notify all available CPUs that the runtime is shutting down
 	virtual void shutdownPhase1() = 0;

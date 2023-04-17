@@ -87,10 +87,16 @@ public:
 		return _isPresent;
 	}
 
+	//! \brief Get number of elements in the config variable set
+	inline size_t size() const
+	{
+		return _contents.size();
+	}
+
 	//! \brief Indicate if the config variable contains an item
 	//!
 	//! \param item The item to search
-	inline bool contains(T &item) const
+	inline bool contains(const T &item) const
 	{
 		return (_contents.find(item) != _contents.end());
 	}

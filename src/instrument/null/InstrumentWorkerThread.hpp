@@ -16,6 +16,7 @@ namespace Instrument {
 	inline void workerThreadObtainedTask() {}
 	inline void workerProgressing() {}
 	inline void workerResting() {}
+	inline void workerAbsorbing() {}
 	inline void workerThreadBusyWaits() {}
 	inline void workerThreadBegin() {}
 	inline void workerThreadEnd() {}
@@ -27,6 +28,8 @@ namespace Instrument {
 	inline void exitSuspend() {}
 	inline void enterResume() {}
 	inline void exitResume() {}
+	inline void enterSpongeMode() {}
+	inline void exitSpongeMode() {}
 }
 
 #endif // INSTRUMENT_NULL_WORKERTHREAD_HPP

@@ -55,6 +55,16 @@
 	# works for the 'hybrid' policy. This number will be divided by the number of active CPUs to
 	# obtain a "busy_iters per CPU" metric for each individual CPU to busy-wait for
 	busy_iters = 240000
+	# The CPUs that should be in sponge mode. A sponge CPU is a CPU that the runtime system has available
+	# but it does not execute any task (or runtime code) on it. Such CPUs are useful to reduce the system
+	# noise. The runtime leaves these CPUs free (without consuming CPU time) so that the system can schedule
+	# other threads and interruptions on them.
+	# The option accepts a list of CPU system identifiers that must be in sponge mode. The user is responsible
+	# for ensuring the runtime can progress with the specified set of sponge CPUs. If DLB is enabled, this
+	# option is ignored.
+	# As an example, sponge_cpus = [ 2, 8 ] would leave the CPUs with system id 2 and 8 free to absorb noise.
+	# By default, there are no sponge CPUs, and the runtime uses all CPUs from the process CPU mask
+	sponge_cpus = [ ]
 
 [throttle]
 	# Enable throttle to stop creating tasks when certain conditions are met. Default is false

@@ -21,6 +21,9 @@ namespace Instrument {
 	//! This function is called when the thread enters the resting state
 	void workerResting();
 
+	//! This function is called when the thread enters the sponge/absorbing state
+	void workerAbsorbing();
+
 	//! This function is called when the current worker thread starts busy waiting
 	void workerThreadBusyWaits();
 
@@ -53,6 +56,13 @@ namespace Instrument {
 
 	//! Called when the current worker exits resume()
 	void exitResume();
+
+	//! Called when the current worker enters the sponge mode on the
+	//! current CPU to reduce system noise
+	void enterSpongeMode();
+
+	//! Called when the current worker exits the sponge mode
+	void exitSpongeMode();
 }
 
 #endif // INSTRUMENT_WORKERTHREAD_HPP

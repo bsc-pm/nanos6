@@ -124,6 +124,9 @@ void DefaultCPUManager::shutdownPhase1()
 	for (size_t id = 0; id < _cpus.size(); ++id) {
 		DefaultCPUActivation::shutdownCPU(_cpus[id]);
 	}
+
+	// Wake up threads that are blocking sponge CPUs
+	_spongeModeCondVar.signalAll();
 }
 
 void DefaultCPUManager::forcefullyResumeFirstCPU()

@@ -18,8 +18,8 @@ namespace Instrument {
 	inline void workerProgressing()
 	{
 		ThreadLocalData &tld = getThreadLocalData();
-		if (!tld._isProgressing) {
-			tld._isProgressing = true;
+		if (tld._workerStatus != worker_status_t::progressing) {
+			tld._workerStatus = worker_status_t::progressing;
 			Ovni::workerProgressing();
 		}
 	}
@@ -27,9 +27,18 @@ namespace Instrument {
 	inline void workerResting()
 	{
 		ThreadLocalData &tld = getThreadLocalData();
-		if (tld._isProgressing) {
-			tld._isProgressing = false;
+		if (tld._workerStatus != worker_status_t::resting) {
+			tld._workerStatus = worker_status_t::resting;
 			Ovni::workerResting();
+		}
+	}
+
+	inline void workerAbsorbing()
+	{
+		ThreadLocalData &tld = getThreadLocalData();
+		if (tld._workerStatus != worker_status_t::absorbing) {
+			tld._workerStatus = worker_status_t::absorbing;
+			Ovni::workerAbsorbing();
 		}
 	}
 
@@ -85,6 +94,16 @@ namespace Instrument {
 	inline void exitResume()
 	{
 		Ovni::resumeExit();
+	}
+
+	inline void enterSpongeMode()
+	{
+		Ovni::spongeModeEnter();
+	}
+
+	inline void exitSpongeMode()
+	{
+		Ovni::spongeModeExit();
 	}
 }
 

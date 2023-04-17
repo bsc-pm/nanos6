@@ -14,6 +14,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUManagerInterface.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 
 class DLBCPUManager : public CPUManagerInterface {
@@ -41,6 +42,17 @@ public:
 	inline bool isDLBEnabled() const override
 	{
 		return true;
+	}
+
+	inline bool isSpongeCPU(CPU *) const override
+	{
+		// Disable sponge mode when using DLB
+		return false;
+	}
+
+	inline void enterSpongeMode(CPU *) override
+	{
+		FatalErrorHandler::fail("Sponge CPUs not allowed in DLB mode");
 	}
 
 	void shutdownPhase1() override;

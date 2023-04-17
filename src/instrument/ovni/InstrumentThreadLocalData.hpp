@@ -10,13 +10,19 @@
 #include <InstrumentInstrumentationContext.hpp>
 
 namespace Instrument {
+	enum worker_status_t {
+		progressing,
+		resting,
+		absorbing
+	};
+
 	struct ThreadLocalData {
 		InstrumentationContext _context;
-		bool _isProgressing;
+		worker_status_t _workerStatus;
 
 		ThreadLocalData() :
 			_context(),
-			_isProgressing(true)
+			_workerStatus(progressing)
 		{
 		}
 	};

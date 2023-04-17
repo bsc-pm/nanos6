@@ -8,6 +8,8 @@
 #define DEFAULT_CPU_MANAGER_HPP
 
 #include "executors/threads/CPUManagerInterface.hpp"
+#include "lowlevel/MultiConditionVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class DefaultCPUManager : public CPUManagerInterface {
@@ -23,11 +25,36 @@ private:
 	//! The current number of idle CPUs, kept atomic through idleCPUsLock
 	size_t _numIdleCPUs;
 
+	//! The system ids of the CPUs in sponge mode. These CPUs are not used by
+	//! the runtime to reduce the system noise
+	ConfigVariableSet<size_t> _spongeModeCPUs;
+
+	//! Condition variable where sponge CPUs (actually its running thread) is
+	//! blocked until the runtime finalization
+	MultiConditionVariable _spongeModeCondVar;
+
 public:
 
-	DefaultCPUManager() : CPUManagerInterface()
+	DefaultCPUManager() :
+		CPUManagerInterface(),
+		_spongeModeCPUs("cpumanager.sponge_cpus"),
+		_spongeModeCondVar(_spongeModeCPUs.size())
 	{
 	}
+
+	inline bool isSpongeCPU(CPU *cpu) const override
+	{
+		assert(cpu != nullptr);
+
+		// Return whether the CPU is in the list of sponge CPUs
+		return _spongeModeCPUs.contains(cpu->getSystemCPUId());
+	}
+
+	inline void enterSpongeMode(CPU *) override
+	{
+		_spongeModeCondVar.wait();
+	}
+
 
 	/*    CPUMANAGER    */
 
