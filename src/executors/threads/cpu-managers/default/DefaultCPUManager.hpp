@@ -31,13 +31,13 @@ public:
 
 	/*    CPUMANAGER    */
 
-	void preinitialize();
+	void preinitialize() override;
 
-	void initialize();
+	void initialize() override;
 
-	void shutdownPhase1();
+	void shutdownPhase1() override;
 
-	inline void shutdownPhase2()
+	inline void shutdownPhase2() override
 	{
 		delete _leaderThreadCPU;
 
@@ -51,13 +51,13 @@ public:
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
 		size_t numRequested = 0
-	) {
+	) override {
 		assert(_cpuManagerPolicy != nullptr);
 
 		_cpuManagerPolicy->execute(cpu, hint, numRequested);
 	}
 
-	inline CPU *getCPU(size_t systemCPUId) const
+	inline CPU *getCPU(size_t systemCPUId) const override
 	{
 		assert(_systemToVirtualCPUId.size() > systemCPUId);
 
@@ -65,42 +65,42 @@ public:
 		return _cpus[virtualCPUId];
 	}
 
-	inline CPU *getUnusedCPU()
+	inline CPU *getUnusedCPU() override
 	{
 		// In the default implementation, getting an unused CPU means going
 		// through the idle mechanism and thus getting an idle CPU
 		return getIdleCPU();
 	}
 
-	void forcefullyResumeFirstCPU();
+	void forcefullyResumeFirstCPU() override;
 
 
 	/*    CPUACTIVATION BRIDGE    */
 
-	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread);
+	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread) override;
 
-	inline void checkIfMustReturnCPU(WorkerThread *)
+	inline void checkIfMustReturnCPU(WorkerThread *) override
 	{
 		// CPUs are never returned in this implementation
 	}
 
-	bool acceptsWork(CPU *cpu);
+	bool acceptsWork(CPU *cpu) override;
 
-	bool enable(size_t systemCPUId);
+	bool enable(size_t systemCPUId) override;
 
-	bool disable(size_t systemCPUId);
+	bool disable(size_t systemCPUId) override;
 
 
 	/*    SHUTDOWN CPUS    */
 
-	inline CPU *getShutdownCPU()
+	inline CPU *getShutdownCPU() override
 	{
 		// In the default implementation, getting a shutdown CPU means going
 		// through the idle mechanism and thus getting an idle CPU
 		return getIdleCPU();
 	}
 
-	inline void addShutdownCPU(CPU *cpu)
+	inline void addShutdownCPU(CPU *cpu) override
 	{
 		assert(cpu != nullptr);
 

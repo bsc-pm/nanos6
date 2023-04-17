@@ -34,30 +34,30 @@ public:
 
 	/*    CPUMANAGER    */
 
-	void preinitialize();
+	void preinitialize() override;
 
-	void initialize();
+	void initialize() override;
 
-	inline bool isDLBEnabled() const
+	inline bool isDLBEnabled() const override
 	{
 		return true;
 	}
 
-	void shutdownPhase1();
+	void shutdownPhase1() override;
 
-	void shutdownPhase2();
+	void shutdownPhase2() override;
 
 	inline void executeCPUManagerPolicy(
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
 		size_t numRequested = 0
-	) {
+	) override {
 		assert(_cpuManagerPolicy != nullptr);
 
 		_cpuManagerPolicy->execute(cpu, hint, numRequested);
 	}
 
-	inline CPU *getCPU(size_t systemCPUId) const
+	inline CPU *getCPU(size_t systemCPUId) const override
 	{
 		assert(_systemToVirtualCPUId.size() > systemCPUId);
 
@@ -65,27 +65,27 @@ public:
 		return _cpus[virtualCPUId];
 	}
 
-	inline CPU *getUnusedCPU()
+	inline CPU *getUnusedCPU() override
 	{
 		// In the DLB implementation, underlying policies control CPUs,
 		// obtaining unused CPUs should not be needed
 		return nullptr;
 	}
 
-	void forcefullyResumeFirstCPU();
+	void forcefullyResumeFirstCPU() override;
 
 
 	/*    CPUACTIVATION BRIDGE    */
 
-	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread);
+	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread) override;
 
-	void checkIfMustReturnCPU(WorkerThread *thread);
+	void checkIfMustReturnCPU(WorkerThread *thread) override;
 
-	bool acceptsWork(CPU *cpu);
+	bool acceptsWork(CPU *cpu) override;
 
-	bool enable(size_t systemCPUId);
+	bool enable(size_t systemCPUId) override;
 
-	bool disable(size_t systemCPUId);
+	bool disable(size_t systemCPUId) override;
 
 
 	/*    SHUTDOWN CPUS    */
@@ -93,7 +93,7 @@ public:
 	//! \brief Get an unused CPU to participate in the shutdown process
 	//!
 	//! \return A CPU or nullptr
-	inline CPU *getShutdownCPU()
+	inline CPU *getShutdownCPU() override
 	{
 		std::lock_guard<SpinLock> guard(_shutdownCPUsLock);
 
@@ -109,7 +109,7 @@ public:
 	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
 	//! \param[in] cpu The CPU object to offer
-	inline void addShutdownCPU(CPU *cpu)
+	inline void addShutdownCPU(CPU *cpu) override
 	{
 		const int index = cpu->getIndex();
 

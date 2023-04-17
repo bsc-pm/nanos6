@@ -31,7 +31,7 @@ public:
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
 		size_t numRequested = 0
-	);
+	) override;
 };
 
 #endif // IDLE_POLICY_HPP

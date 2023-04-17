@@ -28,7 +28,7 @@ public:
 	{
 	}
 
-	inline size_t getMaxBusyIterations() const
+	inline size_t getMaxBusyIterations() const override
 	{
 		// In the busy policy, the maximum number of busy iterations should
 		// be a value large enough so that it can barely be reached
