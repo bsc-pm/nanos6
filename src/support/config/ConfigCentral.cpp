@@ -26,6 +26,7 @@ ConfigCentral::ConfigCentral() :
 	// CPU manager
 	registerOption<integer_t>("cpumanager.busy_iters", 240000);
 	registerOption<string_t>("cpumanager.policy", "default");
+	registerOption<integer_t>("cpumanager.sponge_cpus", {});
 
 	// CUDA devices
 	registerOption<string_t>("devices.cuda.kernels_folder", "nanos6-cuda-kernels");

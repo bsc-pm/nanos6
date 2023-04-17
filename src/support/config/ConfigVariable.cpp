@@ -39,7 +39,8 @@ ConfigVariableSet<T>::ConfigVariableSet(const std::string &name) :
 
 	if (!values.empty()) {
 		_contents.clear();
-		for (T &item : values)
+
+		for (const option_type_t &item : values)
 			_contents.emplace((T) item);
 	}
 }
@@ -56,4 +57,9 @@ template class ConfigVariable<std::string>;
 template class ConfigVariable<unsigned int>;
 template class ConfigVariable<StringifiedMemorySize>;
 
+template class ConfigVariableSet<int>;
+template class ConfigVariableSet<bool>;
+template class ConfigVariableSet<float>;
+template class ConfigVariableSet<size_t>;
 template class ConfigVariableSet<std::string>;
+template class ConfigVariableSet<unsigned int>;

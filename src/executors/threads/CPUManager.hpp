@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_HPP
@@ -201,6 +201,19 @@ public:
 		return _cpuManager->getCPUListReference();
 	}
 
+	static inline bool isSpongeCPU(CPU *cpu)
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->isSpongeCPU(cpu);
+	}
+
+	static inline void enterSpongeMode(CPU *cpu)
+	{
+		assert(_cpuManager != nullptr);
+
+		_cpuManager->enterSpongeMode(cpu);
+	}
 
 	/*    CPUACTIVATION BRIDGE    */
 

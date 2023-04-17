@@ -7,6 +7,7 @@
 #ifndef WORKER_THREAD_HPP
 #define WORKER_THREAD_HPP
 
+#include <cstdint>
 #include <random>
 
 #include "DependencyDomain.hpp"
@@ -56,7 +57,7 @@ private:
 	std::uniform_real_distribution<float> _ISDistribution;
 
 	//! Number of initialized WorkerThread
-	static std::atomic<int> _initializedThreads;
+	static std::atomic<uint64_t> _initializedThreads;
 
 public:
 	WorkerThread() = delete;
