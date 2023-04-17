@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "DefaultCPUActivation.hpp"
@@ -12,10 +12,6 @@
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/TrackingPoints.hpp"
-
-boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
-SpinLock DefaultCPUManager::_idleCPUsLock;
-size_t DefaultCPUManager::_numIdleCPUs;
 
 
 /*    CPUMANAGER    */
@@ -46,10 +42,10 @@ void DefaultCPUManager::preinitialize()
 		_cpuManagerPolicy = new BusyPolicy();
 		_policyId = BUSY_POLICY;
 	} else if (policyValue == "idle" ) {
-		_cpuManagerPolicy = new IdlePolicy(numCPUs);
+		_cpuManagerPolicy = new IdlePolicy(*this, numCPUs);
 		_policyId = IDLE_POLICY;
 	} else if (policyValue == "hybrid" || policyValue == "default") {
-		_cpuManagerPolicy = new HybridPolicy(numCPUs);
+		_cpuManagerPolicy = new HybridPolicy(*this, numCPUs);
 		_policyId = HYBRID_POLICY;
 	} else {
 		FatalErrorHandler::fail("Unexistent '", policyValue, "' CPU Manager Policy");

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef BUSY_POLICY_HPP
@@ -20,7 +20,7 @@ class BusyPolicy : public CPUManagerPolicyInterface {
 
 public:
 
-	inline void execute(ComputePlace *, CPUManagerPolicyHint hint, size_t = 0)
+	inline void execute(ComputePlace *, CPUManagerPolicyHint hint, size_t = 0) override
 	{
 		// NOTE: This policy works as follows:
 		// - If the hint is IDLE_CANDIDATE, the CPU remains active (no change)
@@ -30,7 +30,7 @@ public:
 			Instrument::workerThreadBusyWaits();
 	}
 
-	inline size_t getMaxBusyIterations() const
+	inline size_t getMaxBusyIterations() const override
 	{
 		// In the busy policy, the maximum number of busy iterations should
 		// be a value large enough so that it can barely be reached

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <config.h>
@@ -9,17 +9,6 @@
 
 #include "CPUManagerInterface.hpp"
 #include "system/RuntimeInfo.hpp"
-
-
-std::vector<CPU *> CPUManagerInterface::_cpus;
-std::vector<size_t> CPUManagerInterface::_systemToVirtualCPUId;
-cpu_set_t CPUManagerInterface::_cpuMask;
-std::atomic<bool> CPUManagerInterface::_finishedCPUInitialization;
-CPUManagerPolicyInterface *CPUManagerInterface::_cpuManagerPolicy;
-ConfigVariable<std::string> CPUManagerInterface::_policyChosen("cpumanager.policy");
-CPUManagerPolicy CPUManagerInterface::_policyId;
-size_t CPUManagerInterface::_firstCPUId;
-CPU *CPUManagerInterface::_leaderThreadCPU;
 
 
 namespace cpumanager_internals {
