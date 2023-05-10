@@ -18,8 +18,6 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
-AC_USE_SYSTEM_EXTENSIONS
 
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall tar-pax -Wno-portability])
 AM_SILENT_RULES([yes])
@@ -95,11 +93,7 @@ AC_CHECK_DLB
 AC_CHECK_JEMALLOC
 AC_CHECK_BABELTRACE2
 AC_CHECK_OVNI
-
-HWLOC_SETUP_CORE([hwloc-2.3.0], [happy=yes], [happy=no])
-AS_IF([test "$happy" = "no"],
-      [AC_MSG_ERROR([Cannot continue])])
-HWLOC_DO_AM_CONDITIONALS
+AC_CHECK_HWLOC
 
 # Build ctf2prv fast converter if Babeltrace2 is available
 AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])
@@ -325,9 +319,9 @@ _AS_ECHO([])
 _AS_ECHO([   libnuma CPPFLAGS... ${libnuma_CPPFLAGS}])
 _AS_ECHO([   libnuma LIBS... ${libnuma_LIBS}])
 _AS_ECHO([])
-_AS_ECHO([   hwloc CPPFLAGS... ${HWLOC_EMBEDDED_CPPFLAGS}])
-_AS_ECHO([   hwloc CFLAGS... ${HWLOC_EMBEDDED_CFLAGS}])
-_AS_ECHO([   hwloc LIBS... ${HWLOC_EMBEDDED_LIBS} ${HWLOC_EMBEDDED_LDADD}])
+_AS_ECHO([   hwloc CPPFLAGS... ${hwloc_CPPFLAGS}])
+_AS_ECHO([   hwloc LIBS... ${hwloc_LIBS}])
+_AS_ECHO([   hwloc LIBADD... ${hwloc_LIBADD}])
 _AS_ECHO([])
 _AS_ECHO([   clock LIBS... ${CLOCK_LIBS}])
 

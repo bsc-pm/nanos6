@@ -22,7 +22,10 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS)
 AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
-SUBDIRS = hwloc-2.3.0 . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+if ! HAVE_HWLOC
+  HWLOC_INTERNAL = hwloc-2.3.0
+endif
+SUBDIRS = $(HWLOC_INTERNAL) . commands tests/directive_based/clang tests/directive_based/mercurium scripts
 
 
 # See info page of libtool "Updating version info"
@@ -1357,9 +1360,9 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(HWLOC_EMBEDDED_CPPFLAGS) $(HWLOC_EMBEDDED_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
-common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(HWLOC_EMBEDDED_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
-common_libnanos6_libadd = $(HWLOC_EMBEDDED_LDADD)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
+common_libnanos6_libadd = $(hwloc_LIBADD)
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)
