@@ -2264,6 +2264,8 @@ dist_bin_SCRIPTS = \
 	scripts/ctf/ctfkerneldefs \
 	scripts/ctf/ctfstats
 
+dist_noinst_SCRIPTS = autogen.sh
+
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##
 ## --------------------------------- ##
