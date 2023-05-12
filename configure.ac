@@ -18,6 +18,8 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+AC_USE_SYSTEM_EXTENSIONS
 
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall tar-pax -Wno-portability])
 AM_SILENT_RULES([yes])
