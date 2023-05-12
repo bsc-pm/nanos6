@@ -40,10 +40,10 @@ Nanos6 uses the standard GNU automake and libtool toolchain.
 When cloning from a repository, the building environment must be prepared through the following command:
 
 ```sh
-$ autoreconf -f -i -v
+$ ./autogen.sh
 ```
 
-When the code is distributed through a tarball, it usually does not need that command.
+Use this script instead of the `autoreconf` command. When the code is distributed through a tarball, it usually does not need that command.
 
 Then execute the following commands:
 
