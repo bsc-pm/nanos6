@@ -10,6 +10,9 @@ m4_define([nanos6_version], [2.8])
 m4_define([nanos6_license], ["GPL3"])
 m4_define([nanos6_copyright], ["2015-2021 Barcelona Supercomputing Center (BSC)"])
 
+# Location of external dependencies that can be embedded
+m4_define([hwloc_embedded_subdir], [deps/hwloc])
+
 AC_PREREQ([2.69])
 AC_INIT([nanos6], [nanos6_version], [pm-tools@bsc.es])
 AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
@@ -19,12 +22,13 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
+
+AC_CHECK_SPECIAL_HOST_ARCH
 AC_USE_SYSTEM_EXTENSIONS
 
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall tar-pax -Wno-portability])
 AM_SILENT_RULES([yes])
 
-AC_CHECK_SPECIAL_HOST_ARCH
 AC_CHECK_CACHE
 
 AC_CONFIG_HEADERS([config.h])
@@ -320,10 +324,16 @@ _AS_ECHO([   Backtrace LIBS... ${BACKTRACE_LIBS}])
 _AS_ECHO([])
 _AS_ECHO([   libnuma CPPFLAGS... ${libnuma_CPPFLAGS}])
 _AS_ECHO([   libnuma LIBS... ${libnuma_LIBS}])
+
 _AS_ECHO([])
-_AS_ECHO([   hwloc CPPFLAGS... ${hwloc_CPPFLAGS}])
-_AS_ECHO([   hwloc LIBS... ${hwloc_LIBS}])
-_AS_ECHO([   hwloc LIBADD... ${hwloc_LIBADD}])
+if test x"${ac_use_embedded_hwloc}" = x"yes" ; then
+	_AS_ECHO([   hwloc is embedded... ${HWLOC_EMBEDDED_SUBDIR}])
+else
+	_AS_ECHO([   hwloc CPPFLAGS... ${hwloc_CPPFLAGS} ${hwloc_CFLAGS}])
+	_AS_ECHO([   hwloc LIBS... ${hwloc_LIBS}])
+	_AS_ECHO([   hwloc LIBADD... ${hwloc_LIBADD}])
+fi
+
 _AS_ECHO([])
 _AS_ECHO([   clock LIBS... ${CLOCK_LIBS}])
 

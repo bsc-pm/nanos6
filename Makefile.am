@@ -15,17 +15,24 @@ am__is_gnu_make = { \
   fi; \
 }
 
+# The subdir of the embedded hwloc
+if USE_HWLOC_EMBEDDED
+HWLOC_EMBEDDED_SUBDIR_COND = $(HWLOC_EMBEDDED_SUBDIR)
+endif
 
-ACLOCAL_AMFLAGS = -I m4 -I hwloc-2.3.0/config
+# Note: do not use HWLOC_EMBEDDED_SUBDIR here, since it is not defined yet
+ACLOCAL_AMFLAGS = -I m4 -I deps/hwloc/config
+
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS)
 AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
-if ! HAVE_HWLOC
-  HWLOC_INTERNAL = hwloc-2.3.0
-endif
-SUBDIRS = $(HWLOC_INTERNAL) . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+# Add the embedded hwloc (if necessary) into SUBDIRS, but not in DIST_SUBDIRS. Adding it
+# would enable the distributable rules of hwloc and generate its own tarball. Instead, it
+# is distributed as a regular directory by adding it to EXTRA_DIST
+SUBDIRS = $(HWLOC_EMBEDDED_SUBDIR_COND) . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+DIST_SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium scripts
 
 
 # See info page of libtool "Updating version info"
@@ -1360,7 +1367,7 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
 common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 common_libnanos6_libadd = $(hwloc_LIBADD)
 
@@ -2173,7 +2180,9 @@ EXTRA_DIST += \
 	docs/devices/Devices.md \
 	docs/devices/OpenACC.md \
 	scripts/generate_config.sh \
-	scripts/nanos6_defconfig.toml
+	scripts/nanos6_defconfig.toml \
+	$(HWLOC_EMBEDDED_SUBDIR)
+
 
 CLEANFILES += LICENSE.txt
 
