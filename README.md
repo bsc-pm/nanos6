@@ -73,7 +73,21 @@ The configure script accepts the following options:
 1. `--with-babeltrace2=prefix` to specify the prefix of the Babeltrace2 installation and enable the fast CTF converter (`ctf2prv --fast`) and the multi-process trace merger (`nanos6-mergeprv`)
 1. `--with-ovni=prefix` to specify the prefix of the ovni installation and enable the ovni instrumentation
 
-The location of elfutils and hwloc is always retrieved through pkg-config.
+The hwloc dependency can be specified using the `--with-hwloc` option. This option can take these values:
+* `pkgconfig`: The hwloc is an external installation and Nanos6 should discover it through the pkg-config tool.
+Make sure to set the `PKG_CONFIG_PATH` if the hwloc is not installed in non-standard directories.
+This is the **default** behavior if the option is not present or no value is provided
+* A prefix of an external hwloc installation
+* `embedded`: The hwloc is built and embedded into the Nanos6 library as an internal module.
+This is useful when user programs may have third-party software (e.g., MPI libraries) that depend on a different hwloc version and may conflict with the one used by Nanos6.
+When embedded, the hwloc library is internal and is only used by Nanos6.
+To this end, the `deps` folder contains a default hwloc source tarball.
+This tarball is automatically extracted into `deps/hwloc` by our `autogen.sh` script, which is then built and embedded when `--with-hwloc=embedded` is chosen.
+You may change the embedded hwloc version by placing the desired tarball inside the `deps` folder and re-running `autogen.sh` with the option `--embed-hwloc <VERSION>`.
+For the moment, the tarball must follow the format `deps/hwloc-<VERSION>.tar.gz`
+
+The location of elfutils is always retrieved through pkg-config.
+The same occurs for hwloc by default or when specifying `--with-hwloc=pkgconfig`.
 If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
 For instance:
 
