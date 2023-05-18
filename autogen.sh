@@ -8,7 +8,7 @@ deps_folder=deps
 hwloc_folder=${deps_folder}/hwloc
 
 # The default hwloc version. This value should be changed when updating the default hwloc
-hwloc_default_version=2.3.0
+hwloc_default_version=2.9.1
 
 usage() {
 	echo "Usage: $1 [--embed-hwloc VERSION] [--help]"
