@@ -89,8 +89,17 @@ else
 	verbose "reusing previously extracted hwloc in '${hwloc_folder}'"
 fi
 
-verbose "configuring autotools from '${hwloc_folder}' package"
-./${hwloc_folder}/autogen.sh
+if [ -f ${hwloc_folder}/autogen.sh ]; then
+	verbose "generating autotools from '${hwloc_folder}' package"
+	./${hwloc_folder}/autogen.sh
+else
+	verbose "autogen.sh script not found in '${hwloc_folder}'"
+	verbose "skipping autotools generation from '${hwloc_folder}' package"
+fi
+
+if [ ! -f ${hwloc_folder}/configure ]; then
+	error "${hwloc_folder}/configure not found"
+fi
 
 verbose "configuring autotools from current package"
 autoreconf -fiv
