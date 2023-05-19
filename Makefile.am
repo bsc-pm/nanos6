@@ -15,14 +15,24 @@ am__is_gnu_make = { \
   fi; \
 }
 
+# The subdir of the embedded hwloc
+if USE_HWLOC_EMBEDDED
+HWLOC_EMBEDDED_SUBDIR_COND = $(HWLOC_EMBEDDED_SUBDIR)
+endif
 
-ACLOCAL_AMFLAGS = -I m4
+# Note: do not use HWLOC_EMBEDDED_SUBDIR here, since it is not defined yet
+ACLOCAL_AMFLAGS = -I m4 -I deps/hwloc/config
+
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS)
 AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
-SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+# Add the embedded hwloc (if necessary) into SUBDIRS, but not in DIST_SUBDIRS. Adding it
+# would enable the distributable rules of hwloc and generate its own tarball. Instead, it
+# is distributed as a regular directory by adding it to EXTRA_DIST
+SUBDIRS = $(HWLOC_EMBEDDED_SUBDIR_COND) . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+DIST_SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium scripts
 
 
 # See info page of libtool "Updating version info"
@@ -1357,8 +1367,9 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
 common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
+common_libnanos6_libadd = $(hwloc_LIBADD)
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)
@@ -1377,6 +1388,7 @@ disabled_variants =
 libnanos6_debug_discrete_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_discrete_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_debug_discrete_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1386,6 +1398,7 @@ endif
 libnanos6_debug_regions_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_regions_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_debug_regions_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_la_SOURCES = $(common_sources) $(noinstrument_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
 
 
@@ -1393,11 +1406,13 @@ nodist_libnanos6_debug_regions_la_SOURCES = $(common_sources) $(noinstrument_sou
 libnanos6_debug_discrete_ctf_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_debug_discrete_ctf_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_ctf_la_LDFLAGS = $(common_libnanos6_ldflags) -lrt
+libnanos6_debug_discrete_ctf_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_ctf_la_SOURCES =
 
 libnanos6_debug_regions_ctf_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_debug_regions_ctf_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_ctf_la_LDFLAGS = $(common_libnanos6_ldflags) -lrt
+libnanos6_debug_regions_ctf_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_ctf_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1419,11 +1434,13 @@ endif
 libnanos6_debug_discrete_extrae_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_debug_discrete_extrae_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_debug_discrete_extrae_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_extrae_la_SOURCES =
 
 libnanos6_debug_regions_extrae_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_debug_regions_extrae_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_debug_regions_extrae_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_extrae_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1453,6 +1470,7 @@ endif
 libnanos6_debug_regions_graph_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
 libnanos6_debug_regions_graph_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_debug_regions_graph_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_graph_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION
@@ -1466,11 +1484,13 @@ endif
 libnanos6_debug_discrete_lint_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/lint
 libnanos6_debug_discrete_lint_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_lint_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_debug_discrete_lint_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_lint_la_SOURCES =
 
 libnanos6_debug_regions_lint_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/lint
 libnanos6_debug_regions_lint_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_lint_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_debug_regions_lint_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_lint_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1491,11 +1511,13 @@ endif
 libnanos6_debug_discrete_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
 libnanos6_debug_discrete_ovni_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+libnanos6_debug_discrete_ovni_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_ovni_la_SOURCES =
 
 libnanos6_debug_regions_ovni_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
 libnanos6_debug_regions_ovni_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+libnanos6_debug_regions_ovni_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_ovni_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1525,11 +1547,13 @@ endif
 libnanos6_debug_discrete_stats_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_debug_discrete_stats_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_debug_discrete_stats_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_stats_la_SOURCES =
 
 libnanos6_debug_regions_stats_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_debug_regions_stats_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_debug_regions_stats_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_stats_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1551,11 +1575,13 @@ endif
 libnanos6_debug_discrete_verbose_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_debug_discrete_verbose_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_debug_discrete_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_debug_discrete_verbose_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_discrete_verbose_la_SOURCES =
 
 libnanos6_debug_regions_verbose_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_debug_regions_verbose_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_debug_regions_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_debug_regions_verbose_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_debug_regions_verbose_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1581,6 +1607,7 @@ endif
 libnanos6_optimized_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_optimized_discrete_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_optimized_discrete_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1590,6 +1617,7 @@ endif
 libnanos6_optimized_regions_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_regions_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_optimized_regions_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_la_SOURCES = $(common_sources) $(noinstrument_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
 
 
@@ -1597,11 +1625,13 @@ nodist_libnanos6_optimized_regions_la_SOURCES = $(common_sources) $(noinstrument
 libnanos6_optimized_discrete_ctf_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_optimized_discrete_ctf_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_optimized_discrete_ctf_la_LDFLAGS = $(common_libnanos6_ldflags) -lrt
+libnanos6_optimized_discrete_ctf_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_ctf_la_SOURCES =
 
 libnanos6_optimized_regions_ctf_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_optimized_regions_ctf_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_ctf_la_LDFLAGS = $(common_libnanos6_ldflags) -lrt
+libnanos6_optimized_regions_ctf_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_ctf_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1625,11 +1655,13 @@ endif
 libnanos6_optimized_discrete_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_optimized_discrete_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_optimized_discrete_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
+libnanos6_optimized_discrete_extrae_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_extrae_la_SOURCES =
 
 libnanos6_optimized_regions_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_optimized_regions_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
+libnanos6_optimized_regions_extrae_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_extrae_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1662,6 +1694,7 @@ endif
 libnanos6_optimized_regions_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
 libnanos6_optimized_regions_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_optimized_regions_graph_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_graph_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION
@@ -1678,11 +1711,13 @@ endif
 libnanos6_optimized_discrete_lint_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/lint
 libnanos6_optimized_discrete_lint_la_CXXFLAGS = $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_optimized_discrete_lint_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_optimized_discrete_lint_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_lint_la_SOURCES =
 
 libnanos6_optimized_regions_lint_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/lint
 libnanos6_optimized_regions_lint_la_CXXFLAGS = $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_lint_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_optimized_regions_lint_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_lint_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1705,11 +1740,13 @@ endif
 libnanos6_optimized_discrete_ovni_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
 libnanos6_optimized_discrete_ovni_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_optimized_discrete_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+libnanos6_optimized_discrete_ovni_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_ovni_la_SOURCES =
 
 libnanos6_optimized_regions_ovni_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) $(ovni_CPPFLAGS) -I$(srcdir)/src/instrument/ovni
 libnanos6_optimized_regions_ovni_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_ovni_la_LDFLAGS = $(common_libnanos6_ldflags) $(ovni_LIBS) -lrt
+libnanos6_optimized_regions_ovni_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_ovni_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1741,11 +1778,13 @@ endif
 libnanos6_optimized_discrete_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_optimized_discrete_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(discrete_dependency_flags)
 libnanos6_optimized_discrete_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_optimized_discrete_stats_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_stats_la_SOURCES =
 
 libnanos6_optimized_regions_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_optimized_regions_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(regions_dependency_flags)
 libnanos6_optimized_regions_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_optimized_regions_stats_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_stats_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1769,11 +1808,13 @@ endif
 libnanos6_optimized_discrete_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_optimized_discrete_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_optimized_discrete_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_optimized_discrete_verbose_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_discrete_verbose_la_SOURCES =
 
 libnanos6_optimized_regions_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_optimized_regions_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
 libnanos6_optimized_regions_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_optimized_regions_verbose_la_LIBADD = $(common_libnanos6_libadd)
 nodist_libnanos6_optimized_regions_verbose_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -2139,7 +2180,9 @@ EXTRA_DIST += \
 	docs/devices/Devices.md \
 	docs/devices/OpenACC.md \
 	scripts/generate_config.sh \
-	scripts/nanos6_defconfig.toml
+	scripts/nanos6_defconfig.toml \
+	$(HWLOC_EMBEDDED_SUBDIR)
+
 
 CLEANFILES += LICENSE.txt
 
