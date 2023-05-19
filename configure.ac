@@ -96,10 +96,21 @@ AC_CHECK_LIBNUMA
 AC_CHECK_PAPI
 AC_CHECK_PQOS
 AC_CHECK_DLB
-AC_CHECK_JEMALLOC
+# AC_CHECK_JEMALLOC
 AC_CHECK_BABELTRACE2
 AC_CHECK_OVNI
 AC_CHECK_HWLOC
+# AC_CONFIG_SUBDIRS([deps/jemalloc-5.3.0])
+AX_SUBDIRS_CONFIGURE([deps/jemalloc-5.3.0],
+  [[CFLAGS=-fPIC],
+  [CXXFLAGS=-fPIC],
+  [--with-install-suffix=-nanos6],
+  [--bindir=${prefix}/bin/jemalloc],
+  [--libdir=${prefix}/lib/jemalloc],
+  [--datarootdir=${prefix}/share/jemalloc],
+  [--includedir=${prefix}/include/jemalloc],
+  [--with-jemalloc-prefix=nanos6_je_],
+  [--enable-stats]])
 
 # Build ctf2prv fast converter if Babeltrace2 is available
 AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])

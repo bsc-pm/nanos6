@@ -80,6 +80,11 @@ if [ ! -f "${hwloc_tarball}" ]; then
 	error "${hwloc_tarball} not found"
 fi
 
+rm -rf deps/jemalloc-5.3.0
+mkdir deps/jemalloc-5.3.0
+tar -zxvf deps/jemalloc-5.3.0.tar.gz --strip-components=1 -C deps/jemalloc-5.3.0
+(cd deps/jemalloc-5.3.0 && ./autogen.sh)
+
 if [ ! -d "${hwloc_folder}" ] || [ ${hwloc_regenerate} -eq 1 ]; then
 	rm -rf ${hwloc_folder}
 	mkdir ${hwloc_folder}
