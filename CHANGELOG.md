@@ -2,6 +2,35 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 3.0, Wed May 24, 2023
+The 3.0 release corresponds to the OmpSs-2 2023.05 release. It introduces several performance improvements, important bug fixes, and improved usability and programmability. It also improves the support for the ovni instrumentation.
+
+### General
+- Leverage C++17 standard, which may require newer GCC (such as GCC 7 or later)
+- Fix visualization of task labels for programatically spawned tasks (e.g., polling tasks from task-aware libraries)
+- Deprecate CTF instrumentation; use ovni instrumentation instead
+- Remove support for the `task for` clause
+
+### Performance
+- Decrease the default immediate successor probability to 0.75 instead of 1.0. Always applying the immediate successor policy can degrade the performance of some applications. Instead, if your program considerability relies on it, set it back to 1.0
+- Remove several dynamic memory allocations that were on the critical path of Nanos6 code
+- The `turbo.warmup` indicates whether the runtime should perform a warmup of Jemalloc arenas (enabled by default)
+- Add the config list option `cpumanager.sponge_cpus` to indicate which CPUs should not be used by the runtime. A sponge CPU is a CPU that the runtime system has available but it does not execute any task (or runtime code) on it. Such CPUs are useful to reduce the system noise. The runtime leaves these CPUs free (without consuming CPU time) so that the system can schedule other threads and interruptions on them
+
+### Building and Usability
+- Add the `autogen.sh` script to prepare autotools, instead of `autoreconf`
+- Allow embedding a hwloc library into Nanos6 to avoid conflicts with other external hwloc libraries
+- Add the configure option `--with-hwloc` to specify whether hwloc should be external or embedded
+- Attach the hwloc 2.9.1 tarball inside the `deps` folder for the embedded default hwloc. See `autogen.sh --help` for more information
+
+### **ovni** Instrumentation
+- Add support for the ovni's Idle view that can be displayed with Paraver
+- Add support for the ovni's Breakdown view that can be displayed with Paraver
+- Support ovni 1.2.0 version and higher compatible versions
+- Perform a run-time version check to verify if the loaded ovni library is compatible
+- Link Nanos6 with ovni library using `runpath` instead of `rpath` to allow changing the ovni library through `LD_LIBRARY_PATH`
+
+
 ## Version 2.8, Tue Nov 15, 2022
 The 2.8 release corresponds to the OmpSs-2 2022.11 release. It introduces LLVM support for CUDA tasks and runtime loading. It also adds OVNI instrumentation support and several bug fixes and features that improve the overall performance and programmability.
 
