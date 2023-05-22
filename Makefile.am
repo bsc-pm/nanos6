@@ -81,7 +81,8 @@ nanos6include_HEADERS = \
 	api/nanos6/task-instantiation.h \
 	api/nanos6/loop.h \
 	api/nanos6/taskwait.h \
-	api/nanos6/user-mutex.h
+	api/nanos6/user-mutex.h \
+	api/nanos6/version.h
 
 nodist_nanos6include_HEADERS = \
 	nanos6/multidimensional-dependencies.h \
@@ -214,6 +215,7 @@ symbol_resolution += \
 	loader/symbol-resolver/loop.c \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
+	loader/symbol-resolver/version.c \
 	loader/symbol-resolver/weak-dependencies.c
 
 if USE_CUDA
@@ -251,6 +253,7 @@ symbol_resolution += \
 	loader/indirect-symbols/loop.c \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
+	loader/indirect-symbols/version.c \
 	loader/indirect-symbols/weak-dependencies.c
 
 if USE_CUDA
@@ -457,7 +460,8 @@ common_sources = \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Task.cpp \
 	src/tasks/TaskInfoManager.cpp \
-	src/tasks/Taskloop.cpp
+	src/tasks/Taskloop.cpp \
+	src/version/VersionAPI.cpp
 
 common_sources += $(universal_debug_sources)
 nodist_common_sources += $(nodist_universal_debug_sources)
