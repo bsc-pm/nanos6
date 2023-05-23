@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_H
@@ -31,11 +31,12 @@
 #include "nanos6/multidimensional-release.h"
 #include "nanos6/numa.h"
 #include "nanos6/polling.h"
+#include "nanos6/reductions.h"
 #include "nanos6/task-info-registration.h"
 #include "nanos6/task-instantiation.h"
 #include "nanos6/taskwait.h"
 #include "nanos6/user-mutex.h"
-#include "nanos6/reductions.h"
+#include "nanos6/version.h"
 
 
 #endif /* NANOS6_H */
