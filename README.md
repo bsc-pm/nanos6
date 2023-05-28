@@ -14,7 +14,10 @@ To install Nanos6 the following tools and libraries must be installed:
 1. [boost](http://boost.org) >= 1.59
 1. [hwloc](https://www.open-mpi.org/projects/hwloc/)
 1. [numactl](http://oss.sgi.com/projects/libnuma/)
-1. Finally, it's highly recommended to have a installation of [Mercurium](https://github.com/bsc-pm/mcxx) with OmpSs-2 support enabled. When installing OmpSs-2 for the first time, you can break the chicken and egg dependence between Nanos6 and Mercurium in both sides: on one hand, you can install Nanos6 without specifying a valid installation of Mercurium. On the other hand, you can install Mercurium without a valid installation of Nanos6 using the `--enable-nanos6-bootstrap` configuration flag.
+
+It's highly recommended to have an installation of the [OmpSs-2 LLVM/Clang](https://github.com/bsc-pm/llvm) which supports the OmpSs-2 model. When installing OmpSs-2 for the first time, you can break the chicken and egg dependency between Nanos6 and LLVM/Clang in the following way: you can build Nanos6 without specifying any LLVM/Clang, then, build LLVM/Clang specifying that Nanos6 installation, and finally, re-configure and build Nanos6 passing the `--with-nanos6-clang` to specify the LLVM/Clang path.
+
+**Important:** The [Mercurium](https://github.com/bsc-pm/mcxx) source-to-source compiler is the OmpSs-2 legacy compiler and it is unsupported now. You do not have to install it to use OmpSs-2. We recommend using the [LLVM/Clang](https://github.com/bsc-pm/llvm) compiler instead.
 
 ### Optional libraries and tools
 
@@ -57,6 +60,7 @@ where `INSTALLATION_PREFIX` is the directory into which to install Nanos6.
 
 The configure script accepts the following options:
 
+1. `--with-nanos6-clang=prefix` to specify the prefix of the LLVM/Clang that supports OmpSs-2 installation
 1. `--with-nanos6-mercurium=prefix` to specify the prefix of the Mercurium installation
 1. `--with-boost=prefix` to specify the prefix of the Boost installation
 1. `--with-libunwind=prefix` to specify the prefix of the libunwind installation
@@ -101,14 +105,16 @@ Alternatively, for non-standard installation paths, it can be specified using th
 
 The location of PGI compilers can be retrieved from the `$PATH` variable, if it is not specified through the `--with-pgi` parameter.
 
-After Nanos6 has been installed, it can be used by compiling your C, C++ and Fortran codes with Mercurium using the `--ompss-2` flag.
+After Nanos6 has been installed, it can be used by compiling your C and C++ codes with LLVM/Clang using the `-fompss-2` flag.
 Example:
 
 ```sh
-$ mcc -c --ompss-2 a_part_in_c.c
-$ mcxx -c --ompss-2 a_part_in_c_plus_plus.cxx
-$ mcxx --ompss-2 a_part_in_c.o a_part_in_c_plus_plus.o -o app
+$ clang -c -fompss-2 a_part_in_c.c
+$ clang++ -c -fompss-2 a_part_in_c_plus_plus.cxx
+$ clang++ -fompss-2 a_part_in_c.o a_part_in_c_plus_plus.o -o app
 ```
+
+We still recommend using the [Mercurium](https://github.com/bsc-pm/mcxx) source-to-source compiler for Fortran applications.
 
 ## Execution
 
@@ -372,9 +378,6 @@ To enable validity checks, run the application with the `version.debug` config s
 This will enable many internal validity checks that may be violated with the application code is incorrect.
 In the future we may include a validation mode that will perform extensive application code validation.
 Notice that all instrumentation variants can be executed either with or without enabling the debug option.
-
-To debug an application with a regular debugger, please compile its code with the regular debugging flags and also the `-keep` flag.
-This flag will force Mercurium to dump the transformed code in the local file system, so that it will be available for the debugger.
 
 To debug dependencies, it is advised to reduce the problem size so that very few tasks trigger the problem, and then use let the runtime make a graphical representation of the dependency graph as shown previously.
 

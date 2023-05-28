@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([SSS_CHECK_NANOS6_CLANG],
 	[
@@ -53,7 +53,7 @@ AC_DEFUN([SSS_CHECK_NANOS6_CLANG],
 			AC_MSG_CHECKING([which flag enables OmpSs-2 support in Clang])
 			OMPSS2_FLAG=none
 
-			CC="${NANOS6_CLANG} -fompss-2"
+			CC="${NANOS6_CLANG} -fompss-2=libnanos6"
 			AC_COMPILE_IFELSE(
 				[ AC_LANG_SOURCE( [[
 int main(int argc, char ** argv) {
@@ -61,7 +61,7 @@ int main(int argc, char ** argv) {
 }
 ]]
 					) ],
-				[ OMPSS2_FLAG=-fompss-2 ],
+				[ OMPSS2_FLAG="-fompss-2=libnanos6" ],
 				[ ]
 			)
 
