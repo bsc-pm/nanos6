@@ -188,8 +188,10 @@ To enable the generation of ovni traces, Nanos6 must be built with the
 `--with-ovni` option, and without `--disable-ovni-instrumentation`. The
 application must run with the `version.instrument=ovni` configuration option.
 The trace will be left in a `ovni/` directory, which can be transformed into a
-Paraver trace with the `ovniemu` utility. See the [ovni documentation][ovnidoc]
-for more details.
+Paraver trace with the `ovniemu` utility. The Paraver configuration files
+(views) can be found in the `ovni/cfg` directory.
+
+See the [ovni documentation][ovnidoc] for more details.
 
 [ovnidoc]: https://ovni.readthedocs.io/
 
