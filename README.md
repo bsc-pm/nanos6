@@ -23,7 +23,7 @@ It's highly recommended to have an installation of the [OmpSs-2 LLVM/Clang](http
 
 In addition to the build requirements, the following libraries and tools enable additional features:
 
-1. [extrae](https://tools.bsc.es/extrae) to generate execution traces for offline performance analysis with [paraver](https://tools.bsc.es/paraver)
+1. [Extrae](https://tools.bsc.es/extrae) to generate execution traces for offline performance analysis with [Paraver](https://tools.bsc.es/paraver)
 1. [elfutils](https://sourceware.org/elfutils/) and [libunwind](http://www.nongnu.org/libunwind) to generate sample-based profiling
 1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
@@ -34,7 +34,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. Jemalloc must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime
 1. [PAPI](http://icl.utk.edu/papi/software/) >= 5.6.0
 1. [Babeltrace2](https://babeltrace.org/) to enable the fast CTF converter (`ctf2prv --fast`) and the multi-process trace merger (`nanos6-mergeprv`)
-1. [ovni](https://ovni.readthedocs.io/) to enable the ovni instrumentation
+1. [ovni](https://ovni.readthedocs.io/) to generate execution traces for performance analysis with [Paraver](https://tools.bsc.es/paraver)
 
 
 ## Build procedure
@@ -60,7 +60,7 @@ where `INSTALLATION_PREFIX` is the directory into which to install Nanos6.
 
 The configure script accepts the following options:
 
-1. `--with-nanos6-clang=prefix` to specify the prefix of the LLVM/Clang that supports OmpSs-2 installation
+1. `--with-nanos6-clang=prefix` to specify the prefix of the LLVM/Clang installation which supports OmpSs-2
 1. `--with-nanos6-mercurium=prefix` to specify the prefix of the Mercurium installation
 1. `--with-boost=prefix` to specify the prefix of the Boost installation
 1. `--with-libunwind=prefix` to specify the prefix of the libunwind installation
@@ -103,6 +103,7 @@ To enable CUDA the `--with-cuda` flag is needed.
 The location of CUDA can be retrieved automatically, if it is in standard system locations (`/usr/lib`, `/usr/include`, etc), or through pkg-config.
 Alternatively, for non-standard installation paths, it can be specified using the optional `=prefix` of the parameter.
 
+The ``--enable-openacc`` flag is needed to enable OpenACC tasks.
 The location of PGI compilers can be retrieved from the `$PATH` variable, if it is not specified through the `--with-pgi` parameter.
 
 After Nanos6 has been installed, it can be used by compiling your C and C++ codes with LLVM/Clang using the `-fompss-2` flag.
@@ -177,7 +178,27 @@ Changing the dependency system implementation may also affect the performance of
 The different dependency implementations and how to enable them are explained in the Section [Choosing a dependency implementation](#choosing-a-dependency-implementation).
 
 
-### Tracing a Nanos6 application with Extrae
+### Tracing an OmpSs-2 application with ovni (recommended)
+
+Nanos6 can generate execution traces with the ovni library, which generates
+lightweight binary traces, and it is possible to mix ovni-instrumented libraries
+together with an OmpSs-2 program and obtain a single coherent trace.
+
+To enable the generation of ovni traces, Nanos6 must be built with the
+`--with-ovni` option, and without `--disable-ovni-instrumentation`. The
+application must run with the `version.instrument=ovni` configuration option.
+The trace will be left in a `ovni/` directory, which can be transformed into a
+Paraver trace with the `ovniemu` utility. See the [ovni documentation][ovnidoc]
+for more details.
+
+[ovnidoc]: https://ovni.readthedocs.io/
+
+The level of detail can be controlled with the `instrument.ovni.level`
+configuration option, a higher number includes more events but also incurs in a
+larger performance penalty.
+
+
+### Tracing an OmpSs-2 application with Extrae
 
 To generate an extrae trace, run the application with the `version.instrument` config set to `extrae`.
 
@@ -188,7 +209,7 @@ The resulting trace will show the activity of the actual threads instead of the 
 In the future, this problem will be fixed.
 
 
-### Tracing a Nanos6 application with CTF
+### Tracing an OmpSs-2 application with CTF
 
 Nanos6 includes another instrumentation mechanism which provides detailed
 information of the internal runtime state as the execution evolves. The
@@ -271,24 +292,6 @@ information on how the CTF instrumentation variant works see
 
 To run the experimental fast converter, add the option `--fast`.
 
-### Tracing a Nanos6 application with ovni
-
-Nanos6 can also generate execution traces with the ovni library, which generates
-lightweight binary traces, and it is possible to mix ovni-instrumented libraries
-together with an OmpSs-2 program and obtain a single coherent trace.
-
-To enable the generation of ovni traces, Nanos6 must be built with the
-`--with-ovni` option, and without `--disable-ovni-instrumentation`. The
-application must run with the `version.instrument=ovni` configuration option.
-The trace will be left in a `ovni/` directory, which can be transformed into a
-Paraver trace with the `ovniemu` utility. See the [ovni documentation][ovnidoc]
-for more details.
-
-[ovnidoc]: https://ovni.readthedocs.io/
-
-The level of detail can be controlled with the `instrument.ovni.level`
-configuration option, a higher number includes more events but also incurs in a
-larger performance penalty.
 
 ### Generating a graphical representation of the dependency graph
 
