@@ -20,17 +20,22 @@ if USE_HWLOC_EMBEDDED
 HWLOC_EMBEDDED_SUBDIR_COND = $(HWLOC_EMBEDDED_SUBDIR)
 endif
 
+# The subdir of the embedded jemalloc
+if USE_JEMALLOC_EMBEDDED
+JEMALLOC_EMBEDDED_SUBDIR_COND = $(JEMALLOC_EMBEDDED_SUBDIR)
+endif
+
 # Note: do not use HWLOC_EMBEDDED_SUBDIR here, since it is not defined yet
 ACLOCAL_AMFLAGS = -I m4 -I deps/hwloc/config
-AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I. -I$(builddir)/deps/jemalloc-5.3.0/include
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I. -I$(builddir)/deps/jemalloc-5.3.0/include
+AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS)
 AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
-# Add the embedded hwloc (if necessary) into SUBDIRS, but not in DIST_SUBDIRS. Adding it
-# would enable the distributable rules of hwloc and generate its own tarball. Instead, it
-# is distributed as a regular directory by adding it to EXTRA_DIST
-SUBDIRS = $(HWLOC_EMBEDDED_SUBDIR_COND) deps/jemalloc-5.3.0 . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+# Add the embedded hwloc and jemalloc (if necessary) into SUBDIRS, but not in DIST_SUBDIRS.
+# Adding them to DIST_SUBDIRS would enable their distributable rules and generate their own
+# tarball. Instead, these are distributed as a regular directory by adding it to EXTRA_DIST
+SUBDIRS = $(HWLOC_EMBEDDED_SUBDIR_COND) $(JEMALLOC_EMBEDDED_SUBDIR_COND) . commands tests/directive_based/clang tests/directive_based/mercurium scripts
 DIST_SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium scripts
 
 
@@ -53,11 +58,6 @@ LINT_MAX_REGION_DIMENSIONS = 8
 LINT_MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite
 
 nanos6includedir = $(includedir)/nanos6
-
-# Use -Xlinker with --no-as-needed and the lib we want to always include
-# This will be appended at the end of the link line, so we have to
-# put it together to make it work. Also restore the default behaviour
-jemalloc_LIBS=-L$(builddir)/deps/jemalloc-5.3.0/lib -Xlinker "-rpath,@prefix@/lib/jemalloc,--no-as-needed -ljemalloc-nanos6 $(AS_NEEDED_FLAGS)"
 
 nanos6include_HEADERS = \
 	api/nanos6/api-check.h \
@@ -286,7 +286,7 @@ libnanos6_la_SOURCES = \
 	loader/support/toml/toml.c \
 	loader/support/toml/toml.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(docdir)\" $(jemalloc_CFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(docdir)\" $(jemalloc_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
 libnanos6_la_LDFLAGS = $(jemalloc_LIBS) $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
@@ -666,9 +666,13 @@ dist_instrument_sources = \
 	$(instrument_verbose_sources) \
 	$(noinstrument_sources)
 
-
+if HAVE_JEMALLOC
 memory_allocator_sources =
 memory_allocator_cppflags = -I$(srcdir)/src/memory/allocator/jemalloc
+else
+memory_allocator_sources =
+memory_allocator_cppflags = -I$(srcdir)/src/memory/allocator/malloc
+endif
 
 memory_sources = $(memory_allocator_sources)
 memory_cppflags = $(memory_allocator_cppflags)
@@ -2184,7 +2188,8 @@ EXTRA_DIST += \
 	docs/devices/OpenACC.md \
 	scripts/generate_config.sh \
 	scripts/nanos6_defconfig.toml \
-	$(HWLOC_EMBEDDED_SUBDIR)
+	$(HWLOC_EMBEDDED_SUBDIR) \
+	$(JEMALLOC_EMBEDDED_SUBDIR)
 
 
 CLEANFILES += LICENSE.txt
