@@ -12,6 +12,10 @@ m4_define([nanos6_copyright], ["2015-2021 Barcelona Supercomputing Center (BSC)"
 
 # Location of external dependencies that can be embedded
 m4_define([hwloc_embedded_subdir], [deps/hwloc])
+m4_define([jemalloc_embedded_subdir], [deps/jemalloc])
+
+# Installation subdirs where to find embedded dependencies
+m4_define([jemalloc_embedded_install_subdir], [deps/nanos6/jemalloc])
 
 AC_PREREQ([2.69])
 AC_INIT([nanos6], [nanos6_version], [pm-tools@bsc.es])
@@ -96,10 +100,10 @@ AC_CHECK_LIBNUMA
 AC_CHECK_PAPI
 AC_CHECK_PQOS
 AC_CHECK_DLB
-AC_CHECK_JEMALLOC
 AC_CHECK_BABELTRACE2
 AC_CHECK_OVNI
 AC_CHECK_HWLOC
+AC_CHECK_JEMALLOC
 
 # Build ctf2prv fast converter if Babeltrace2 is available
 AM_CONDITIONAL([BUILD_CTF2PRV_FAST], [test x"${ac_use_babeltrace2}" = x"yes"])

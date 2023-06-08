@@ -7,7 +7,13 @@
 #ifndef MEMORY_ALLOCATOR_HPP
 #define MEMORY_ALLOCATOR_HPP
 
+#include <config.h>
+
+#ifdef USE_JEMALLOC_EMBEDDED
+#include <jemalloc/jemalloc-nanos6.h>
+#else
 #include <jemalloc/jemalloc.h>
+#endif
 
 #include <cstdint>
 

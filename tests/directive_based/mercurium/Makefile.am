@@ -1,7 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
-
+#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
 AM_LDFLAGS =
@@ -10,7 +9,7 @@ CXX = $(NANOS6_MCXX) --parallel
 
 if MCC_SUPORTS_EXTERNAL_INSTALL
 AM_CXXFLAGS += --no-default-nanos6-inc --no-default-nanos6-lib -I$(top_srcdir)/api -I$(top_builddir) -include nanos6.h
-AM_LDFLAGS += -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs -Wl,-z,lazy ${jemalloc_LIBS}
+AM_LDFLAGS += -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs -Wl,-z,lazy $(jemalloc_build_LIBS)
 LDADD = $(top_builddir)/nanos6-main-wrapper.o $(top_builddir)/libnanos6.la -ldl
 endif
 
