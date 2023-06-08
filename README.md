@@ -94,7 +94,7 @@ The `--with-jemalloc` option can take two values:
 * A prefix of an external jemalloc installation configured with the `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` options
 * `embedded`: The jemalloc is built and embedded into Nanos6 as an internal library.
 The building process installs the jemalloc headers and libraries in `$INSTALLATION_PREFIX/deps/nanos6/jemalloc` and dynamically links our runtime against the jemalloc library.
-This is the behavior if the option is not present or no value is provided
+This is the **default** behavior if the option is not provided.
 See [Embeddeding software dependencies](#embedding-software-dependencies)
 
 The location of elfutils is always retrieved through pkg-config.
