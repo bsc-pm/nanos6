@@ -72,7 +72,7 @@ extract_package() {
 	if [ ! -d "${directory}" ] || [ ${regenerate} -eq 1 ]; then
 		rm -rf ${directory}
 		mkdir ${directory}
-		tar -zxvf ${tarball} --strip-components=1 -C ${directory}
+		tar -zxf ${tarball} --strip-components=1 -C ${directory}
 		verbose "successfully extracted '${tarball}' in '${directory}'"
 	else
 		verbose "reusing previously extracted '${directory}'"
