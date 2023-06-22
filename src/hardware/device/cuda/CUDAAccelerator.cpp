@@ -93,7 +93,7 @@ void CUDAAccelerator::preRunTask(Task *task)
 	DataAccessRegistration::processAllDataAccesses(task,
 		[&](const DataAccess *access) -> bool {
 			if (access->getType() != REDUCTION_ACCESS_TYPE && !access->isWeak()) {
-				CUDAFunctions::cudaDevicePrefetch(
+				CUDAFunctions::prefetchMemory(
 					access->getAccessRegion().getStartAddress(),
 					access->getAccessRegion().getSize(),
 					_deviceHandler, env.stream,
@@ -110,7 +110,7 @@ void CUDAAccelerator::processCUDAEvents()
 	std::swap(_preallocatedEvents, _activeEvents);
 
 	for (CUDAEvent &ev : _preallocatedEvents) {
-		if (CUDAFunctions::cudaEventFinished(ev.event)) {
+		if (CUDAFunctions::isEventFinished(ev.event)) {
 			finishTask(ev.task);
 		} else {
 			_activeEvents.push_back(ev);

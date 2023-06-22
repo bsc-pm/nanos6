@@ -150,13 +150,13 @@ public:
 		CUDAErrorHandler::handle(cudaEventRecord(event, stream), "While recording CUDA event");
 	}
 
-	static bool cudaEventFinished(cudaEvent_t &event)
+	static bool isEventFinished(cudaEvent_t &event)
 	{
 		return CUDAErrorHandler::handleEvent(
 			cudaEventQuery(event), "While querying event");
 	}
 
-	static void cudaDevicePrefetch(void *pHost, size_t size, int device, cudaStream_t &stream, bool readOnly)
+	static void prefetchMemory(void *pHost, size_t size, int device, cudaStream_t &stream, bool readOnly)
 	{
 		if (size == 0)
 			return;
@@ -174,9 +174,9 @@ public:
 		CUDAErrorHandler::handle(err, "Prefetching memory to device");
 	}
 
-	static void memcpy(void *destination, const void *from, size_t count, cudaMemcpyKind kind)
+	static void copyMemory(void *dst, const void *src, size_t count, cudaMemcpyKind kind)
 	{
-		cudaError_t err = cudaMemcpy(destination, from, count, kind);
+		cudaError_t err = cudaMemcpy(dst, src, count, kind);
 		CUDAErrorHandler::handle(err, "Copying memory");
 	}
 
