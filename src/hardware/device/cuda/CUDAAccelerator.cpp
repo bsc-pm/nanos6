@@ -12,6 +12,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "support/MathSupport.hpp"
 #include "system/BlockingAPI.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -120,85 +121,93 @@ void CUDAAccelerator::processCUDAEvents()
 
 void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_t *translationTable)
 {
-	if (task->getTaskInfo()->implementations[0].device_function_name == nullptr) {
-		task->body(translationTable);
-	} else {
-		nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
+	nanos6_task_info_t *taskInfo = task->getTaskInfo();
+	assert(taskInfo != nullptr);
 
-		void *args = task->getArgsBlock();
-		nanos6_device_info_t &deviceInfo = *((nanos6_device_info_t *)args);
+	// The device task may need the body to run on the host
+	const char *kernelName = taskInfo->implementations[0].device_function_name;
+	if (kernelName == nullptr)
+		return task->body(translationTable);
 
-		// NDRANGE is used to define the work elements of the kernel
-		// This can be 1D, 2D or 3D.
-		// A grid contains blocks, which are the basic unit of parallelism.
-		// If the parameters given by the user are invalid for our cuda capabilities,
-		// we COULD perform some math to express the same working units in a supported way.
-		// Right now we expect the user to provide valid parameters.
+	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 
-		size_t gridDim1 = std::max((int64_t) deviceInfo.sizes[0], (int64_t) 1);
-		size_t gridDim2 = std::max((int64_t) deviceInfo.sizes[1], (int64_t) 1);
-		size_t gridDim3 = std::max((int64_t) deviceInfo.sizes[2], (int64_t) 1);
+	void *args = task->getArgsBlock();
+	nanos6_device_info_t &deviceInfo = *((nanos6_device_info_t *)args);
 
-		size_t blockDim1 = std::max((int64_t) deviceInfo.sizes[3], (int64_t) 1);
-		size_t blockDim2 = std::max((int64_t) deviceInfo.sizes[4], (int64_t) 1);
-		size_t blockDim3 = std::max((int64_t) deviceInfo.sizes[5], (int64_t) 1);
+	// The ndrange clause in device tasks is used to define the work hierarchy
+	// used to execute the kernel in the device. The work hierarchy can be 1D,
+	// 2D, or 3D. The first parameter of the clause is the number of dimensions,
+	// the next are the global sizes of elements in each dimension, and then,
+	// the last are the local sizes of elements in each dimenion. The global
+	// sizes indicate how many threads will be spawn in total. The local sizes
+	// indicate the number of threads per CUDA block
+	//
+	// NOTE: The global sizes do not correspond to the CUDA grid sizes
+	//
+	// TODO: If the parameters provided by the user are invalid for our CUDA
+	// capabilities, we could perform some math to express the same working
+	// units in a supported way. Right now we expect the user to provide valid
+	// parameters
 
-		std::array<void *, MAX_STACK_ARGS> stack_params;
-		void **params = &stack_params[0];
-		nanos6_task_info_t *taskInfo = task->getTaskInfo();
-		int numArgs = taskInfo->num_args;
+	// Retrieve the local sizes (CUDA block sizes)
+	size_t blockDim1 = std::max((int64_t) deviceInfo.sizes[3], (int64_t) 1);
+	size_t blockDim2 = std::max((int64_t) deviceInfo.sizes[4], (int64_t) 1);
+	size_t blockDim3 = std::max((int64_t) deviceInfo.sizes[5], (int64_t) 1);
 
-		if (numArgs > MAX_STACK_ARGS)
-			params = (void **)MemoryAllocator::alloc(numArgs * sizeof(void *));
+	// Retrieve the global sizes (not the CUDA grid sizes)
+	size_t globalDim1 = std::max((int64_t) deviceInfo.sizes[0], (int64_t) 1);
+	size_t globalDim2 = std::max((int64_t) deviceInfo.sizes[1], (int64_t) 1);
+	size_t globalDim3 = std::max((int64_t) deviceInfo.sizes[2], (int64_t) 1);
 
-		for (int i = 0; i < numArgs; i++) {
-			params[i] = (void *)((char *)args + taskInfo->offset_table[i]);
-		}
+	// Compute the CUDA grid sizes using the global and local dimensions
+	size_t gridDim1 = MathSupport::ceil(globalDim1, blockDim1);
+	size_t gridDim2 = MathSupport::ceil(globalDim2, blockDim2);
+	size_t gridDim3 = MathSupport::ceil(globalDim3, blockDim3);
 
-		if (translationTable) {
-			for (int i = 0; i < taskInfo->num_symbols; ++i) {
-				int arg = taskInfo->arg_idx_table[i];
-				// Translate corresponding param
-				if (arg >= 0 && translationTable[i].device_address != 0) {
-					// params[arg] is a void * which actually points to the location of the argument
-					// What we want to translate is the argument itself, so we will have to dereference it
-					uintptr_t *argument = (uintptr_t *)params[arg];
-					*argument = *argument - translationTable[i].local_address + translationTable[i].device_address;
-				}
+	std::array<void *, MAX_STACK_ARGS> stackParams;
+	void **params = &stackParams[0];
+	int numArgs = taskInfo->num_args;
+
+	if (numArgs > MAX_STACK_ARGS)
+		params = (void **) MemoryAllocator::alloc(numArgs * sizeof(void *));
+
+	for (int i = 0; i < numArgs; i++)
+		params[i] = (void *) ((char *) args + taskInfo->offset_table[i]);
+
+	if (translationTable) {
+		for (int i = 0; i < taskInfo->num_symbols; ++i) {
+			int arg = taskInfo->arg_idx_table[i];
+			// Translate corresponding parameter
+			if (arg >= 0 && translationTable[i].device_address != 0) {
+				// The params[arg] is a void pointer which actually points to
+				// the location of the argument. We want to translate is the
+				// argument itself, so we need to dereference it
+				uintptr_t *argument = (uintptr_t *) params[arg];
+				*argument = *argument - translationTable[i].local_address
+					+ translationTable[i].device_address;
 			}
 		}
+	}
 
-		CUresult execution_result = cuLaunchKernel(
-			CUDAFunctions::loadFunction(task->getTaskInfo()->implementations[0].device_function_name),
+	// Launch the kernel
+	CUDAFunctions::launchKernel(kernelName, params,
 			gridDim1, gridDim2, gridDim3,
 			blockDim1, blockDim2, blockDim3,
-			deviceInfo.shm_size,
-			env.stream,
-			params,
-			nullptr);
+			deviceInfo.shm_size, env.stream);
 
-		if (execution_result != CUDA_SUCCESS) {
-			const char *err_str = nullptr;
-			cuGetErrorString(execution_result, &err_str);
-
-			fprintf(stderr, "Error launching kernel: %s with error: %s \n launch config is: block[%zu %zu %zu] grid[%zu %zu %zu] shmem[%zu]\n",
-				task->getTaskInfo()->implementations[0].device_function_name, err_str,
-				blockDim1, blockDim2, blockDim3, gridDim1, gridDim2, gridDim3, deviceInfo.shm_size);
-			FatalErrorHandler::fail("Failed to execute cuda kernel: ", task->getTaskInfo()->implementations[0].device_function_name);
-		}
-
-		// Here we un-translate the arguments, in case this task needs to be realunched at some point
-		if (translationTable) {
-			for (int i = 0; i < taskInfo->num_symbols; ++i) {
-				int arg = taskInfo->arg_idx_table[i];
-				if (arg >= 0 && translationTable[i].device_address != 0) {
-					uintptr_t *argument = (uintptr_t *)params[arg];
-					*argument = *argument - translationTable[i].device_address + translationTable[i].local_address;
-				}
+	// Un-translate the arguments, in case this task needs to be realunched at some point
+	if (translationTable) {
+		for (int i = 0; i < taskInfo->num_symbols; ++i) {
+			int arg = taskInfo->arg_idx_table[i];
+			if (arg >= 0 && translationTable[i].device_address != 0) {
+				uintptr_t *argument = (uintptr_t *)params[arg];
+				*argument = *argument - translationTable[i].device_address
+					+ translationTable[i].local_address;
 			}
 		}
-
-		if (numArgs > MAX_STACK_ARGS)
-			MemoryAllocator::free((void *)params, numArgs * sizeof(void *));
 	}
+
+	// Free the arguments if necessary
+	if (numArgs > MAX_STACK_ARGS)
+		MemoryAllocator::free((void *)params, numArgs * sizeof(void *));
 }

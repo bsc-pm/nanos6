@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_FUNCTIONS_HPP
@@ -178,6 +178,32 @@ public:
 	{
 		cudaError_t err = cudaMemcpy(destination, from, count, kind);
 		CUDAErrorHandler::handle(err, "Copying memory");
+	}
+
+	static void launchKernel(
+		const char *kernelName, void **kernelParams,
+		size_t gridDim1, size_t gridDim2, size_t gridDim3,
+		size_t blockDim1, size_t blockDim2, size_t blockDim3,
+		size_t sharedMemoryBytes, CUstream stream
+	) {
+		CUresult res = cuLaunchKernel(loadFunction(kernelName),
+			gridDim1, gridDim2, gridDim3, blockDim1, blockDim2, blockDim3,
+			sharedMemoryBytes, stream, kernelParams, nullptr);
+
+		if (res != CUDA_SUCCESS) {
+			const char *errorDescription;
+			res = cuGetErrorString(res, &errorDescription);
+			if (res != CUDA_SUCCESS)
+				errorDescription = "Unknown error";
+
+			FatalErrorHandler::fail(
+				"Failed when launching kernel ", kernelName, ":\n"
+				"    error: ", errorDescription, "\n"
+				"    configuration:\n"
+				"        grid: ", gridDim1, " x ", gridDim2, " x ", gridDim3, "\n"
+				"        block: ", blockDim1, " x ", blockDim2, " x ", blockDim3, "\n"
+				"        shmem: ", sharedMemoryBytes, " bytes");
+		}
 	}
 };
 

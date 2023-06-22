@@ -1,26 +1,25 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 
 #ifndef MATH_SUPPORT_HPP
 #define MATH_SUPPORT_HPP
 
-#include <cstddef>
-
-
 class MathSupport {
 public:
-	static inline size_t ceil(size_t x, size_t y)
+	template <typename T>
+	static inline T ceil(T x, T y)
 	{
-		return (x + (y - 1)) / y;
+		return (x + (y - (T) 1)) / y;
 	}
 
-	static inline size_t closestMultiple(size_t n, size_t multipleOf)
+	template <typename T>
+	static inline T closestMultiple(T n, T multipleOf)
 	{
-		return ((n + multipleOf - 1) / multipleOf) * multipleOf;
+		return ((n + multipleOf - (T) 1) / multipleOf) * multipleOf;
 	}
 };
 
