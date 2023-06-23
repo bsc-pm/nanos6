@@ -22,6 +22,7 @@
 
 ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned");
 ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us");
+ConfigVariable<bool> CUDAAccelerator::_prefetchDataDependencies("devices.cuda.prefetch");
 
 thread_local Task *CUDAAccelerator::_currentTask;
 
@@ -84,8 +85,12 @@ void CUDAAccelerator::postRunTask(Task *task)
 
 void CUDAAccelerator::preRunTask(Task *task)
 {
-	// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
+	// Set the thread_local static var to be used by nanos6_get_current_cuda_stream()
 	CUDAAccelerator::_currentTask = task;
+
+	// Nothing else to do if prefetch is disabled
+	if (!_prefetchDataDependencies)
+		return;
 
 	// Prefetch available memory locations to the GPU
 	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;

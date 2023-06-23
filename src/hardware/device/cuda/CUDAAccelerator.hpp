@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_ACCELERATOR_HPP
@@ -37,6 +37,9 @@ private:
 
 	// The time period in microseconds between device service runs
 	static ConfigVariable<size_t> _usPollingPeriod;
+
+	// Whether the task data dependencies should be prefetched to the device
+	static ConfigVariable<bool> _prefetchDataDependencies;
 
 	// To be used in order to obtain the current task in nanos6_get_current_cuda_stream() call
 	thread_local static Task *_currentTask;

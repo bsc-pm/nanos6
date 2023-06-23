@@ -33,6 +33,7 @@ ConfigCentral::ConfigCentral() :
 	registerOption<bool_t>("devices.cuda.warning_on_incompatible_binary", true);
 	registerOption<integer_t>("devices.cuda.page_size", 0x8000);
 	registerOption<integer_t>("devices.cuda.streams", 16);
+	registerOption<bool_t>("devices.cuda.prefetch", true);
 	registerOption<bool_t>("devices.cuda.polling.pinned", true);
 	registerOption<integer_t>("devices.cuda.polling.period_us", 1000);
 
