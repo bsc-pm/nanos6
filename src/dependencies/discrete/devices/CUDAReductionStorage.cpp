@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -64,7 +64,7 @@ void *CUDAReductionStorage::getFreeSlotStorage(
 		_initializationFunction(tmpStorage, _address, _length);
 
 		// Transfer initialized value to GPU
-		CUDAFunctions::memcpy(slot.storage, tmpStorage, _paddedLength, cudaMemcpyHostToDevice);
+		CUDAFunctions::copyMemory(slot.storage, tmpStorage, _paddedLength, cudaMemcpyHostToDevice);
 		CUDAFunctions::freeHost(tmpStorage);
 
 		slot.initialized = true;
@@ -114,7 +114,7 @@ void CUDAReductionStorage::combineInStorage(void *combineDestination)
 		}
 
 		// Transfer from GPU to host
-		CUDAFunctions::memcpy(tmpStorage, slot.storage, _paddedLength, cudaMemcpyDeviceToHost);
+		CUDAFunctions::copyMemory(tmpStorage, slot.storage, _paddedLength, cudaMemcpyDeviceToHost);
 
 		// Combine from temporal host storage
 		_combinationFunction(combineDestination, tmpStorage, _length);
