@@ -191,9 +191,9 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 
 	// Launch the kernel
 	CUDAFunctions::launchKernel(kernelName, params,
-			gridDim1, gridDim2, gridDim3,
-			blockDim1, blockDim2, blockDim3,
-			deviceInfo.shm_size, env.stream);
+		gridDim1, gridDim2, gridDim3,
+		blockDim1, blockDim2, blockDim3,
+		deviceInfo.shm_size, env.stream);
 
 	// Un-translate the arguments, in case this task needs to be realunched at some point
 	if (translationTable) {
