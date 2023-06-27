@@ -158,16 +158,23 @@ public:
 
 	static void prefetchMemory(void *pHost, size_t size, int device, cudaStream_t &stream, bool readOnly)
 	{
+		// Ensure that we have a stream assigned; stream 0 is special in CUDA and we do not
+		// launch tasks are never launched on it
+		assert(stream != 0);
+
 		if (size == 0)
 			return;
 
 		// Depending on the access we're prefetching, we will advise the driver to do a shared copy
 		cudaMemoryAdvise advice = (readOnly ? cudaMemAdviseSetReadMostly : cudaMemAdviseUnsetReadMostly);
 		cudaError_t err = cudaMemAdvise(pHost, size, advice, device);
-		CUDAErrorHandler::handle(err, "Advising memory region");
 
-		// Ensure that we have a stream assigned. Stream 0 is special in CUDA and tasks are never launched on it.
-		assert(stream != 0);
+		// The memory may not be managed memory, and thus, skip prefetching
+		if (err == cudaErrorInvalidValue)
+			return;
+
+		// Check the rest of errors
+		CUDAErrorHandler::handle(err, "Advising memory region");
 
 		// Call a prefetch operation on the same stream that we are going to launch that task on
 		err = cudaMemPrefetchAsync(pHost, size, device, stream);
