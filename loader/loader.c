@@ -1,11 +1,19 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #if HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#ifdef HAVE_JEMALLOC
+#ifdef USE_JEMALLOC_EMBEDDED
+#include <jemalloc/jemalloc-nanos6.h>
+#else
+#include <jemalloc/jemalloc.h>
+#endif
 #endif
 
 #ifndef _GNU_SOURCE
@@ -307,6 +315,13 @@ char const *nanos6_get_runtime_path(void)
 	return lib_path;
 #else
 	return "not available";
+#endif
+}
+
+void _nanos6_loader_force_external_libs_linking(void)
+{
+#ifdef HAVE_JEMALLOC
+	nanos6_je_mallocx(0, 0);
 #endif
 }
 
