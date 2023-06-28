@@ -22,6 +22,7 @@
 
 ConfigVariable<bool> CUDAAccelerator::_pinnedPolling("devices.cuda.polling.pinned");
 ConfigVariable<size_t> CUDAAccelerator::_usPollingPeriod("devices.cuda.polling.period_us");
+ConfigVariable<bool> CUDAAccelerator::_prefetchDataDependencies("devices.cuda.prefetch");
 
 thread_local Task *CUDAAccelerator::_currentTask;
 
@@ -84,8 +85,12 @@ void CUDAAccelerator::postRunTask(Task *task)
 
 void CUDAAccelerator::preRunTask(Task *task)
 {
-	// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
+	// Set the thread_local static var to be used by nanos6_get_current_cuda_stream()
 	CUDAAccelerator::_currentTask = task;
+
+	// Nothing else to do if prefetch is disabled
+	if (!_prefetchDataDependencies)
+		return;
 
 	// Prefetch available memory locations to the GPU
 	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
@@ -191,9 +196,9 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 
 	// Launch the kernel
 	CUDAFunctions::launchKernel(kernelName, params,
-			gridDim1, gridDim2, gridDim3,
-			blockDim1, blockDim2, blockDim3,
-			deviceInfo.shm_size, env.stream);
+		gridDim1, gridDim2, gridDim3,
+		blockDim1, blockDim2, blockDim3,
+		deviceInfo.shm_size, env.stream);
 
 	// Un-translate the arguments, in case this task needs to be realunched at some point
 	if (translationTable) {

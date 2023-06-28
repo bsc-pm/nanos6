@@ -167,6 +167,10 @@ __require_CUDA
 		page_size = 0x8000
 		# Maximum CUDA streams per GPU. Default is 16
 		streams = 16
+		# Prefetch data dependencies on the GPU before running a CUDA device task. Prefetching
+		# may reduce the page faults on the device and thus improve overall performance of the
+		# kernels. Default is enabled
+		prefetch = true
 		# CUDA device polling services options. There is a service for each GPU device. They run
 		# periodically and manage the launching and finalization of ready CUDA tasks on the GPU
 		# devices. While running, each service occupies an available CPU from the system
