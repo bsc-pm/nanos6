@@ -55,7 +55,8 @@ if USE_CUDA
 base_tests += \
 	cuda-kernargs.clang.test \
 	cuda-ndrange.clang.test \
-	cuda-saxpy.clang.test
+	cuda-saxpy.clang.test \
+	cuda-shmem.clang.test
 endif
 
 # Ignore CPU Activation test if we have DLB
@@ -138,7 +139,8 @@ if USE_CUDA
 base_tests += \
 	cuda-kernargs.clang.debug.test \
 	cuda-ndrange.clang.debug.test \
-	cuda-saxpy.clang.debug.test
+	cuda-saxpy.clang.debug.test \
+	cuda-shmem.clang.debug.test
 endif
 
 # Ignore CPU Activation test if we have DLB for now
@@ -266,6 +268,16 @@ cuda_saxpy_clang_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ..
 cuda_saxpy_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
 cuda_saxpy_clang_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
 cuda_saxpy_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_shmem_clang_debug_test_SOURCES = ../cuda/cuda-shmem.cpp ../cuda/cuda-shmem.hpp ../cuda/cuda-shmem-kernel.cu
+cuda_shmem_clang_debug_test_CPPFLAGS = $(CUDA_CFLAGS)
+cuda_shmem_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_shmem_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_shmem_clang_test_SOURCES = ../cuda/cuda-shmem.cpp ../cuda/cuda-shmem.hpp ../cuda/cuda-shmem-kernel.cu
+cuda_shmem_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
+cuda_shmem_clang_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_shmem_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
 
 blocking_clang_debug_test_SOURCES = ../blocking/blocking.cpp
 blocking_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
