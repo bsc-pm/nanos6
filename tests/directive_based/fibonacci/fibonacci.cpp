@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "TestAnyProtocolProducer.hpp"
@@ -58,7 +58,8 @@ void fibonacci(INTEGER index, INTEGER *resultPointer) {
 }
 
 
-int main(int argc, char **argv) {
+int main()
+{
 	tap.registerNewTests(1);
 	tap.begin();
 

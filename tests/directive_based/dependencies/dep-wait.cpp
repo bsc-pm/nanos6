@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <iostream>
@@ -9,7 +9,7 @@
 #include <cassert>
 #include <string>
 
-#include <Atomic.hpp>
+#include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
 
 #define DEPTH 10000
@@ -18,7 +18,7 @@ TestAnyProtocolProducer tap;
 
 Atomic<size_t> counter;
 
-void task(int depth, int n)
+void task(size_t depth, size_t n)
 {
 	if (depth == n) {
 		++counter;
@@ -43,7 +43,7 @@ void task(int depth, int n)
 
 int main()
 {
-	int n = DEPTH;
+	size_t n = DEPTH;
 	counter = 0;
 
 	tap.registerNewTests(1);

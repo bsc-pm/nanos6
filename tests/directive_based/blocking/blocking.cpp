@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
@@ -15,19 +15,20 @@
 
 #include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
+#include "Utils.hpp"
 
 #define NUM_TASKS 100
 #define NUM_BLOCKS 50
 
 typedef std::vector<Atomic<void *> > contexts_list_t;
-typedef std::vector<Atomic<int> > processed_list_t;
+typedef std::vector<Atomic<size_t> > processed_list_t;
 
 struct UnblockerArgs {
 	contexts_list_t *_contexts;
 	processed_list_t *_processed;
-	int _nblocks;
+	size_t _nblocks;
 
-	UnblockerArgs(contexts_list_t *contexts, processed_list_t *processed, int nblocks) :
+	UnblockerArgs(contexts_list_t *contexts, processed_list_t *processed, size_t nblocks) :
 		_contexts(contexts),
 		_processed(processed),
 		_nblocks(nblocks)
@@ -43,13 +44,13 @@ void *unblocker(void *arg)
 	UnblockerArgs *args = (UnblockerArgs *) arg;
 	assert(args != NULL);
 
-	const int nblocks = args->_nblocks;
+	const size_t nblocks = args->_nblocks;
 	contexts_list_t &contexts = *args->_contexts;
 	processed_list_t &processed = *args->_processed;
 
 	// Iterate through all contexts unblocking the tasks
-	for (int b = 0; b < nblocks; ++b) {
-		for (int c = 0; c < contexts.size(); ++c) {
+	for (size_t b = 0; b < nblocks; ++b) {
+		for (size_t c = 0; c < contexts.size(); ++c) {
 			void *context = NULL;
 			while (!(context = contexts[c]));
 			++processed[c];
@@ -61,7 +62,7 @@ void *unblocker(void *arg)
 }
 
 
-int main(int argc, char **argv)
+int main()
 {
 	const long activeCPUs = nanos6_get_num_cpus();
 	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
@@ -75,14 +76,14 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	const int ntasks = NUM_TASKS;
-	const int nblocks = NUM_BLOCKS;
+	const size_t ntasks = NUM_TASKS;
+	const size_t nblocks = NUM_BLOCKS;
 	tap.registerNewTests(ntasks * (nblocks + 1));
 	tap.begin();
 
 	contexts_list_t contexts(ntasks);
 	processed_list_t processed(ntasks);
-	for (int c = 0; c < ntasks; ++c) {
+	for (size_t c = 0; c < ntasks; ++c) {
 		contexts[c] = NULL;
 		processed[c] = 0;
 	}
@@ -90,12 +91,12 @@ int main(int argc, char **argv)
 	// Create an external thread that will unblock all tasks
 	pthread_t thread;
 	UnblockerArgs args(&contexts, &processed, nblocks);
-	pthread_create(&thread, NULL, unblocker, &args);
+	CHECK(pthread_create(&thread, NULL, unblocker, &args));
 
-	for (int task = 0; task < ntasks; ++task) {
+	for (size_t task = 0; task < ntasks; ++task) {
 		#pragma oss task shared(contexts, processed)
 		{
-			for (int b = 0; b < nblocks; ++b) {
+			for (size_t b = 0; b < nblocks; ++b) {
 				void *context = nanos6_get_current_blocking_context();
 				assert(context != NULL);
 
@@ -118,14 +119,14 @@ int main(int argc, char **argv)
 	#pragma oss taskwait
 
 	// Check that all contexts were processed by the unblocker
-	for (int c = 0; c < ntasks; ++c) {
+	for (size_t c = 0; c < ntasks; ++c) {
 		tap.evaluate(
 			processed[c] == nblocks,
 			"Check that the task was correctly unblocked all times"
 		);
 	}
 
-	pthread_join(thread, NULL);
+	CHECK(pthread_join(thread, NULL));
 
 	tap.end();
 

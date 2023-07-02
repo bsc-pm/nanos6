@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -13,8 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -165,7 +165,7 @@ static inline int numSubtests(int numWaits, int numConcurrents)
 }
 
 
-int main(int argc, char **argv)
+int main()
 {
 	nanos6_wait_for_full_initialization();
 
@@ -236,7 +236,6 @@ int main(int argc, char **argv)
 		expected._taskAWaitsTaskB[0][1] = true;
 		expected._taskARunsConcurrentlyToTaskB[0][2] = true;
 		expected._taskARunsConcurrentlyToTaskB[2][0] = true;
-		int a;
 
 		#pragma oss task shared(status, expected) label("T1: if 0 task")
 		{

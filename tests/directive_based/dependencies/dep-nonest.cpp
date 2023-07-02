@@ -1,11 +1,12 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -20,11 +21,11 @@
 
 #include <nanos6/debug.h>
 
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
-
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Utils.hpp"
 
 
 #define SUSTAIN_MICROSECONDS 200000L
@@ -41,12 +42,12 @@ TestAnyProtocolProducer tap;
 static int nextTaskId = 0;
 
 #if FINE_SELF_CHECK
-static int numTests = 0;
+static size_t numTests = 0;
 #else
-static int numTests = 1;
+static size_t numTests = 1;
 #endif
 
-static int ncpus = 0;
+static size_t ncpus = 0;
 static double delayMultiplier = 1.0;
 
 
@@ -201,64 +202,66 @@ public:
 };
 
 
-#pragma oss task in(*variable) label("R")
-void verifyRead(int *variable, TaskVerifier *verifier)
+#pragma oss task in(*var) label("R")
+void verifyRead(UNUSED int *var, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task out(*variable) label("W")
-void verifyWrite(int *variable, TaskVerifier *verifier)
+#pragma oss task out(*var) label("W")
+void verifyWrite(UNUSED int *var, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task in(*variable1, *variable2) label("RR")
-void verifyRepeatedRead(int *variable1, int *variable2, TaskVerifier *verifier)
+#pragma oss task in(*var1, *var2) label("RR")
+void verifyRepeatedRead(UNUSED int *var1, UNUSED int *var2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task out(*variable1, *variable2) label("WW")
-void verifyRepeatedWrite(int *variable1, int *variable2, TaskVerifier *verifier)
+#pragma oss task out(*var1, *var2) label("WW")
+void verifyRepeatedWrite(UNUSED int *var1, UNUSED int *var2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task out(*variable2) in(*variable1) label("RW")
-void verifyUpgradedAccess1(int *variable1, int *variable2, TaskVerifier *verifier)
+#pragma oss task out(*var2) in(*var1) label("RW")
+void verifyUpgradedAccess1(UNUSED int *var1, UNUSED int *var2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task out(*variable1) in(*variable2) label("WR")
-void verifyUpgradedAccess2(int *variable1, int *variable2, TaskVerifier *verifier)
+#pragma oss task out(*var1) in(*var2) label("WR")
+void verifyUpgradedAccess2(UNUSED int *var1, UNUSED int *var2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task out(*variable2, *variable4) in(*variable1, *variable3) label("RWRW")
-void verifyUpgradedAccess3(int *variable1, int *variable2, int *variable3, int *variable4, TaskVerifier *verifier)
-{
+#pragma oss task out(*var2, *var4) in(*var1, *var3) label("RWRW")
+void verifyUpgradedAccess3(
+	UNUSED int *var1, UNUSED int *var2, UNUSED int *var3,
+	UNUSED int *var4, TaskVerifier *verifier
+) {
 	assert(verifier != 0);
 	verifier->verify();
 }
 
 
-#pragma oss task concurrent(*variable1) label("C")
-void verifyConcurrent(int *variable1, TaskVerifier *verifier)
+#pragma oss task concurrent(*var1) label("C")
+void verifyConcurrent(UNUSED int *var1, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
 	verifier->verify();
@@ -626,12 +629,12 @@ struct VerifierConstraintCalculator {
 static VerifierConstraintCalculator _constraintCalculator;
 
 
-int main(int argc, char **argv)
+int main()
 {
 	ncpus = nanos6_get_num_cpus();
 
 #if TEST_LESS_THREADS
-	ncpus = std::min(ncpus, 64);
+	ncpus = std::min(ncpus, (size_t) 64);
 #endif
 
 	delayMultiplier = sqrt(ncpus);
@@ -645,26 +648,8 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	/***********/
-	/* WARM-UP */
-	/***********/
-
-	int warmupCounter = 0;
-
-	for (int t = 0; t < ncpus; ++t) {
-		#pragma oss task shared(warmupCounter, ncpus)
-		{
-			#pragma oss atomic
-			warmupCounter++;
-
-			while (warmupCounter < ncpus) {
-				usleep(100);
-				__sync_synchronize();
-			}
-		}
-	}
-	#pragma oss taskwait
-
+	// Perform a warmup
+	Utils::warmup();
 
 	int var1;
 
@@ -673,7 +658,7 @@ int main(int argc, char **argv)
 
 	// NCPUS readers
 	Atomic<int> numConcurrentReaders1(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders1);
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
@@ -687,7 +672,7 @@ int main(int argc, char **argv)
 
 	// NCPUS readers
 	Atomic<int> numConcurrentReaders2(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders2);
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
@@ -698,7 +683,7 @@ int main(int argc, char **argv)
 
 	// NCPUS double readers
 	Atomic<int> numConcurrentReaders3(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::DOUBLE_READ, &var1, &numConcurrentReaders3);
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
@@ -722,7 +707,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_CONCURRENT_SUPPORT
 	// NCPUS concurrent
 	Atomic<int> numConcurrents1(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents1);
 		verifiers.push_back(concurrent);
 		_constraintCalculator.handleConcurrent(concurrent);
@@ -733,7 +718,7 @@ int main(int argc, char **argv)
 
 	// NCPUS concurrent
 	Atomic<int> numConcurrents2(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents2);
 		verifiers.push_back(concurrent);
 		_constraintCalculator.handleConcurrent(concurrent);
@@ -741,7 +726,7 @@ int main(int argc, char **argv)
 
 	// NCPUS readers
 	Atomic<int> numConcurrentReaders5(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders5);
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
@@ -749,7 +734,7 @@ int main(int argc, char **argv)
 
 	// NCPUS concurrent
 	Atomic<int> numConcurrents3(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents3);
 		verifiers.push_back(concurrent);
 		_constraintCalculator.handleConcurrent(concurrent);
@@ -757,7 +742,7 @@ int main(int argc, char **argv)
 
 	// NCPUS readers
 	Atomic<int> numConcurrentReaders6(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders6);
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
@@ -765,7 +750,7 @@ int main(int argc, char **argv)
 
 	// NCPUS concurrent
 	Atomic<int> numConcurrents4(0);
-	for (long i=0; i < ncpus; i++) {
+	for (size_t i = 0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents4);
 		verifiers.push_back(concurrent);
 		_constraintCalculator.handleConcurrent(concurrent);

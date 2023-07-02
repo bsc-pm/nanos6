@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -30,8 +30,7 @@ void wrongExecution(const char *error)
 	tap.end();
 }
 
-int main(int argc, char **argv) {
-
+int main(int, char **argv) {
 	// Make sure DLB is enabled
 	if (!nanos6_is_dlb_enabled()) {
 		wrongExecution("DLB is disabled, skipping this test");
@@ -40,7 +39,7 @@ int main(int argc, char **argv) {
 
 	// Check that we're using all the CPUs in the system
 	long activeCPUs = get_nprocs();
-	unsigned long activeCPUsNanos6 = nanos6_get_num_cpus();
+	long activeCPUsNanos6 = nanos6_get_num_cpus();
 	if (activeCPUs != activeCPUsNanos6) {
 		wrongExecution("Can only execute this test using all available cores, skipping this test");
 		return 0;
@@ -65,7 +64,7 @@ int main(int argc, char **argv) {
 	std::string passiveCommand(argv[0]);
 
 	// Construct the launch commands of the processes to launch
-	const int index = activeCommand.rfind(parentTestName);
+	const size_t index = activeCommand.rfind(parentTestName);
 	if (index == std::string::npos) {
 		wrongExecution("This test is renamed and does not match with the expected name");
 		return 0;
@@ -96,7 +95,7 @@ int main(int argc, char **argv) {
 			// a clean environment
 			char *passiveProcess = new char[passiveCommand.length() + 1];
 			strcpy(passiveProcess, passiveCommand.c_str());
-			char *const passiveProcessArgs[] = {passiveProcess, "nanos6-testing", NULL};
+			char *const passiveProcessArgs[] = {passiveProcess, (char *) "nanos6-testing", NULL};
 
 			// Redirect the current output to /dev/null prior to executing 'execv'
 			int fd = open("/dev/null", O_WRONLY | O_CREAT, 0666);

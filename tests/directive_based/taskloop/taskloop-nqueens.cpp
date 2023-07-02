@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <stdio.h>
@@ -64,7 +64,8 @@ void solve(int n, const int col, sol_node_t& sol)
 	}
 }
 
-int main() {
+int main()
+{
 	int n = TOTAL_SIZE;
 	final_depth = FINAL_DEPTH;
 	grainsize = GRAINSIZE;

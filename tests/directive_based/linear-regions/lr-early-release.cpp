@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -13,10 +13,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
+#include "Utils.hpp"
 
 
 #define SUSTAIN_MICROSECONDS 100000L
@@ -172,18 +173,16 @@ static inline void taskCode(int currentTaskNumber, ExperimentStatus<NUM_TASKS> &
 	taskEpilogue(currentTaskNumber, status, expected);
 }
 
-
-static inline int numSubtests(int numTasks, int numWaits)
+static inline int numSubtests(UNUSED int numTasks, int numWaits)
 {
-	#if PERFORM_NON_GUARANTEED_CHECKS
-		return numTasks * (numTasks - 1);
-	#else
-		return numWaits * 2;
-	#endif
+#if PERFORM_NON_GUARANTEED_CHECKS
+	return numTasks * (numTasks - 1);
+#else
+	return numWaits * 2;
+#endif
 }
 
-
-int main(int argc, char **argv)
+int main()
 {
 	nanos6_wait_for_full_initialization();
 
