@@ -1366,7 +1366,9 @@ noinst_HEADERS = \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \
 	tests/TestAnyProtocolProducer.hpp \
-	tests/Timer.hpp
+	tests/Timer.hpp \
+	tests/Utils.hpp \
+	tests/UtilsCUDA.hpp
 
 
 EXTRA_DIST += \

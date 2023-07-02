@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2021-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
@@ -29,7 +29,7 @@ void onreadyFunction2(int *A, int *B)
 	*B += 10;
 }
 
-int main(int argc, char **argv)
+int main()
 {
 	tap.registerNewTests(14);
 	tap.begin();

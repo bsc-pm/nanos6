@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
@@ -15,6 +15,7 @@
 
 #include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
+#include "Utils.hpp"
 
 #define NUM_TASKS 1000
 
@@ -48,7 +49,7 @@ void *fulfiller(void *arg)
 
 	// Iterate through all counters fulfilling the
 	// missing task events
-	for (int c = 0; c < counters.size(); ++c) {
+	for (size_t c = 0; c < counters.size(); ++c) {
 		void *counter = NULL;
 		while (!(counter = counters[c]));
 		processed[c] = true;
@@ -59,7 +60,7 @@ void *fulfiller(void *arg)
 }
 
 
-int main(int argc, char **argv)
+int main()
 {
 	const long activeCPUs = nanos6_get_num_cpus();
 	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
@@ -87,7 +88,7 @@ int main(int argc, char **argv)
 	// Create an external thread that will fulfill the task events
 	pthread_t thread;
 	FulfillerArgs args(&counters, &processed);
-	pthread_create(&thread, NULL, fulfiller, &args);
+	CHECK(pthread_create(&thread, NULL, fulfiller, &args));
 
 	for (int task = 0; task < ntasks; ++task) {
 		#pragma oss task shared(counters)
@@ -120,7 +121,7 @@ int main(int argc, char **argv)
 		tap.evaluate(processed[c], "Check that the task event was fulfilled");
 	}
 
-	pthread_join(thread, NULL);
+	CHECK(pthread_join(thread, NULL));
 
 	tap.end();
 

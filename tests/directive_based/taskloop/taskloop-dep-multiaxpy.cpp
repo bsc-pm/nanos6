@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -16,7 +16,8 @@
 
 TestAnyProtocolProducer tap;
 
-static void initialize(double *data, double value, long N, long BS) {
+static void initialize(double *data, double value, long N, long BS)
+{
 	for (long i = 0; i < N; i += BS) {
 		long elements = std::min(BS, N - i);
 
@@ -27,14 +28,16 @@ static void initialize(double *data, double value, long N, long BS) {
 	}
 }
 
-static void axpy(const double *x, double *y, double alpha, long N, long BS, long GS) {
+static void axpy(const double *x, double *y, double alpha, long N, long GS)
+{
 	#pragma oss taskloop in(x[i]) inout(y[i]) grainsize(GS)
 	for (long i = 0; i < N; i++) {
 		y[i] += alpha * x[i];
 	}
 }
 
-static bool validate(double *y, long N, long BS, double expectedValue) {
+static bool validate(double *y, long N, long BS, double expectedValue)
+{
 	int errors = 0;
 
 	for (long i = 0; i < N; i += BS) {
@@ -53,7 +56,8 @@ static bool validate(double *y, long N, long BS, double expectedValue) {
 	return (errors == 0);
 }
 
-int main() {
+int main()
+{
 	long n = TOTALSIZE;
 	long bs = BLOCKSIZE;
 	long gs = GRAINSIZE;
@@ -71,7 +75,7 @@ int main() {
 
 	// Main algorithm
 	for (int iteration = 0; iteration < its; iteration++) {
-		axpy(x, y, 1.0, n, bs, gs);
+		axpy(x, y, 1.0, n, gs);
 	}
 	#pragma oss taskwait
 

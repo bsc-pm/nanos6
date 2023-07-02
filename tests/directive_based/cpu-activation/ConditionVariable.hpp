@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CONDITION_VARIABLE_HPP
@@ -113,7 +113,7 @@ public:
 
 #include <nanos6/blocking.h>
 
-#include <Atomic.hpp>
+#include "Atomic.hpp"
 
 class ConditionVariable {
 	Atomic<bool> _signaled;
@@ -200,6 +200,8 @@ public:
 
 #include <pthread.h>
 
+#include "Utils.hpp"
+
 
 class ConditionVariable {
 	bool _signaled;
@@ -214,33 +216,33 @@ public:
 	ConditionVariable()
 		: _signaled(false)
 	{
-		pthread_mutex_init(&_mutex, 0);
-		pthread_cond_init(&_condVar, 0);
+		CHECK(pthread_mutex_init(&_mutex, 0));
+		CHECK(pthread_cond_init(&_condVar, 0));
 	}
 	
 	
 	//! \brief Wait on the contition variable until signaled
 	void wait()
 	{
-		pthread_mutex_lock(&_mutex);
+		CHECK(pthread_mutex_lock(&_mutex));
 		while (!_signaled) {
-			pthread_cond_wait(&_condVar, &_mutex);
+			CHECK(pthread_cond_wait(&_condVar, &_mutex));
 		}
 		
 		// Initialize for next time
 		_signaled = false;
-		pthread_mutex_unlock(&_mutex);
+		CHECK(pthread_mutex_unlock(&_mutex));
 	}
 	
 	//! \brief Signal the condition variable to wake up a thread that is waiting or will wait on it
 	void signal()
 	{
-		pthread_mutex_lock(&_mutex);
+		CHECK(pthread_mutex_lock(&_mutex));
 		assert(_signaled == false);
 		_signaled = true;
 		
-		pthread_cond_signal(&_condVar);
-		pthread_mutex_unlock(&_mutex);
+		CHECK(pthread_cond_signal(&_condVar));
+		CHECK(pthread_mutex_unlock(&_mutex));
 	}
 	
 	bool isPresignaled()

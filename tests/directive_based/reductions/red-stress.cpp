@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 /*
@@ -10,7 +10,7 @@
  *
  */
 
-#include <Atomic.hpp>
+#include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
 
 
@@ -23,7 +23,8 @@
 TestAnyProtocolProducer tap;
 Atomic<int> numReductions(0);
 
-int main() {
+int main()
+{
 	int array[N_REDUCTIONS] = { 0 };
 	int outputStep = N_REDUCTIONS/DIAGNOSTIC_PROGRESS_LINES;
 

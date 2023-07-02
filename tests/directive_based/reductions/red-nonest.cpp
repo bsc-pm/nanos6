@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -15,11 +15,11 @@
 
 #include <nanos6/debug.h>
 
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
-
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Utils.hpp"
 
 using namespace Functors;
 
@@ -33,7 +33,7 @@ TestAnyProtocolProducer tap;
 
 static int numTests = 0;
 
-static unsigned int ncpus = 0;
+static size_t ncpus = 0;
 static double delayMultiplier = 1.0;
 
 
@@ -124,7 +124,7 @@ public:
 			int nwait = _runsConcurrentlyWithReduction.size() + 1;
 
 			assert(_numConcurrentReductionTasks != 0);
-			int var = ++(*_numConcurrentReductionTasks);
+			++(*_numConcurrentReductionTasks);
 
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with all other reduction tasks";
@@ -156,7 +156,7 @@ public:
 			int nwait = _runsConcurrentlyWith.size() + 1;
 
 			assert(_numConcurrentTasks != 0);
-			int var = ++(*_numConcurrentTasks);
+			++(*_numConcurrentTasks);
 
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with all other compatible tasks";
@@ -205,24 +205,27 @@ public:
 };
 
 
-#pragma oss task in(*variable) label("R")
-void verifyRead(int *variable, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers)
-{
+#pragma oss task in(*var) label("R")
+void verifyRead(
+	UNUSED int *var, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers
+) {
 	assert(verifier != 0);
 	verifier->verify(verifiers);
 }
 
 
-#pragma oss task out(*variable) label("W")
-void verifyWrite(int *variable, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers)
-{
+#pragma oss task out(*var) label("W")
+void verifyWrite(
+	UNUSED int *var, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers
+) {
 	assert(verifier != 0);
 	verifier->verify(verifiers);
 }
 
 
-void verifyReduction(int *variable1, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers)
-{
+void verifyReduction(
+	UNUSED int *var1, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers
+) {
 	assert(verifier != 0);
 	verifier->verify(verifiers);
 }
@@ -522,8 +525,10 @@ struct VerifierConstraintCalculator {
 
 	void selfcheck() const
 	{
+#ifdef FINE_SELF_CHECK
 		// Check if we are running with DLB
 		bool runningWithDLB = nanos6_is_dlb_enabled();
+#endif
 
 #ifdef FINE_SELF_CHECK
 #else
@@ -652,12 +657,12 @@ struct VerifierConstraintCalculator {
 };
 
 
-int main(int argc, char **argv)
+int main()
 {
 	ncpus = nanos6_get_num_cpus();
 
 #if TEST_LESS_THREADS
-	ncpus = std::min(ncpus, 64U);
+	ncpus = std::min(ncpus, (size_t) 64);
 #endif
 
 	delayMultiplier = sqrt(ncpus);
@@ -671,25 +676,8 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	/***********/
-	/* WARM-UP */
-	/***********/
-
-	int warmupCounter = 0;
-
-	for (int t = 0; t < ncpus; ++t) {
-		#pragma oss task shared(warmupCounter, ncpus)
-		{
-			#pragma oss atomic
-			warmupCounter++;
-
-			while (warmupCounter < ncpus) {
-				usleep(100);
-				__sync_synchronize();
-			}
-		}
-	}
-	#pragma oss taskwait
+	// Perform a warmup
+	Utils::warmup();
 
 	std::vector<std::vector<TaskVerifier *> *> testVerifiers;
 	std::vector<std::pair<VerifierConstraintCalculator, std::string> > testConstraintCalculators;
@@ -709,7 +697,7 @@ int main(int argc, char **argv)
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
 
-		for (long i = 0; i < ncpus - 1; i++) {
+		for (size_t i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
@@ -746,7 +734,7 @@ int main(int argc, char **argv)
 		verifiers->push_back(write1);
 		constraintCalculator.handleWriter();
 
-		for (long i = 0; i < ncpus - 1; i++) {
+		for (size_t i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
@@ -775,7 +763,7 @@ int main(int argc, char **argv)
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
 
-		for (long i = 0; i < ncpus - 1; i++) {
+		for (size_t i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
@@ -812,7 +800,7 @@ int main(int argc, char **argv)
 		verifiers->push_back(read1);
 		constraintCalculator.handleReader();
 
-		for (long i = 0; i < ncpus - 1; i++) {
+		for (size_t i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
