@@ -1,11 +1,10 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
-#include <cassert>
 #include <cstdlib>
 
 #include <cuda_runtime.h>
@@ -13,6 +12,7 @@
 #include "cuda-saxpy.hpp"
 
 #include "TestAnyProtocolProducer.hpp"
+#include "UtilsCUDA.hpp"
 
 
 #define TOTALSIZE  (4*1024*1024)
@@ -42,7 +42,7 @@ void saxpy(long int N, long int BS, double a, double *x, double *y, bool if0) {
 	}
 }
 
-bool validate(long int N, double a, long int ITS, double *x, double *y) {
+bool validate(long int N, double a, long int ITS, double *y) {
 	for (long int i = 0; i < N; ++i) {
 		if (y[i] != a * i * ITS + (i + 2)) {
 			// There may be doubleing point precision errors in large numbers
@@ -52,7 +52,8 @@ bool validate(long int N, double a, long int ITS, double *x, double *y) {
 	return true;
 }
 
-int main() {
+int main()
+{
 	tap.registerNewTests(1);
 	tap.begin();
 
@@ -62,14 +63,10 @@ int main() {
 	const int BS = BLOCKSIZE;
 	const int ITS = ITERATIONS;
 
-	cudaError_t err;
-	double *x, *y;
-
 	// Allocate CUDA unified memory
-	err = cudaMallocManaged(&x, N * sizeof(double), cudaMemAttachGlobal);
-	assert(err == cudaSuccess);
-	err = cudaMallocManaged(&y, N * sizeof(double), cudaMemAttachGlobal);
-	assert(err == cudaSuccess);
+	double *x, *y;
+	CUDA_CHECK(cudaMallocManaged(&x, N * sizeof(double), cudaMemAttachGlobal));
+	CUDA_CHECK(cudaMallocManaged(&y, N * sizeof(double), cudaMemAttachGlobal));
 
 	initialize(N, BS, x, y);
 
@@ -79,15 +76,13 @@ int main() {
 	}
 	#pragma oss taskwait
 
-	bool validates = validate(N, a, ITS, x, y);
+	bool validates = validate(N, a, ITS, y);
 
 	tap.evaluate(validates, "The result of the multiaxpy program is correct");
 	tap.end();
 
-	err = cudaFree(x);
-	assert(err == cudaSuccess);
-	err = cudaFree(y);
-	assert(err == cudaSuccess);
+	CUDA_CHECK(cudaFree(x));
+	CUDA_CHECK(cudaFree(y));
 
 	return 0;
 }

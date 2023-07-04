@@ -5,7 +5,6 @@
 */
 
 #include <algorithm>
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
 
@@ -14,11 +13,13 @@
 #include "cuda-ndrange.hpp"
 
 #include "TestAnyProtocolProducer.hpp"
+#include "UtilsCUDA.hpp"
 
 
 TestAnyProtocolProducer tap;
 
-int main() {
+int main()
+{
 	tap.registerNewTests(1);
 	tap.begin();
 
@@ -30,14 +31,10 @@ int main() {
 		blocks[d] = (total[d] % threads[d] == 0)
 			? (total[d] / threads[d]) : (total[d] / threads[d] + 1);
 
-	cudaError_t err;
-	int *outGridSizes, *outBlockSizes;
-
 	// Allocate CUDA unified memory
-	err = cudaMallocManaged(&outGridSizes, 3 * sizeof(int), cudaMemAttachGlobal);
-	assert(err == cudaSuccess);
-	err = cudaMallocManaged(&outBlockSizes, 3 * sizeof(int), cudaMemAttachGlobal);
-	assert(err == cudaSuccess);
+	int *outGridSizes, *outBlockSizes;
+	CUDA_CHECK(cudaMallocManaged(&outGridSizes, 3 * sizeof(int), cudaMemAttachGlobal));
+	CUDA_CHECK(cudaMallocManaged(&outBlockSizes, 3 * sizeof(int), cudaMemAttachGlobal));
 
 	std::memset(outGridSizes, 0, 3 * sizeof(int));
 	std::memset(outBlockSizes, 0, 3 * sizeof(int));
@@ -59,10 +56,8 @@ int main() {
 	tap.evaluate(validates, "The ndrange parameters are respected");
 	tap.end();
 
-	err = cudaFree(outGridSizes);
-	assert(err == cudaSuccess);
-	err = cudaFree(outBlockSizes);
-	assert(err == cudaSuccess);
+	CUDA_CHECK(cudaFree(outGridSizes));
+	CUDA_CHECK(cudaFree(outBlockSizes));
 
 	return 0;
 }

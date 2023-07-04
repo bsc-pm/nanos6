@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -12,12 +12,9 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <Atomic.hpp>
-#include <Functors.hpp>
-#include <Functors.hpp>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -70,7 +67,7 @@ static void verifyNonReleased(ExperimentStatus<NSEGMENTS+1> &status)
 }
 
 
-int main(int argc, char **argv)
+int main()
 {
 	nanos6_wait_for_full_initialization();
 
@@ -157,15 +154,16 @@ int main(int argc, char **argv)
 
 			tap.emitDiagnostic("T", i+1, " has started and is about to finish");
 
-
-			std::ostringstream oss;
-			oss << "T0 does not finish before T" << i+1;
-			tap.timedEvaluate(
-				Zero< Atomic<int> >(status._taskHasFinished[i+1]),
-				SUSTAIN_MICROSECONDS*2L,
-				oss.str(),
-				true
-			);
+			{
+				std::ostringstream oss;
+				oss << "T0 does not finish before T" << i+1;
+				tap.timedEvaluate(
+					Zero< Atomic<int> >(status._taskHasFinished[i+1]),
+					SUSTAIN_MICROSECONDS*2L,
+					oss.str(),
+					true
+				);
+			}
 
 			{
 				std::ostringstream oss;

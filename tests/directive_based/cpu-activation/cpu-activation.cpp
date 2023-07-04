@@ -1,13 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -96,7 +96,8 @@ public:
 };
 
 
-int main(int argc, char **argv) {
+int main()
+{
 	nanos6_wait_for_full_initialization();
 
 	long activeCPUs = nanos6_get_num_cpus();

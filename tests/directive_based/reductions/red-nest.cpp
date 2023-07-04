@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 /*
@@ -20,8 +20,8 @@
 
 #include <nanos6/debug.h>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
+#include "Atomic.hpp"
+#include "Functors.hpp"
 #include "TestAnyProtocolProducer.hpp"
 
 
@@ -84,7 +84,8 @@ void recursion(int& x, int depth, Atomic<bool>& parentReady) {
 	}
 }
 
-int main() {
+int main()
+{
 	int activeCPUs = nanos6_get_num_cpus();
 	delayMultiplier = sqrt(activeCPUs);
 

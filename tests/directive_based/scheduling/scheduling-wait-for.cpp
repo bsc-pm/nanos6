@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/blocking.h>
@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "TestAnyProtocolProducer.hpp"
-
+#include "Utils.hpp"
 
 #define NUM_TASKS 10
 #define NUM_REGULAR_TASKS 1000
@@ -29,7 +29,7 @@ TestAnyProtocolProducer tap;
 
 bool checkTimeouts(double theoretical, std::vector<uint64_t> &timeouts, int numTimeouts, bool checkOutliers)
 {
-	assert(timeouts.size() == numTimeouts);
+	assert(timeouts.size() == (size_t) numTimeouts);
 
 	// Sort the timeouts to get the median later
 	std::sort(timeouts.begin(), timeouts.end());
@@ -63,12 +63,6 @@ bool checkTimeouts(double theoretical, std::vector<uint64_t> &timeouts, int numT
 		", median ", median, ", min ", min, ", max ", max, ", stdev ", stdev,
 		", outliers ", numOutliers);
 
-#ifdef LESS_TEST_THREADS
-	const double meanFailFactor = 2.5;
-#else
-	const double meanFailFactor = 1.6;
-#endif
-
 	if (checkOutliers && numOutliers > numTimeouts * 0.1) {
 		return false;
 	} else if (mean < theoretical * 0.8 || mean > theoretical * 2.5) {
@@ -79,7 +73,7 @@ bool checkTimeouts(double theoretical, std::vector<uint64_t> &timeouts, int numT
 	return true;
 }
 
-int main(int argc, char **argv)
+int main()
 {
 	const int numCPUs = nanos6_get_num_cpus();
 
@@ -100,25 +94,8 @@ int main(int argc, char **argv)
 	tap.emitDiagnostic("Wait-for input: theoretical timeout ", theoreticalTimeout,
 		", tasks ", numTasks, ", waits x task ", numWaits);
 
-	/***********/
-	/* WARM-UP */
-	/***********/
-
-	int warmupCounter = 0;
-
-	for (int t = 0; t < numCPUs; ++t) {
-		#pragma oss task shared(warmupCounter, numCPUs)
-		{
-			#pragma oss atomic
-			warmupCounter++;
-
-			while (warmupCounter < numCPUs) {
-				usleep(100);
-				__sync_synchronize();
-			}
-		}
-	}
-	#pragma oss taskwait
+	// Perform a warmup
+	Utils::warmup();
 
 	/***********/
 	/* PHASE 1 */

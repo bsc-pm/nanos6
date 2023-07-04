@@ -10,17 +10,16 @@
 
 #include <nanos6/debug.h>
 
+#include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
-
-#include <Atomic.hpp>
 
 
 #define MAX_SPINS 20000
 
 TestAnyProtocolProducer tap;
-Atomic<int> numBusyCPUs;
-Atomic<int> numCheckedCPUs;
+Atomic<size_t> numBusyCPUs;
+Atomic<size_t> numCheckedCPUs;
 
 
 void wrongExecution(const char *error)
@@ -35,7 +34,7 @@ void wrongExecution(const char *error)
 //! system are busy
 //!
 //! \param[in] numCPUs The number of CPUs used by this process (and to acquire)
-void cpuComputation(long numCPUs)
+void cpuComputation(size_t numCPUs)
 {
 	++numBusyCPUs;
 	Timer timer;
@@ -117,12 +116,12 @@ int main(int argc, char **argv) {
 
 	// Try for a number of iterations to have all CPUs working. This may fail
 	// if the passive process delays its execution
-	int iteration = 0;
+	size_t iteration = 0;
 	while (iteration < 5 && numCheckedCPUs.load() != numCPUs) {
 		numBusyCPUs = 0;
 		numCheckedCPUs = 0;
 
-		for (int id = 0; id < numCPUs; ++id) {
+		for (size_t id = 0; id < numCPUs; ++id) {
 			#pragma oss task label("ownedCPUTask")
 			cpuComputation(numCPUs);
 		}

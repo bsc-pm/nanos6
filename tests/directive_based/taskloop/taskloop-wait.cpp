@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Atomic.hpp"
@@ -11,7 +11,8 @@
 
 TestAnyProtocolProducer tap;
 
-int main() {
+int main()
+{
 	Atomic<int> var(0);
 
 	tap.registerNewTests(1);

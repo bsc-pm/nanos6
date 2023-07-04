@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2021-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
@@ -15,6 +15,7 @@
 
 #include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
+#include "Utils.hpp"
 
 #define NUM_TASKS 1000
 
@@ -48,7 +49,7 @@ void *fulfiller(void *arg)
 
 	// Iterate through all counters fulfilling the
 	// missing task events
-	for (int c = 0; c < counters.size(); ++c) {
+	for (size_t c = 0; c < counters.size(); ++c) {
 		void *counter = NULL;
 		while (!(counter = counters[c])) {
 			usleep(100);
@@ -80,7 +81,7 @@ void onreadyFunction(int task, counters_list_t &counters)
 	}
 }
 
-int main(int argc, char **argv)
+int main()
 {
 	const long activeCPUs = nanos6_get_num_cpus();
 	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
@@ -111,16 +112,12 @@ int main(int argc, char **argv)
 	}
 
 	// Create external threads that will fulfill the task events
-	pthread_t preThread, postThread;
 	FulfillerArgs preArgs(&preCounters, &preProcessed);
 	FulfillerArgs postArgs(&postCounters, &postProcessed);
 
-	int eret;
-	eret = pthread_create(&preThread, NULL, fulfiller, &preArgs);
-	assert(!eret);
-
-	eret = pthread_create(&postThread, NULL, fulfiller, &postArgs);
-	assert(!eret);
+	pthread_t preThread, postThread;
+	CHECK(pthread_create(&preThread, NULL, fulfiller, &preArgs));
+	CHECK(pthread_create(&postThread, NULL, fulfiller, &postArgs));
 
 	for (int task = 0; task < ntasks; ++task) {
 		#pragma oss task shared(postCounters, preCounters) onready(onreadyFunction(task, preCounters))
@@ -149,11 +146,8 @@ int main(int argc, char **argv)
 		tap.evaluate(postProcessed[c], "Check that the task post-event was fulfilled");
 	}
 
-	eret = pthread_join(preThread, NULL);
-	assert(!eret);
-
-	eret = pthread_join(postThread, NULL);
-	assert(!eret);
+	CHECK(pthread_join(preThread, NULL));
+	CHECK(pthread_join(postThread, NULL));
 
 	tap.end();
 
