@@ -77,7 +77,8 @@ The configure script accepts the following options:
 1. `--with-babeltrace2=prefix` to specify the prefix of the Babeltrace2 installation and enable the fast CTF converter (`ctf2prv --fast`) and the multi-process trace merger (`nanos6-mergeprv`)
 1. `--with-ovni=prefix` to specify the prefix of the ovni installation and enable the ovni instrumentation
 
-The hwloc dependency can be specified using the `--with-hwloc` option. This option can take these values:
+The hwloc dependency can be specified using the `--with-hwloc` option.
+This option can take these values:
 * `pkgconfig`: The hwloc is an external installation and Nanos6 should discover it through the pkg-config tool.
 Make sure to set the `PKG_CONFIG_PATH` if the hwloc is not installed in non-standard directories.
 This is the **default** behavior if the option is not present or no value is provided
@@ -85,10 +86,7 @@ This is the **default** behavior if the option is not present or no value is pro
 * `embedded`: The hwloc is built and embedded into the Nanos6 library as an internal module.
 This is useful when user programs may have third-party software (e.g., MPI libraries) that depend on a different hwloc version and may conflict with the one used by Nanos6.
 When embedded, the hwloc library is internal and is only used by Nanos6.
-To this end, the `deps` folder contains a default hwloc source tarball.
-This tarball is automatically extracted into `deps/hwloc` by our `autogen.sh` script, which is then built and embedded when `--with-hwloc=embedded` is chosen.
-You may change the embedded hwloc version by placing the desired tarball inside the `deps` folder and re-running `autogen.sh` with the option `--embed-hwloc <VERSION>`.
-For the moment, the tarball must follow the format `deps/hwloc-<VERSION>.tar.gz`
+See [Embeddeding software dependencies](#embedding-software-dependencies) for more information
 
 The location of elfutils is always retrieved through pkg-config.
 The same occurs for hwloc by default or when specifying `--with-hwloc=pkgconfig`.
@@ -106,8 +104,27 @@ Alternatively, for non-standard installation paths, it can be specified using th
 The ``--enable-openacc`` flag is needed to enable OpenACC tasks.
 The location of PGI compilers can be retrieved from the `$PATH` variable, if it is not specified through the `--with-pgi` parameter.
 
-After Nanos6 has been installed, it can be used by compiling your C and C++ codes with LLVM/Clang using the `-fompss-2` flag.
-Example:
+### Embedding software dependencies
+
+As mentioned above, there are some software dependencies that can be embedded into Nanos6.
+This is the case for hwloc, which you can embed into the Nanos6 installation by configuring with `--with-hwloc=embedded`.
+The sources of these embedded dependencies are taken from the `deps` subdirectory in this repository.
+Inside the subdirectory, there is a default hwloc source tarball.
+This tarball is automatically extracted into `deps/hwloc` by our `autogen.sh` script.
+
+This is the source package that is then built when choosing `--with-hwloc=embedded`.
+You may change the embedded software version by placing the desired tarball inside the `deps` folder and re-running `autogen.sh` with the option `--embed-<SOFTWARE> <VERSION>`.
+Currently, `<SOFTWARE>` can be `hwloc` and `<VERSION>` should be the desired version number of that software.
+For instance, a valid option could be `./autogen.sh --embed-hwloc 2.9.1`.
+
+For the moment, the tarballs must follow the format `deps/<SOFTWARE>-<VERSION>.tar.gz`.
+
+## Compiling and executing programs
+
+You can compile OmpSs-2 programs that are written in C and C++ with the [LLVM/Clang](https://github.com/bsc-pm/llvm) compiler.
+Remember that you must specify the `-fompss-2` flag in both compilation and linking commands.
+The LLVM/Clang will generate a parallel binary that will be linked with the Nanos6 runtime library.
+For instance:
 
 ```sh
 $ clang -c -fompss-2 a_part_in_c.c
@@ -117,9 +134,8 @@ $ clang++ -fompss-2 a_part_in_c.o a_part_in_c_plus_plus.o -o app
 
 We still recommend using the [Mercurium](https://github.com/bsc-pm/mcxx) source-to-source compiler for Fortran applications.
 
-## Execution
-
-Nanos6 applications can be executed as is.
+Then, the application can be executed as is.
+The runtime system will leverage the system cores specified by the CPU mask of the process.
 The number of cores that are used is controlled by running the application through the `taskset` command.
 For instance:
 
