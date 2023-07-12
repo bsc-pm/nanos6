@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 3.0.1, Fri Jul 14, 2023
+The 3.0.1 release corresponds to the OmpSs-2 2023.05.1 release. It introduces several fixes on the OmpSs-2@CUDA support and documentation improvements.
+
+### General
+- Fix CUDA kernel launch configuration and improve performance of OmpSs-2@CUDA support
+- Allow failures at CUDA prefetching without aborting the execution
+- Fix linking with jemalloc when --as-needed linking flag is used
+- Improve testing infrastructure and programs
+- Update documentation regarding OmpSs-2@CUDA support
+- Improve general documentation
+
+
 ## Version 3.0, Wed May 24, 2023
 The 3.0 release corresponds to the OmpSs-2 2023.05 release. It introduces several performance improvements, important bug fixes, and improved usability and programmability. It also improves the support for the ovni instrumentation.
 
