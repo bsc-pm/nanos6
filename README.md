@@ -477,7 +477,7 @@ Next we showcase a simplified version of the hardware counter section of the con
 
 ## Device tasks
 
-For information about using device tasks (e.g., CUDA tasks), refer to the [devices](docs/devices/Devices.md) documentation.
+For information about using device tasks such as CUDA tasks, refer to the [devices](docs/devices/Devices.md) documentation.
 
 ## Choosing a dependency implementation
 

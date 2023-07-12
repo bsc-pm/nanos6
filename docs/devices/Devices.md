@@ -34,7 +34,7 @@ create and launch a new task.
 
 # Supported Devices
 
-Currently supported devices in Nanos6:
+Currently, the supported devices in Nanos6 are:
 
 1. [CUDA](CUDA.md)
 1. [OpenACC](OpenACC.md)
