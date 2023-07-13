@@ -2,13 +2,13 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
 # The top build directory is passed on the first parameter
 DIR=$1
 shift
 
-export NANOS6_CONFIG="${DIR}/scripts/nanos6.toml"
+export NANOS6_CONFIG="${DIR}/nanos6.toml"
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
 if [[ "${*}" == *"discrete"* ]] || [[ "${*}" == *"numa"* ]]; then

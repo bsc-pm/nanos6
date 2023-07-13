@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "config-parser.h"
@@ -62,7 +62,7 @@ static int _nanos6_find_config(void)
 	const char *config_path = getenv("NANOS6_CONFIG");
 
 	// Build the default config file path
-	cnt = snprintf(_nanos6_default_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
+	cnt = snprintf(_nanos6_default_config_path, MAX_CONFIG_PATH, "%s/nanos6.toml", INSTALLED_CONFIG_DIR);
 	if (cnt >= MAX_CONFIG_PATH) {
 		fprintf(stderr, "Error: The installation path for the default Nanos6 config file is too long.\n");
 		return -1;
@@ -305,7 +305,7 @@ static void _nanos6_loader_check_envars(void)
     if (warn) {
 		fprintf(stderr, "\n\n");
 		fprintf(stderr, "From now on, the behavior of the Nanos6 runtime can be tuned using a configuration file in TOML format.\n");
-		fprintf(stderr, "The default configuration file is located at the documentation directory of the Nanos6 installation.\n");
+		fprintf(stderr, "The default configuration file is located at the architecture-independent data directory of the Nanos6 installation.\n");
 		fprintf(stderr, "In this installation, the default configuration file is:\n\t%s\n\n", _nanos6_default_config_path);
 
 		fprintf(stderr, "We recommend to take a look at the configuration file to see the different options that Nanos6 provides.\n");
