@@ -286,7 +286,7 @@ libnanos6_la_SOURCES = \
 	loader/support/toml/toml.c \
 	loader/support/toml/toml.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(docdir)\" $(jemalloc_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(datadir)\" $(jemalloc_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
 libnanos6_la_LDFLAGS = $(jemalloc_LIBS) $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
@@ -1900,6 +1900,7 @@ deprecated_libs = \
 uninstall_libs = nanos6/libprv.la
 uninstall_bins = nanos6-ctf2prv-fast nanos6-mergeprv
 uninstall_links = nanos6-ctf2prv
+uninstall_docfiles = scripts/nanos6_hwcounters.json scripts/nanos6.toml
 
 
 all-local: $(lib_OBJECTS)
@@ -1937,7 +1938,7 @@ install-exec-local: $(lib_OBJECTS)
 		fi ; \
 	done
 	@echo Removing deprecated documentation files
-	for f in scripts/nanos6_hwcounters.json ; do \
+	for f in $(uninstall_docfiles) ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
@@ -1987,7 +1988,7 @@ uninstall-hook:
 		fi ; \
 	done
 	@echo Removing deprecated documentation files
-	for f in scripts/nanos6_hwcounters.json ; do \
+	for f in $(uninstall_docfiles) ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
@@ -2167,8 +2168,8 @@ disabled_config_features += "PQOS"
 endif
 
 # Generate processed config file according to user chosen installation
-scripts/nanos6.toml: $(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml
-	$(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml $(disabled_config_features) > scripts/nanos6.toml
+nanos6.toml: $(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml
+	$(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml $(disabled_config_features) > nanos6.toml
 
 # All potential files in those lists will be distributed
 # regardless of the Makefile conditionals
@@ -2294,9 +2295,8 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/ctf2prv/kernel/kernel_thread_id.cfg
 
 
-configfiledir = ${docdir}
-nobase_nodist_configfile_DATA = \
-	scripts/nanos6.toml
+nobase_nodist_data_DATA = \
+	nanos6.toml
 
 ctfdir = ${docdir}
 nobase_dist_ctf_DATA = \
