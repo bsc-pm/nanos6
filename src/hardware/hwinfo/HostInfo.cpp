@@ -30,29 +30,29 @@
 HostInfo::HostInfo() :
 	_validMemoryPlaces(0)
 {
-//! Check that hwloc headers match with runtime.
+// Check that hwloc headers match with runtime
 #if HWLOC_API_VERSION >= 0x00020000
-	FatalErrorHandler::failIf(hwloc_get_api_version() < 0x20000, "hwloc headers are more recent than runtime library.");
+	FatalErrorHandler::failIf(hwloc_get_api_version() < 0x20000, "hwloc headers are more recent than runtime library");
 #else
-	FatalErrorHandler::failIf(hwloc_get_api_version() >= 0x20000, "hwloc headers are older than runtime library.");
+	FatalErrorHandler::failIf(hwloc_get_api_version() >= 0x20000, "hwloc headers are older than runtime library");
 #endif
 
-	//! Hardware discovery
+	// Hardware discovery
 	hwloc_topology_t topology;
 	hwloc_topology_init(&topology);  // initialization
 
 #if HWLOC_API_VERSION >= 0x00020100
 	// Do not omit empty NUMA nodes. This option is only supported from hwloc 2.1.0
-	// It will mimic the behaviour of hwloc 1.x with disallowed resources.
+	// It will mimic the behaviour of hwloc 1.x with disallowed resources
 	hwloc_topology_set_flags(topology, HWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED);
 #endif
 
 	hwloc_topology_load(topology);   // actual detection
 
-	//! Create NUMA addressSpace
+	// Create NUMA addressSpace
 	AddressSpace *NUMAAddressSpace = new AddressSpace();
 
-	//! Get the number of physical packages in the machine
+	// Get the number of physical packages in the machine
 	int depthPhysicalPackages = hwloc_get_type_depth(topology, HWLOC_OBJ_PACKAGE);
 	if (depthPhysicalPackages != HWLOC_TYPE_DEPTH_UNKNOWN) {
 		_numPhysicalPackages = hwloc_get_nbobjs_by_depth(topology, depthPhysicalPackages);
@@ -60,33 +60,32 @@ HostInfo::HostInfo() :
 		_numPhysicalPackages = 0;
 	}
 
-	//! Get NUMA nodes of the machine.
-	//! NUMA node means: A set of processors around memory which the processors can directly access. (Extracted from hwloc documentation)
+	// Get the NUMA nodes. Extracted from hwloc documentation, a NUMA node is a
+	// set of processors around memory which the processors can directly access
 	size_t memNodesCount = hwloc_get_nbobjs_by_type(topology, HWLOC_NUMA_ALIAS);
 
-	//! Check if HWLOC has found any NUMA node.
+	// Check if HWLOC has found any NUMA node
 	if (memNodesCount != 0) {
 		_memoryPlaces.resize(memNodesCount);
 	} else {
 		memNodesCount = 1;
 		_memoryPlaces.resize(1);
 
-		//! There is no NUMA info. We assume we have a single MemoryPlace.
-		//! Create a MemoryPlace.
-		//! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
-		//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
+		// There is no NUMA info. We assume we have a single MemoryPlace. Create
+		// a MemoryPlace representing the NUMA node with its index and AddressSpace
+		// TODO: Index is 0 arbitrarily; a special index should be set
 		NUMAPlace *node = new NUMAPlace(/* Index */ 0, /* osIndex */ 0, NUMAAddressSpace);
 
-		//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
+		// Add the MemoryPlace to the list of memory nodes
 		_memoryPlaces[node->getIndex()] = node;
 		_validMemoryPlaces = 1;
 	}
 
-	//! Get (logical) CPUs of the machine
+	// Get (logical) CPUs of the machine
 	size_t cpuCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 	_computePlaces.resize(cpuCount);
 
-	//! Get physical core count
+	// Get physical core count
 	size_t coreCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 	for (size_t i = 0; i < cpuCount; i++) {
 		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
@@ -122,17 +121,18 @@ HostInfo::HostInfo() :
 		}
 		FatalErrorHandler::warnIf(!found, "Cannot find NUMA node of PU with OS index ", obj->os_index);
 
-		// Some machines, particularly ARM-based, do not always provide cache info.
-		// However, L3 may not exist, as in KNL in flat mode.
+		// Some machines, particularly ARM-based, do not always provide cache
+		// info. However, L3 may not exist, as in KNL in flat mode
 		hwloc_obj_t L3CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
 		hwloc_obj_t L2CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L2CACHE, obj);
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
 
-		// Some machines, particularly ARM-based, do not always provide cache info.
-		// The first unified cache object found going up from the tmp should be its cache.
+		// Some machines, particularly ARM-based, do not always provide cache
+		// info. The first unified cache object found going up from the tmp
+		// should be its cache
 		hwloc_obj_t tmpCache = obj->parent;
-		// Some machines, particularly ARM-based, do not always provide cache info.
+		// Some machines, particularly ARM-based, do not always provide cache info
 		while (tmpCache != nullptr && tmpCache->attr != nullptr &&
 				!(tmpCache->type == HWLOC_OBJ_CACHE &&
 					tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
@@ -140,7 +140,7 @@ HostInfo::HostInfo() :
 		{
 			tmpCache = tmpCache->parent;
 
-			// Topmost obj, no L2 found.
+			// Topmost obj, no L2 found
 			if (tmpCache == nullptr || tmpCache->type == HWLOC_OBJ_MACHINE)
 				break;
 		}
@@ -149,7 +149,7 @@ HostInfo::HostInfo() :
 		hwloc_obj_t L3CacheObj = nullptr;
 		if (tmpCache != nullptr) {
 			L2CacheObj = tmpCache;
-			// Some machines, particularly ARM-based, do not always provide cache info.
+			// Some machines, particularly ARM-based, do not always provide cache info
 			while (tmpCache != nullptr && tmpCache->attr != nullptr &&
 					!(tmpCache->type == HWLOC_OBJ_CACHE &&
 						tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED &&
@@ -157,7 +157,7 @@ HostInfo::HostInfo() :
 			{
 				tmpCache = tmpCache->parent;
 
-				// Topmost obj, no L3 found.
+				// Topmost obj, no L3 found
 				if (tmpCache == nullptr || tmpCache->type == HWLOC_OBJ_MACHINE)
 					break;
 			}
@@ -167,7 +167,8 @@ HostInfo::HostInfo() :
 		L3Cache *l3Cache = nullptr;
 		if (L3CacheObj != nullptr) {
 
-			// Check that L3 cache object is actually an L3. If there is no L3, it will be another obj type.
+			// Check that L3 cache object is actually an L3. If there is no L3,
+			// it will be another obj type
 #if HWLOC_API_VERSION >= 0x00020000
 			if (L3CacheObj->type == HWLOC_OBJ_L3CACHE
 #else
@@ -176,7 +177,7 @@ HostInfo::HostInfo() :
 				&& L3CacheObj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED
 				&& L3CacheObj->attr->cache.depth == 3)
 			{
-				//! Check if L3 cache object is already created.
+				// Check if L3 cache object is already created
 				if (_l3Caches.size() > L3CacheObj->logical_index) {
 					l3Cache = _l3Caches[L3CacheObj->logical_index];
 				} else {
@@ -217,11 +218,11 @@ HostInfo::HostInfo() :
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
 		if (_memoryPlaces[NUMANodeId] == nullptr) {
-			//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace
+			// Create the MemoryPlace representing the NUMA node with its index and AddressSpace
 			int NUMANodeOsId = nodeNUMA == NULL ? -1 : nodeNUMA->os_index;
 			NUMAPlace *node = new NUMAPlace(NUMANodeId, NUMANodeOsId, NUMAAddressSpace);
 
-			//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo
+			// Add the MemoryPlace to the list of memory nodes of the HardwareInfo
 			_memoryPlaces[node->getIndex()] = node;
 			_validMemoryPlaces++;
 		}
@@ -254,7 +255,7 @@ HostInfo::HostInfo() :
 	assert(_validMemoryPlaces <= memNodesCount);
 
 	if (_validMemoryPlaces < memNodesCount) {
-		//! Create the MemoryPlaces representing the NUMA nodes containing no CPUs.
+		// Create the MemoryPlaces representing the NUMA nodes containing no CPUs
 		for (size_t i = 0; i < memNodesCount; i++) {
 			if (_memoryPlaces[i] == nullptr) {
 				NUMAPlace *node = new NUMAPlace(i, /* osIndex */ -1, NUMAAddressSpace);
@@ -286,25 +287,26 @@ HostInfo::HostInfo() :
 	if ((cache != nullptr) && (cache->attr->cache.linesize != 0)) {
 		_cacheLineSize = cache->attr->cache.linesize;
 
-		// Emit a warning if the runtime was configured with a wrong cacheline size for this machine.
+		// Emit a warning if the runtime was configured with a wrong cacheline
+		// size for this machine
 		FatalErrorHandler::warnIf(_cacheLineSize != CACHELINE_SIZE,
 			"Cacheline size of host (", _cacheLineSize, ") does not match ",
-			"the configured size (", CACHELINE_SIZE, "). Performance may be sub-optimal.");
+			"the configured size (", CACHELINE_SIZE, "). Performance may be sub-optimal");
 	} else {
 		// In some machines, such as HCA-Merlin or Dibona,
 		// hwloc cannot obtain cache information or just returns 0
-		// If so, fall back to compile-time detected cacheline size.
+		// If so, fall back to compile-time detected cacheline size
 		_cacheLineSize = CACHELINE_SIZE;
 	}
 
-	//! Attributes of system's memory
+	// Attributes of system's memory
 	_pageSize = sysconf(_SC_PAGESIZE);
 
-	//! This is not so portable, but it works for more Unix-like stuff
+	// This is not so portable, but it works for more Unix-like stuff
 	size_t nrPhysicalPages = sysconf(_SC_PHYS_PAGES);
 	_physicalMemorySize = nrPhysicalPages * _pageSize;
 
-	//! Associate CPUs with NUMA nodes
+	// Associate CPUs with NUMA nodes
 	for (MemoryPlace *memoryPlace : _memoryPlaces) {
 		for (ComputePlace *computePlace : _computePlaces) {
 			NUMAPlace *numaNode = (NUMAPlace *) memoryPlace;
@@ -318,13 +320,13 @@ HostInfo::HostInfo() :
 
 	if (memNodesCount > 1) {
 #if HWLOC_API_VERSION >= 0x00020000
-		//! Get matrix of NUMA distances
+		// Get matrix of NUMA distances
 		hwloc_distances_s *distances;
-		//! nr points to the number of distance matrices that may be stored in distances
+		// The number of distance matrices that may be stored in distances
 		unsigned nr = 1;
-		//! These distances were obtained from the operating system or hardware.
+		// These distances were obtained from the operating system or hardware
 		unsigned long kind = HWLOC_DISTANCES_KIND_FROM_OS;
-		//! flags is currently unused, should be 0.
+		// The flags are currently unused, should be 0
 		unsigned long flags = 0;
 		hwloc_distances_get(topology, &nr, &distances, kind, flags);
 		unsigned nbobjs = distances->nbobjs;
@@ -359,7 +361,6 @@ HostInfo::HostInfo() :
 #endif
 	}
 
-	// Other work
 	// Release resources
 	hwloc_topology_destroy(topology);
 	_deviceInitialized = true;
