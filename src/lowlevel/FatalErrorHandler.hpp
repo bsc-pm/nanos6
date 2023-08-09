@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef FATAL_ERROR_HANDLER_HPP
@@ -21,7 +21,7 @@ class FatalErrorHandler {
 
 private:
 
-	//! NOTE: Private field as CUDAErrorHandler and MPIErrorHandler don't need it
+	//! NOTE: Private field as CUDAErrorHandler do not need it
 	//! A lock for the information channel (cout)
 	static SpinLock _infoLock;
 

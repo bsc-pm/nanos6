@@ -165,7 +165,7 @@ libnanos6_main_wrapper_la_SOURCES = \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h
 
-libnanos6_main_wrapper_la_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
+libnanos6_main_wrapper_la_CPPFLAGS = $(CUDA_CFLAGS) $(MCMODEL_FLAGS)
 libnanos6_main_wrapper_la_LDFLAGS = -static
 
 
@@ -180,7 +180,7 @@ libnanos6_library_mode_la_SOURCES = \
 	loader/device_strings.c \
 	loader/library-mode-init.c
 
-libnanos6_library_mode_la_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
+libnanos6_library_mode_la_CPPFLAGS = $(CUDA_CFLAGS) $(MCMODEL_FLAGS)
 libnanos6_library_mode_la_LDFLAGS = -static
 
 
@@ -286,7 +286,7 @@ libnanos6_la_SOURCES = \
 	loader/support/toml/toml.c \
 	loader/support/toml/toml.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(datadir)\" $(jemalloc_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(datadir)\" $(jemalloc_CPPFLAGS) $(CUDA_CFLAGS)
 libnanos6_la_LDFLAGS = $(jemalloc_LIBS) $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
@@ -1261,7 +1261,6 @@ noinst_HEADERS = \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
-	src/lowlevel/mpi/MPIErrorHandler.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \
 	src/lowlevel/threads/ExternalThreadGroup.hpp \
@@ -1376,8 +1375,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
-common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 common_libnanos6_libadd = $(hwloc_LIBADD)
 
 # This is needed for debuggable spinlocks
@@ -2131,9 +2130,6 @@ endif
 if !USE_OPENACC
 disabled_config_features += "OPENACC"
 endif
-
-# Cluster is not supported
-disabled_config_features += "CLUSTER"
 
 if !HAVE_DLB
 disabled_config_features += "DLB"

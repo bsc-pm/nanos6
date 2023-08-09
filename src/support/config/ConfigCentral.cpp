@@ -16,13 +16,6 @@ ConfigCentral::ConfigCentral() :
 	_defaults(),
 	_listDefaults()
 {
-	// Cluster
-	registerOption<string_t>("cluster.communication", "disabled");
-	registerOption<memory_t>("cluster.distributed_memory", 2UL << 30);
-	registerOption<memory_t>("cluster.local_memory", 0);
-	registerOption<string_t>("cluster.scheduling_policy", "locality");
-	registerOption<integer_t>("cluster.va_start", 0);
-
 	// CPU manager
 	registerOption<integer_t>("cpumanager.busy_iters", 240000);
 	registerOption<string_t>("cpumanager.policy", "default");
@@ -108,10 +101,6 @@ ConfigCentral::ConfigCentral() :
 	registerOption<bool_t>("loader.warn_envars", true);
 	registerOption<string_t>("loader.library_path", "");
 	registerOption<string_t>("loader.report_prefix", "");
-
-	// Memory allocator
-	registerOption<memory_t>("memory.pool.global_alloc_size", 8 * 1024 * 1024);
-	registerOption<memory_t>("memory.pool.chunk_size", 128 * 1024);
 
 	// Miscellaneous
 	registerOption<memory_t>("misc.stack_size", 8 * 1024 * 1024);
