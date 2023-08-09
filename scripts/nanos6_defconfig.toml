@@ -312,37 +312,6 @@ __require_VERBOSE
 			"!DependenciesByGroup", "!LeaderThread", "!TaskStatus",	"!ThreadManagement"]
 __!require_VERBOSE
 
-__require_CLUSTER
-[cluster]
-	# Choose the communication layer to be used for Cluster communication between processes. The
-	# "disabled" value disables the Cluster mode. Default is "disabled"
-	# Possible values: "disabled", "mpi-2sided"
-	communication = "disabled"
-	# Choose the distributed memory for Cluster mode. Default is 2GB
-	distributed_memory = "2G"
-	# Choose the local memory for Cluster mode. Default is none (not set), which means that the
-	# runtime will allocate minimum between 2GB and the 5% of the total physical memory of the
-	# machine
-	# local_memory = "2G"
-	# Indicate the scheduling policy for Cluster mode. Default is "locality"
-	# Possible values: "locality", "random"
-	scheduling_policy = "locality"
-	# Indicate the virtual address space start. If set to 0x00000000, the runtime will find a
-	# suitable address. Default is 0x00000000
-	va_start = 0x00000000
-__!require_CLUSTER
-
-[memory]
-__require_CLUSTER
-	[memory.pool]
-		# Indicate the global allocation size for the global memory pool. Considered only in
-		# Cluster installations. Default is 8MB
-		global_alloc_size = "8M"
-		# Indicate the chunk size for the global memory pool. Considered only in Cluster
-		# installations. Default is 128KB
-		chunk_size = "128K"
-__!require_CLUSTER
-
 [misc]
 	# Stack size of threads created by the runtime. Default is 8M
 	stack_size = "8M"

@@ -1,22 +1,12 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([CONFIGURE_NANOS6_FEATURES],
 	[
 		ac_nanos6_suports_cpu_management=yes
 		ac_nanos6_supports_user_mutex=yes
 		NANOS6_VARIANT=optimized
-
-		_CONFIGURE_NANOS6_FEATURES
-	]
-)
-
-AC_DEFUN([CONFIGURE_NANOS6_ARGOBOTS_FEATURES],
-	[
-		ac_nanos6_suports_cpu_management=no
-		ac_nanos6_supports_user_mutex=no
-		NANOS6_VARIANT=argobots
 
 		_CONFIGURE_NANOS6_FEATURES
 	]
