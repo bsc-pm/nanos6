@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -369,17 +369,21 @@ HostInfo::~HostInfo()
 {
 	assert(!_memoryPlaces.empty());
 
-	AddressSpace *NUMAAddressSpace = _memoryPlaces[0]->getAddressSpace();;
-	for (size_t i = 0; i < _memoryPlaces.size(); ++i) {
-		delete _memoryPlaces[i];
-	}
-
-	//! There is a single AddressSpace
+	// Get the address space to later be deleted
+	AddressSpace *NUMAAddressSpace = _memoryPlaces[0]->getAddressSpace();
 	assert(NUMAAddressSpace != nullptr);
+
+	for (MemoryPlace *memoryPlace : _memoryPlaces)
+		delete memoryPlace;
 
 	delete NUMAAddressSpace;
 
-	for (size_t i = 0; i < _computePlaces.size(); ++i) {
-		delete _computePlaces[i];
-	}
+	for (L2Cache *cache : _l2Caches)
+		delete cache;
+
+	for (L3Cache *cache : _l3Caches)
+		delete cache;
+
+	for (ComputePlace *computePlace : _computePlaces)
+		delete computePlace;
 }
