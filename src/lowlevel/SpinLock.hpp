@@ -1,69 +1,62 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SPIN_LOCK_HPP
 #define SPIN_LOCK_HPP
 
-#include "SpinLockNoDebug.hpp"
-#include "SpinLockOwnerDebug.hpp"
+#include <atomic>
+#include <cassert>
 
-#if USE_OLD_SPINLOCK_IMPLEMENTATION
-	#ifdef __APPLE__
-		#include <libkern/OSAtomic.h>
-		#define SPINLOCK_INTERNAL_TYPE OSSpinLock
-	#else
-		#include <pthread.h>
-		#define SPINLOCK_INTERNAL_TYPE pthread_spinlock_t
-	#endif
-#else
-	#include <atomic>
-	#define SPINLOCK_INTERNAL_TYPE std::atomic<bool>
-#endif
+#include "SpinWait.hpp"
 
-
-
-template <class DEBUG_KIND>
-class CustomizableSpinLock: public DEBUG_KIND {
+class SpinLock {
 private:
-	CustomizableSpinLock operator=(const CustomizableSpinLock &) = delete;
-	CustomizableSpinLock(const CustomizableSpinLock & ) = delete;
-	
-	SPINLOCK_INTERNAL_TYPE _lock;
-	
+	SpinLock operator=(const SpinLock &) = delete;
+	SpinLock(const SpinLock & ) = delete;
+
+	std::atomic<bool> _lock;
+
 public:
-	inline CustomizableSpinLock();
-	inline ~CustomizableSpinLock();
-	inline void lock();
-	inline bool tryLock();
-	inline void unlock(bool ignoreOwner = false);
-#ifndef NDEBUG
-	inline bool isLockedByThisThread();
-#endif
+	static constexpr int ReadsBetweenCompareExchange = 1000;
+
+	inline SpinLock() : _lock(false)
+	{
+	}
+
+	inline ~SpinLock()
+	{
+		assert(!_lock.load());
+	}
+
+	inline void lock()
+	{
+		bool expected = false;
+		while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire)) {
+			int spinsLeft = ReadsBetweenCompareExchange;
+			do {
+				spinWait();
+				spinsLeft--;
+			} while (_lock.load(std::memory_order_relaxed) && (spinsLeft > 0));
+
+			spinWaitRelease();
+
+			expected = false;
+		}
+	}
+
+	inline bool tryLock()
+	{
+		bool expected = false;
+		return _lock.compare_exchange_strong(expected, true, std::memory_order_acquire);
+	}
+
+	inline void unlock()
+	{
+		_lock.store(false, std::memory_order_release);
+	}
 };
-
-
-#ifndef NDEBUG
-using SpinLock = CustomizableSpinLock<SpinLockOwnerDebug>;
-#else
-using SpinLock = CustomizableSpinLock<SpinLockNoDebug>;
-#endif
-
-
-
-#if USE_OLD_SPINLOCK_IMPLEMENTATION
-	#ifdef __APPLE__
-		#include "apple/SpinLockImplementation.hpp"
-	#else
-		#include "posix/SpinLockImplementation.hpp"
-	#endif
-#else
-	#include "cxx/SpinLockImplementation.hpp"
-#endif
-
-#undef SPINLOCK_INTERNAL_TYPE
-
 
 #endif // SPIN_LOCK_HPP

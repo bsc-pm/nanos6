@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef PADDED_SPIN_LOCK_HPP
@@ -44,13 +44,6 @@ public:
 	{
 		_lock.unlock();
 	}
-
-#ifndef NDEBUG
-	inline bool isLockedByThisThread()
-	{
-		return _lock.isLockedByThisThread();
-	}
-#endif
 
 	inline SpinLock &getSpinLock()
 	{

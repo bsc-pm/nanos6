@@ -1062,20 +1062,14 @@ noinst_HEADERS = \
 	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/Padding.hpp \
 	src/lowlevel/RWSpinLock.hpp \
-	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
-	src/lowlevel/SpinLockNoDebug.hpp \
-	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SpinWait.hpp \
 	src/lowlevel/DelegationLock.hpp \
 	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/TurboSettings.hpp \
-	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cuda/CUDAErrorHandler.hpp \
-	src/lowlevel/cxx/SpinLockImplementation.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \
 	src/lowlevel/threads/ExternalThreadGroup.hpp \
 	src/lowlevel/threads/HelperThread.hpp \
