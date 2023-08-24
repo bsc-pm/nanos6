@@ -292,7 +292,6 @@ AC_CONFIG_FILES([
 	commands/Makefile
 	tests/directive_based/mercurium/Makefile
 	tests/directive_based/clang/Makefile
-	scripts/Makefile
 ])
 AC_OUTPUT
 

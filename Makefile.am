@@ -35,8 +35,8 @@ AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 # Add the embedded hwloc and jemalloc (if necessary) into SUBDIRS, but not in DIST_SUBDIRS.
 # Adding them to DIST_SUBDIRS would enable their distributable rules and generate their own
 # tarball. Instead, these are distributed as a regular directory by adding it to EXTRA_DIST
-SUBDIRS = $(HWLOC_EMBEDDED_SUBDIR_COND) $(JEMALLOC_EMBEDDED_SUBDIR_COND) . commands tests/directive_based/clang tests/directive_based/mercurium scripts
-DIST_SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium scripts
+SUBDIRS = $(HWLOC_EMBEDDED_SUBDIR_COND) $(JEMALLOC_EMBEDDED_SUBDIR_COND) . commands tests/directive_based/clang tests/directive_based/mercurium
+DIST_SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium
 
 
 # See info page of libtool "Updating version info"
