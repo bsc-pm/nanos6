@@ -518,31 +518,6 @@ dist_dependency_sources = $(regions_dependency_sources) $(discrete_dependency_so
 
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
 
-introspection_sources = \
-	src/instrument/support/introspection/CodeAddressInfoBase.cpp \
-	src/instrument/support/introspection/DL/DLCodeAddressInfo.cpp
-introspection_cppflags =
-
-if HAVE_ELFUTILS
-introspection_sources += \
-	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.cpp
-introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/ElfUtils
-else
-introspection_sources += \
-	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.cpp
-introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/Addr2Line
-endif
-
-if HAVE_LIBUNWIND
-introspection_cppflags += -I$(srcdir)/src/instrument/support/backtrace/libunwind
-else
-if HAVE_BACKTRACE
-introspection_cppflags += -I$(srcdir)/src/instrument/support/backtrace/backtrace
-else
-introspection_cppflags += -I$(srcdir)/src/instrument/support/backtrace/unsupported
-endif
-endif
-
 
 AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
 common_sources += \
@@ -1037,32 +1012,12 @@ noinst_HEADERS = \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
-	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
-	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
-	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
-	src/instrument/support/introspection/DL/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
-	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
-	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
-	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
-	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
-	src/instrument/support/introspection/DL/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
-	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentBlockingAPI.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
@@ -1098,7 +1053,6 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
 	src/instrument/verbose/InstrumentWorkerThread.hpp \
-	src/lowlevel/BacktraceRecording.hpp \
 	src/lowlevel/CompatSyscalls.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
@@ -1110,8 +1064,6 @@ noinst_HEADERS = \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
-	src/lowlevel/SpinLockBacktracingDebug.hpp \
-	src/lowlevel/SpinLockDeadlockDebug.hpp \
 	src/lowlevel/SpinLockNoDebug.hpp \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SpinWait.hpp \
@@ -1240,11 +1192,6 @@ EXTRA_DIST += \
 common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CPPFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
 common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 common_libnanos6_libadd = $(hwloc_LIBADD)
-
-# This is needed for debuggable spinlocks
-common_sources += $(introspection_sources)
-AM_CXXFLAGS += $(introspection_cppflags) $(elfutils_CFLAGS)
-common_libnanos6_ldflags  += $(BACKTRACE_LIBS) $(elfutils_LIBS)
 
 enabled_variants =
 disabled_variants =

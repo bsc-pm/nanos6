@@ -24,7 +24,6 @@ It's highly recommended to have an installation of the [OmpSs-2 LLVM/Clang](http
 In addition to the build requirements, the following libraries and tools enable additional features:
 
 1. [Extrae](https://tools.bsc.es/extrae) to generate execution traces for offline performance analysis with [Paraver](https://tools.bsc.es/paraver)
-1. [elfutils](https://sourceware.org/elfutils/) and [libunwind](http://www.nongnu.org/libunwind) to generate sample-based profiling
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 1. [PGI or NVIDIA HPC-SDK](https://pgroup.com) to enable OpenACC tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
@@ -61,7 +60,6 @@ The configure script accepts the following options:
 1. `--with-nanos6-clang=prefix` to specify the prefix of the LLVM/Clang installation which supports OmpSs-2
 1. `--with-nanos6-mercurium=prefix` to specify the prefix of the Mercurium installation
 1. `--with-boost=prefix` to specify the prefix of the Boost installation
-1. `--with-libunwind=prefix` to specify the prefix of the libunwind installation
 1. `--with-libnuma=prefix` to specify the prefix of the numactl installation
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
 1. `--with-dlb=prefix` to specify the prefix of the DLB installation
@@ -95,13 +93,12 @@ The building process installs the jemalloc headers and libraries in `$INSTALLATI
 This is the **default** behavior if the option is not provided.
 See [Embeddeding software dependencies](#embedding-software-dependencies)
 
-The location of elfutils is always retrieved through pkg-config.
-The same occurs for hwloc by default or when specifying `--with-hwloc=pkgconfig`.
+The location of hwloc is retrieved through pkg-config by default, or when specifying `--with-hwloc=pkgconfig`.
 If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
 For instance:
 
 ```sh
-$ export PKG_CONFIG_PATH=$HOME/installations-mn4/elfutils-0.169/lib/pkgconfig:/apps/HWLOC/2.0.0/INTEL/lib/pkgconfig:$PKG_CONFIG_PATH
+$ export PKG_CONFIG_PATH=/apps/HWLOC/2.0.0/INTEL/lib/pkgconfig:$PKG_CONFIG_PATH
 ```
 
 To enable CUDA the `--with-cuda` flag is needed.
