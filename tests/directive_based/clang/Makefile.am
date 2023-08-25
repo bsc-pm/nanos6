@@ -73,6 +73,9 @@ cpu_management_tests += \
 	cpu-activation.clang.test
 endif
 
+user_mutex_tests += \
+	critical.clang.test
+
 linear_region_tests += \
 	lr-nonest.clang.test \
 	lr-nonest-upgrades.clang.test \
@@ -154,6 +157,9 @@ else
 cpu_management_tests += \
 	cpu-activation.clang.debug.test
 endif
+
+user_mutex_tests += \
+	critical.clang.debug.test
 
 linear_region_tests += \
 	lr-nonest.clang.debug.test \
@@ -350,6 +356,15 @@ cpu_activation_clang_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-
 cpu_activation_clang_test_CPPFLAGS = -DNDEBUG
 cpu_activation_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_clang_test_LDFLAGS = $(test_common_ldflags)
+
+critical_clang_debug_test_SOURCES = ../critical/critical.cpp
+critical_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
+critical_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+critical_clang_test_SOURCES = ../critical/critical.cpp
+critical_clang_test_CPPFLAGS = -DNDEBUG
+critical_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+critical_clang_test_LDFLAGS = $(test_common_ldflags)
 
 dep_nonest_clang_debug_test_SOURCES = ../dependencies/dep-nonest.cpp
 dep_nonest_clang_debug_test_CPPFLAGS =
