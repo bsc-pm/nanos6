@@ -25,8 +25,6 @@ In addition to the build requirements, the following libraries and tools enable 
 
 1. [Extrae](https://tools.bsc.es/extrae) to generate execution traces for offline performance analysis with [Paraver](https://tools.bsc.es/paraver)
 1. [elfutils](https://sourceware.org/elfutils/) and [libunwind](http://www.nongnu.org/libunwind) to generate sample-based profiling
-1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
-1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 1. [PGI or NVIDIA HPC-SDK](https://pgroup.com) to enable OpenACC tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
@@ -321,23 +319,6 @@ information on how the CTF instrumentation variant works see
 To run the experimental fast converter, add the option `--fast`.
 
 
-### Generating a graphical representation of the dependency graph
-
-To generate the graph, run the application with the `version.instrument` config set to `graph`.
-
-By default, the graph nodes include the full path of the source code.
-To remove the directories, set the `instrument.graph.shorten_filenames` config to `true`.
-
-The resulting file is a PDF that contains several pages.
-Each page represents the graph at a given point in time.
-Setting the `instrument.graph.show_dead_dependencies` config to `true` forces future and previous dependencies to be shown with different graphical attributes.
-
-The `instrument.graph.display` config, if set to `true`, will make the resulting PDF to be opened automatically.
-The default viewer is `xdg-open`, but it can be overridden through the `instrument.graph.display_command` config.
-
-For best results, we suggest to display the PDF with "single page" view, showing a full page and to advance page by page.
-
-
 ### Verbose logging
 
 To enable verbose logging, run the application with the `version.instrument` config set to `verbose`.
@@ -368,39 +349,6 @@ By default, the output is emitted to standard error, but it can be sent to a fil
 Also `instrument.verbose.dump_only_on_exit` can be set to `true` to delay the output to the end of the program to avoid getting it mixed with the output of the program.
 
 
-### Obtaining statistics
-
-To enable collecting timing statistics, run the application with the `version.instrument` config set to `stats`.
-
-By default, the statistics are emitted standard error when the program ends.
-The output can be sent to a file through the `instrument.stats.output_file` config.
-
-The contents of the output contain the average for each task type and the total task average of the following metrics:
-
-* Number of instances
-* Mean instantiation time
-* Mean pending time (not ready due to dependencies)
-* Mean ready time
-* Mean execution time
-* Mean blocked time (due to a critical or a taskwait)
-* Mean zombie time (finished but not yet destroyed)
-* Mean lifetime (time between creation and destruction)
-
-The output also contains information about:
-
-* Number of CPUs
-* Total number of threads
-* Mean threads per CPU
-* Mean tasks per thread
-* Mean thread lifetime
-* Mean thread running time
-
-
-Most codes consist of an initialization phase, a calculation phase and final phase for verification or writing the results.
-Usually these phases are separated by a taskwait.
-The runtime uses the taskwaits at the outermost level to identify phases and will emit individual metrics for each phase.
-
-
 ### Debugging
 
 By default, the runtime is optimized for speed and will assume that the application code is correct.
@@ -409,8 +357,6 @@ To enable validity checks, run the application with the `version.debug` config s
 This will enable many internal validity checks that may be violated with the application code is incorrect.
 In the future we may include a validation mode that will perform extensive application code validation.
 Notice that all instrumentation variants can be executed either with or without enabling the debug option.
-
-To debug dependencies, it is advised to reduce the problem size so that very few tasks trigger the problem, and then use let the runtime make a graphical representation of the dependency graph as shown previously.
 
 Processing the configuration file involves selecting at run time a runtime compiled for the corresponding instrumentation.
 This part of the bootstrap is performed by a component of the runtime called "loader".

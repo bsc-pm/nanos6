@@ -105,13 +105,10 @@ lib_LTLIBRARIES = \
 	libnanos6-debug-regions-ctf.la \
 	libnanos6-debug-discrete-extrae.la \
 	libnanos6-debug-regions-extrae.la \
-	libnanos6-debug-regions-graph.la \
 	libnanos6-debug-discrete-lint.la \
 	libnanos6-debug-regions-lint.la \
 	libnanos6-debug-discrete-ovni.la \
 	libnanos6-debug-regions-ovni.la \
-	libnanos6-debug-discrete-stats.la \
-	libnanos6-debug-regions-stats.la \
 	libnanos6-debug-discrete-verbose.la \
 	libnanos6-debug-regions-verbose.la \
 	libnanos6-optimized-discrete.la \
@@ -120,13 +117,10 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized-regions-ctf.la \
 	libnanos6-optimized-discrete-extrae.la \
 	libnanos6-optimized-regions-extrae.la \
-	libnanos6-optimized-regions-graph.la \
 	libnanos6-optimized-discrete-lint.la \
 	libnanos6-optimized-regions-lint.la \
 	libnanos6-optimized-discrete-ovni.la \
 	libnanos6-optimized-regions-ovni.la \
-	libnanos6-optimized-discrete-stats.la \
-	libnanos6-optimized-regions-stats.la \
 	libnanos6-optimized-discrete-verbose.la \
 	libnanos6-optimized-regions-verbose.la
 
@@ -592,22 +586,6 @@ instrument_ctf_sources = \
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp
 
-instrument_graph_sources = \
-	$(instrument_generic_ids_sources) \
-	src/instrument/graph/ExecutionSteps.cpp \
-	src/instrument/graph/GenerateEdges.cpp \
-	src/instrument/graph/InstrumentAddTask.cpp \
-	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
-	src/instrument/graph/InstrumentGraph.cpp \
-	src/instrument/graph/InstrumentInitAndShutdown.cpp \
-	src/instrument/graph/InstrumentTaskExecution.cpp \
-	src/instrument/graph/InstrumentTaskWait.cpp \
-	src/instrument/graph/InstrumentUserMutex.cpp \
-	src/instrument/graph/PathLength.cpp \
-	src/instrument/graph/SortAccessGroups.cpp \
-	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
-
 instrument_lint_sources = \
 	src/instrument/lint/Callbacks.cpp
 
@@ -618,12 +596,6 @@ instrument_ovni_sources = \
 	src/instrument/ovni/InstrumentTasktypeData.cpp \
 	src/instrument/ovni/InstrumentThreadManagement.cpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.cpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
-
-instrument_stats_sources = \
-	src/instrument/stats/InstrumentInitAndShutdown.cpp \
-	src/instrument/stats/InstrumentStats.cpp \
-	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 instrument_verbose_sources = \
@@ -659,10 +631,8 @@ instrument_extrae_sources = \
 dist_instrument_sources = \
 	$(instrument_ctf_sources) \
 	$(instrument_extrae_sources) \
-	$(instrument_graph_sources) \
 	$(instrument_lint_sources) \
 	$(instrument_ovni_sources) \
-	$(instrument_stats_sources) \
 	$(instrument_verbose_sources) \
 	$(noinstrument_sources)
 
@@ -951,46 +921,6 @@ noinst_HEADERS = \
 	src/instrument/generic_ids/InstrumentComputePlaceId.hpp \
 	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
 	src/instrument/generic_ids/InstrumentThreadId.hpp \
-	src/instrument/graph/Color.hpp \
-	src/instrument/graph/ExecutionSteps.hpp \
-	src/instrument/graph/GenerateEdges.hpp \
-	src/instrument/graph/InstrumentAddTask.hpp \
-	src/instrument/graph/InstrumentBlockingAPI.hpp \
-	src/instrument/graph/InstrumentCPULocalData.hpp \
-	src/instrument/graph/InstrumentComputePlaceId.hpp \
-	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
-	src/instrument/graph/InstrumentDataAccessId.hpp \
-	src/instrument/graph/InstrumentDebug.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
-	src/instrument/graph/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/graph/InstrumentDistributedMemory.hpp \
-	src/instrument/graph/InstrumentExternalThreadId.hpp \
-	src/instrument/graph/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/graph/InstrumentGraph.hpp \
-	src/instrument/graph/InstrumentInitAndShutdown.hpp \
-	src/instrument/graph/InstrumentLeaderThread.hpp \
-	src/instrument/graph/InstrumentLogMessage.hpp \
-	src/instrument/graph/InstrumentMainThread.hpp \
-	src/instrument/graph/InstrumentMemory.hpp \
-	src/instrument/graph/InstrumentPthread.hpp \
-	src/instrument/graph/InstrumentReductions.hpp \
-	src/instrument/graph/InstrumentScheduler.hpp \
-	src/instrument/graph/InstrumentTaskExecution.hpp \
-	src/instrument/graph/InstrumentTaskId.hpp \
-	src/instrument/graph/InstrumentTaskStatus.hpp \
-	src/instrument/graph/InstrumentTaskWait.hpp \
-	src/instrument/graph/InstrumentTasktypeData.hpp \
-	src/instrument/graph/InstrumentThreadId.hpp \
-	src/instrument/graph/InstrumentThreadLocalData.hpp \
-	src/instrument/graph/InstrumentThreadManagement.hpp \
-	src/instrument/graph/InstrumentTracingPointTypes.hpp \
-	src/instrument/graph/InstrumentTracingPoints.hpp \
-	src/instrument/graph/InstrumentUserMutex.hpp \
-	src/instrument/graph/InstrumentWorkerThread.hpp \
-	src/instrument/graph/PathLength.hpp \
-	src/instrument/graph/SortAccessGroups.hpp \
 	src/instrument/lint/Callbacks.hpp \
 	src/instrument/lint/InstrumentAddTask.hpp \
 	src/instrument/lint/InstrumentBlockingAPI.hpp \
@@ -1101,42 +1031,22 @@ noinst_HEADERS = \
 	src/instrument/ovni/InstrumentUserMutex.hpp \
 	src/instrument/ovni/InstrumentWorkerThread.hpp \
 	src/instrument/ovni/OvniTrace.hpp \
-	src/instrument/stats/InstrumentAddTask.hpp \
-	src/instrument/stats/InstrumentBlockingAPI.hpp \
-	src/instrument/stats/InstrumentCPULocalData.hpp \
-	src/instrument/stats/InstrumentComputePlaceId.hpp \
-	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
-	src/instrument/stats/InstrumentDataAccessId.hpp \
-	src/instrument/stats/InstrumentDebug.hpp \
-	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
-	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
-	src/instrument/stats/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/stats/InstrumentDistributedMemory.hpp \
-	src/instrument/stats/InstrumentExternalThreadId.hpp \
-	src/instrument/stats/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/stats/InstrumentInitAndShutdown.hpp \
-	src/instrument/stats/InstrumentLeaderThread.hpp \
-	src/instrument/stats/InstrumentLogMessage.hpp \
-	src/instrument/stats/InstrumentMainThread.hpp \
-	src/instrument/stats/InstrumentMemory.hpp \
-	src/instrument/stats/InstrumentPthread.hpp \
-	src/instrument/stats/InstrumentReductions.hpp \
-	src/instrument/stats/InstrumentScheduler.hpp \
-	src/instrument/stats/InstrumentStats.hpp \
-	src/instrument/stats/InstrumentTaskExecution.hpp \
-	src/instrument/stats/InstrumentTaskId.hpp \
-	src/instrument/stats/InstrumentTaskStatus.hpp \
-	src/instrument/stats/InstrumentTaskWait.hpp \
-	src/instrument/stats/InstrumentTasktypeData.hpp \
-	src/instrument/stats/InstrumentThreadId.hpp \
-	src/instrument/stats/InstrumentThreadLocalData.hpp \
-	src/instrument/stats/InstrumentThreadManagement.hpp \
-	src/instrument/stats/InstrumentTracingPointTypes.hpp \
-	src/instrument/stats/InstrumentTracingPoints.hpp \
-	src/instrument/stats/InstrumentUserMutex.hpp \
-	src/instrument/stats/InstrumentWorkerThread.hpp \
-	src/instrument/stats/Timer.hpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
+	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
+	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
+	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
+	src/instrument/support/introspection/DL/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
@@ -1155,9 +1065,9 @@ noinst_HEADERS = \
 	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentBlockingAPI.hpp \
-	src/instrument/verbose/InstrumentCPULocalData.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
+	src/instrument/verbose/InstrumentCPULocalData.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
 	src/instrument/verbose/InstrumentDebug.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
@@ -1178,61 +1088,13 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
-	src/instrument/verbose/InstrumentTaskWait.hpp \
 	src/instrument/verbose/InstrumentTasktypeData.hpp \
+	src/instrument/verbose/InstrumentTaskWait.hpp \
 	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
-	src/instrument/verbose/InstrumentTracingPointTypes.hpp \
 	src/instrument/verbose/InstrumentTracingPoints.hpp \
-	src/instrument/verbose/InstrumentUserMutex.hpp \
-	src/instrument/verbose/InstrumentVerbose.hpp \
-	src/instrument/verbose/InstrumentWorkerThread.hpp \
-	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
-	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.hpp \
-	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
-	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
-	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
-	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
-	src/instrument/support/introspection/DL/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
-	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
-	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
-	src/instrument/verbose/InstrumentAddTask.hpp \
-	src/instrument/verbose/InstrumentBlockingAPI.hpp \
-	src/instrument/verbose/InstrumentCPULocalData.hpp \
-	src/instrument/verbose/InstrumentComputePlaceId.hpp \
-	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
-	src/instrument/verbose/InstrumentDataAccessId.hpp \
-	src/instrument/verbose/InstrumentDebug.hpp \
-	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
-	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
-	src/instrument/verbose/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/verbose/InstrumentDistributedMemory.hpp \
-	src/instrument/verbose/InstrumentExternalThreadId.hpp \
-	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
-	src/instrument/verbose/InstrumentLeaderThread.hpp \
-	src/instrument/verbose/InstrumentLogMessage.hpp \
-	src/instrument/verbose/InstrumentReductions.hpp \
-	src/instrument/verbose/InstrumentScheduler.hpp \
-	src/instrument/verbose/InstrumentTaskExecution.hpp \
-	src/instrument/verbose/InstrumentTaskId.hpp \
-	src/instrument/verbose/InstrumentTaskStatus.hpp \
-	src/instrument/verbose/InstrumentTaskWait.hpp \
-	src/instrument/verbose/InstrumentTasktypeData.hpp \
-	src/instrument/verbose/InstrumentThreadId.hpp \
-	src/instrument/verbose/InstrumentThreadLocalData.hpp \
-	src/instrument/verbose/InstrumentThreadManagement.hpp \
 	src/instrument/verbose/InstrumentTracingPointTypes.hpp \
-	src/instrument/verbose/InstrumentTracingPoints.hpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
 	src/instrument/verbose/InstrumentWorkerThread.hpp \
@@ -1474,20 +1336,6 @@ nodist_libnanos6_debug_regions_extrae_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-# Debug graph variants
-libnanos6_debug_regions_graph_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
-libnanos6_debug_regions_graph_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
-libnanos6_debug_regions_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
-libnanos6_debug_regions_graph_la_LIBADD = $(common_libnanos6_libadd)
-nodist_libnanos6_debug_regions_graph_la_SOURCES =
-
-if BUILD_GRAPH_INSTRUMENTATION
-nodist_libnanos6_debug_regions_graph_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
-else
-nodist_libnanos6_debug_regions_graph_la_SOURCES += loader/disabled_variant.c
-endif
-
-
 # Debug lint variants
 libnanos6_debug_discrete_lint_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/lint
 libnanos6_debug_discrete_lint_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
@@ -1548,34 +1396,6 @@ nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
 endif
 else
 nodist_libnanos6_debug_regions_ovni_la_SOURCES += loader/disabled_variant.c
-endif
-
-
-# Debug stats variants
-libnanos6_debug_discrete_stats_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
-libnanos6_debug_discrete_stats_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
-libnanos6_debug_discrete_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
-libnanos6_debug_discrete_stats_la_LIBADD = $(common_libnanos6_libadd)
-nodist_libnanos6_debug_discrete_stats_la_SOURCES =
-
-libnanos6_debug_regions_stats_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
-libnanos6_debug_regions_stats_la_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
-libnanos6_debug_regions_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
-libnanos6_debug_regions_stats_la_LIBADD = $(common_libnanos6_libadd)
-nodist_libnanos6_debug_regions_stats_la_SOURCES =
-
-if DISCRETE_DEPENDENCIES
-if BUILD_STATS_INSTRUMENTATION
-nodist_libnanos6_debug_discrete_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
-else
-nodist_libnanos6_debug_discrete_stats_la_SOURCES += loader/disabled_variant.c
-endif
-endif
-
-if BUILD_STATS_INSTRUMENTATION
-nodist_libnanos6_debug_regions_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
-else
-nodist_libnanos6_debug_regions_stats_la_SOURCES += loader/disabled_variant.c
 endif
 
 
@@ -1698,22 +1518,6 @@ nodist_libnanos6_optimized_regions_extrae_la_SOURCES += loader/disabled_variant.
 endif
 
 
-# Optimized graph variants
-libnanos6_optimized_regions_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
-libnanos6_optimized_regions_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(regions_dependency_flags)
-libnanos6_optimized_regions_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
-libnanos6_optimized_regions_graph_la_LIBADD = $(common_libnanos6_libadd)
-nodist_libnanos6_optimized_regions_graph_la_SOURCES =
-
-if BUILD_GRAPH_INSTRUMENTATION
-enabled_variants += graph
-nodist_libnanos6_optimized_regions_graph_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
-else
-disabled_variants += graph
-nodist_libnanos6_optimized_regions_graph_la_SOURCES += loader/disabled_variant.c
-endif
-
-
 # Optimized lint variants
 # Lint variants cannot use optimization flags
 libnanos6_optimized_discrete_lint_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/lint
@@ -1782,36 +1586,6 @@ disabled_variants += ovni
 nodist_libnanos6_optimized_regions_ovni_la_SOURCES += loader/disabled_variant.c
 endif
 
-# Optimized stats variants
-libnanos6_optimized_discrete_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
-libnanos6_optimized_discrete_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(discrete_dependency_flags)
-libnanos6_optimized_discrete_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
-libnanos6_optimized_discrete_stats_la_LIBADD = $(common_libnanos6_libadd)
-nodist_libnanos6_optimized_discrete_stats_la_SOURCES =
-
-libnanos6_optimized_regions_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
-libnanos6_optimized_regions_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(regions_dependency_flags)
-libnanos6_optimized_regions_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
-libnanos6_optimized_regions_stats_la_LIBADD = $(common_libnanos6_libadd)
-nodist_libnanos6_optimized_regions_stats_la_SOURCES =
-
-if DISCRETE_DEPENDENCIES
-if BUILD_STATS_INSTRUMENTATION
-nodist_libnanos6_optimized_discrete_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(memory_sources) $(discrete_dependency_sources) $(nodist_common_sources)
-else
-nodist_libnanos6_optimized_discrete_stats_la_SOURCES += loader/disabled_variant.c
-endif
-endif
-
-if BUILD_STATS_INSTRUMENTATION
-enabled_variants += stats
-nodist_libnanos6_optimized_regions_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(memory_sources) $(regions_dependency_sources) $(nodist_common_sources)
-else
-disabled_variants += stats
-nodist_libnanos6_optimized_regions_stats_la_SOURCES += loader/disabled_variant.c
-endif
-
-
 # Optimized verbose variants
 libnanos6_optimized_discrete_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_optimized_discrete_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
@@ -1847,13 +1621,11 @@ nodist_libnanos6_debug_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_debug_discrete_ctf_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_debug_discrete_extrae_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_debug_discrete_lint_la_SOURCES += loader/disabled_variant.c
-nodist_libnanos6_debug_discrete_stats_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_debug_discrete_verbose_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_ctf_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_extrae_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_lint_la_SOURCES += loader/disabled_variant.c
-nodist_libnanos6_optimized_discrete_stats_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_verbose_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -1893,7 +1665,13 @@ deprecated_libs = \
 	libnanos6-lint-discrete.la \
 	libnanos6-stats-discrete.la \
 	libnanos6-verbose-discrete.la \
-	libnanos6-verbose-debug-discrete.la
+	libnanos6-verbose-debug-discrete.la \
+	libnanos6-optimized-discrete-stats.la \
+	libnanos6-optimized-regions-stats.la \
+	libnanos6-optimized-regions-graph.la \
+	libnanos6-debug-discrete-stats.la \
+	libnanos6-debug-regions-stats.la \
+	libnanos6-debug-regions-graph.la
 
 # Extra libraries and binaries to uninstall manually
 uninstall_libs = nanos6/libprv.la
@@ -2141,10 +1919,6 @@ endif
 
 if !BUILD_OVNI_INSTRUMENTATION
 disabled_config_features += "OVNI"
-endif
-
-if !BUILD_GRAPH_INSTRUMENTATION
-disabled_config_features += "GRAPH"
 endif
 
 if !BUILD_VERBOSE_INSTRUMENTATION

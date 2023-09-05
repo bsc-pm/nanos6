@@ -15,7 +15,7 @@
 	# Possible values: "discrete", "regions"
 	dependencies = "discrete"
 	# Choose the instrumentation variant to run. Default is "none"
-	# Possible values: "none", "ctf", "ovni", "extrae", "graph", "lint", "stats", "verbose"
+	# Possible values: "none", "ctf", "ovni", "extrae", "lint", "verbose"
 	instrument = "none"
 
 [turbo]
@@ -263,42 +263,6 @@ __require_EXTRAE
 		# Choose the detail level of the information generated in extrae traces. Default is 1
 		detail_level = 1
 __!require_EXTRAE
-__require_GRAPH
-	[instrument.graph]
-		# Indicate whether the resulting PDF should be opened automatically with the display
-		# command. Default is false
-		display = false
-		# Choose the command to be used to automatically display the resulting PDF
-		display_command = "xdg-open"
-		# Indicate whether the graph nodes should remove the directories from the source code
-		# file names. Default is false
-		shorten_filenames = false
-		# Indicate whether should show the internal data structures that determine when tasks
-		# are ready. Default is false
-		show_dependency_structures = false
-		# Include the information about the range of data or region that is covered when showing
-		# internal data structures. Default is false
-		show_regions = false
-		# Indicate whether should show the internal data structures that do not determine dependencies
-		# or that are redundant by transitivity. Default is false
-		show_spurious_dependency_structures = false
-		# Choose whether should force future and previous dependencies to be shown with different
-		# graphical attributes. Default is false
-		show_dead_dependencies = false
-		# Include the internal data structures after they are no longer relevant. Default is false
-		show_dead_dependency_structures = false
-		# Instead of trying to collapse in one step as many related changes as possible, show one
-		# at a time. Default is false
-		show_all_steps = false
-		# Show superaccess links. Default is true
-		show_superaccess_links = true
-		# Choose whether to emit a table next to the graph with a description of the changes in
-		# each frame. Default is false
-		show_log = false
-__!require_GRAPH
-	[instrument.stats]
-		# The outfile file for emitting the statistics. Default is the standard error
-		output_file = "/dev/stderr"
 __require_VERBOSE
 	[instrument.verbose]
 		# Output device or file for verbose log. Default is "/dev/stderr"

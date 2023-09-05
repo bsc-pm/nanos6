@@ -70,22 +70,6 @@ ConfigCentral::ConfigCentral() :
 	registerOption<bool_t>("instrument.extrae.as_threads", false);
 	registerOption<integer_t>("instrument.extrae.detail_level", 1);
 
-	// Graph instrumentation
-	registerOption<bool_t>("instrument.graph.display", false);
-	registerOption<string_t>("instrument.graph.display_command", "xdg-open");
-	registerOption<bool_t>("instrument.graph.shorten_filenames", false);
-	registerOption<bool_t>("instrument.graph.show_all_steps", false);
-	registerOption<bool_t>("instrument.graph.show_dead_dependency_structures", false);
-	registerOption<bool_t>("instrument.graph.show_dead_dependencies", false);
-	registerOption<bool_t>("instrument.graph.show_dependency_structures", false);
-	registerOption<bool_t>("instrument.graph.show_log", false);
-	registerOption<bool_t>("instrument.graph.show_regions", false);
-	registerOption<bool_t>("instrument.graph.show_spurious_dependency_structures", false);
-	registerOption<bool_t>("instrument.graph.show_superaccess_links", true);
-
-	// Stats instrumentation
-	registerOption<string_t>("instrument.stats.output_file", "/dev/stderr");
-
 	// Verbose instrumentation
 	registerOption<string_t>("instrument.verbose.areas", {
 			"all", "!ComputePlaceManagement", "!DependenciesByAccess",
