@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef PADDED_TICKET_SPIN_LOCK_HPP
@@ -41,11 +41,6 @@ public:
 	inline void unlock()
 	{
 		_lock.unlock();
-	}
-
-	inline bool isLockedByThisThread()
-	{
-		return _lock.isLockedByThisThread();
 	}
 
 	inline inner_type_t &getTicketLock()

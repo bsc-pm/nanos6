@@ -2,25 +2,7 @@
 #
 #	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
-AC_DEFUN([CONFIGURE_NANOS6_FEATURES],
-	[
-		ac_nanos6_suports_cpu_management=yes
-		ac_nanos6_supports_user_mutex=yes
-		NANOS6_VARIANT=optimized
-
-		_CONFIGURE_NANOS6_FEATURES
-	]
-)
-
-AC_DEFUN([_CONFIGURE_NANOS6_FEATURES],
-	[
-		AM_CONDITIONAL(HAVE_CPU_MANAGEMENT, test x"${ac_nanos6_suports_cpu_management}" = x"yes")
-		AM_CONDITIONAL(HAVE_WORKING_USER_MUTEX, test x"${ac_nanos6_supports_user_mutex}" = x"yes")
-		AC_SUBST([NANOS6_VARIANT])
-	]
-)
-
-AC_DEFUN([SELECT_NANOS6_INSTRUMENTATIONS],
+AC_DEFUN([SELECT_INSTRUMENTATIONS],
 	[
 		AC_MSG_CHECKING([whether to build instrumentation variants])
 		AC_ARG_ENABLE(
@@ -46,18 +28,14 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATIONS],
 		if test x"${ac_build_all_instrumentations}" = x"yes"; then
 			ac_build_ctf_instrumentation=yes
 			ac_build_extrae_instrumentation=yes
-			ac_build_graph_instrumentation=yes
 			ac_build_lint_instrumentation=yes
 			ac_build_ovni_instrumentation=yes
-			ac_build_stats_instrumentation=yes
 			ac_build_verbose_instrumentation=yes
 		else
 			ac_build_ctf_instrumentation=no
 			ac_build_extrae_instrumentation=no
-			ac_build_graph_instrumentation=no
 			ac_build_lint_instrumentation=no
 			ac_build_ovni_instrumentation=no
-			ac_build_stats_instrumentation=no
 			ac_build_verbose_instrumentation=no
 		fi
 
@@ -102,27 +80,6 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATIONS],
 		)
 		AC_MSG_RESULT([$ac_build_extrae_instrumentation])
 		AM_CONDITIONAL(BUILD_EXTRAE_INSTRUMENTATION, test x"${ac_build_extrae_instrumentation}" = x"yes")
-
-		AC_MSG_CHECKING([whether to build the graph instrumented variant])
-		AC_ARG_ENABLE(
-			[graph-instrumentation],
-			[AS_HELP_STRING([--disable-graph-instrumentation], [build the graph instrumented variant])],
-			[
-				case "${enableval}" in
-				yes)
-					ac_build_graph_instrumentation=yes
-					;;
-				no)
-					ac_build_graph_instrumentation=no
-					;;
-				*)
-					AC_MSG_ERROR([bad value ${enableval} for --enable-graph-instrumentation])
-					;;
-				esac
-			], []
-		)
-		AC_MSG_RESULT([$ac_build_graph_instrumentation])
-		AM_CONDITIONAL(BUILD_GRAPH_INSTRUMENTATION, test x"${ac_build_graph_instrumentation}" = x"yes")
 
 		AC_MSG_CHECKING([whether to build the lint instrumented variant])
 		AC_ARG_ENABLE(
@@ -171,27 +128,6 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATIONS],
 		)
 		AC_MSG_RESULT([$ac_build_ovni_instrumentation])
 		AM_CONDITIONAL(BUILD_OVNI_INSTRUMENTATION, test x"${ac_build_ovni_instrumentation}" = x"yes")
-
-		AC_MSG_CHECKING([whether to build the stats instrumented variant])
-		AC_ARG_ENABLE(
-			[stats-instrumentation],
-			[AS_HELP_STRING([--disable-stats-instrumentation], [build the stats instrumented variant])],
-			[
-				case "${enableval}" in
-				yes)
-					ac_build_stats_instrumentation=yes
-					;;
-				no)
-					ac_build_stats_instrumentation=no
-					;;
-				*)
-					AC_MSG_ERROR([bad value ${enableval} for --enable-stats-instrumentation])
-					;;
-				esac
-			], []
-		)
-		AC_MSG_RESULT([$ac_build_stats_instrumentation])
-		AM_CONDITIONAL(BUILD_STATS_INSTRUMENTATION, test x"${ac_build_stats_instrumentation}" = x"yes")
 
 		AC_MSG_CHECKING([whether to build the verbose instrumented variant])
 		AC_ARG_ENABLE(

@@ -3,7 +3,7 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
 # Nanos6 version and copyright
 m4_define([nanos6_version], [3.0])
@@ -95,7 +95,6 @@ fi
 
 # Checks for library functions.
 AC_CHECK_DLOPEN
-AC_CHECK_BACKTRACE
 AC_CHECK_LIBNUMA
 AC_CHECK_PAPI
 AC_CHECK_PQOS
@@ -117,25 +116,13 @@ AC_SUBST(CLOCK_LIBS)
 AC_CHECK_LIB([log], [__android_log_print], [ANDROID_LOG_LIBS="${ANDROID_LOG_LIBS} -llog"])
 AC_SUBST(ANDROID_LOG_LIBS)
 
-PKG_CHECK_MODULES([elfutils], [libdw >= 0.164],
-   [
-		AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])
-		ac_have_elfutils=yes
-	], [
-		AC_MSG_WARN([The profiling instrumenter is more accurate and efficient when the headers and libraries of elfutils are available.])
-		ac_have_elfutils=no
-	]
-)
-AM_CONDITIONAL([HAVE_ELFUTILS], [test "x${ac_have_elfutils}" = "xyes"])
-
 CHECK_UNDEFINED_SYMBOL_VERIFICATION_FLAGS
 CHECK_AS_NEEDED_FLAGS
 ADD_AS_NEEDED_SUPPORT_TO_LIBTOOL
 
 SSS_FIXUP_COMPILER_FLAGS
 
-CONFIGURE_NANOS6_FEATURES
-SELECT_NANOS6_INSTRUMENTATIONS
+SELECT_INSTRUMENTATIONS
 
 # Check for gethostid
 AC_CHECK_FUNCS([gethostid])
@@ -293,7 +280,6 @@ AC_CONFIG_FILES([
 	commands/Makefile
 	tests/directive_based/mercurium/Makefile
 	tests/directive_based/clang/Makefile
-	scripts/Makefile
 ])
 AC_OUTPUT
 
@@ -323,8 +309,6 @@ _AS_ECHO([])
 _AS_ECHO([   Code model flags... ${MCMODEL_FLAGS}])
 _AS_ECHO([])
 _AS_ECHO([   Boost CPPFLAGS... ${BOOST_CPPFLAGS}])
-_AS_ECHO([])
-_AS_ECHO([   Backtrace LIBS... ${BACKTRACE_LIBS}])
 _AS_ECHO([])
 _AS_ECHO([   libnuma CPPFLAGS... ${libnuma_CPPFLAGS}])
 _AS_ECHO([   libnuma LIBS... ${libnuma_LIBS}])
@@ -358,10 +342,6 @@ if test x"${ac_use_ovni}" = x"yes" ; then
 else
     AC_MSG_RESULT([no])
 fi
-
-_AS_ECHO([])
-_AS_ECHO([   elfutils CPPFLAGS... ${elfutils_CFLAGS}])
-_AS_ECHO([   elfutils LIBS... ${elfutils_LIBS}])
 
 _AS_ECHO([])
 _AS_ECHO_N([   CUDA is enabled... ])

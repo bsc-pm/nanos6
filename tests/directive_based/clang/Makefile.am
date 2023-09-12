@@ -207,15 +207,11 @@ endif
 check_PROGRAMS = $(base_tests)
 TESTS = $(base_tests)
 
-if HAVE_CPU_MANAGEMENT
 check_PROGRAMS += $(cpu_management_tests)
 TESTS += $(cpu_management_tests)
-endif
 
-if HAVE_WORKING_USER_MUTEX
 check_PROGRAMS += $(user_mutex_tests)
 TESTS += $(user_mutex_tests)
-endif
 
 if HAVE_LINEAR_REGION_SUPPORT
 check_PROGRAMS += $(linear_region_tests)
