@@ -590,12 +590,16 @@ namespace DataAccessRegistration {
 				if (currentReductionInfo == nullptr) {
 					currentReductionInfo = reductionInfo;
 					// Inherited reductions must be equal
-					assert(reductionInfo == nullptr || (reductionInfo->getTypeAndOperatorIndex() == typeAndOpIndex && reductionInfo->getOriginalLength() == length));
+					assert(reductionInfo == nullptr ||
+						(reductionInfo->getTypeAndOperatorIndex() == typeAndOpIndex
+							&& reductionInfo->getOriginalLength() == length));
 				} else {
 					reductionInfo = currentReductionInfo;
 				}
 
-				if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex || currentReductionInfo->getOriginalLength() != length) {
+				if (currentReductionInfo == nullptr ||
+					currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
+					currentReductionInfo->getOriginalLength() != length) {
 					currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
 						address, length, *task);
 				}
@@ -776,10 +780,6 @@ namespace DataAccessRegistration {
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
 		assert(translationTable != nullptr);
-
-		// Initialize translationTable
-		for (int i = 0; i < totalSymbols; ++i)
-			translationTable[i] = {0, 0};
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 

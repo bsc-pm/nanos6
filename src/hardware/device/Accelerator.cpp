@@ -7,6 +7,7 @@
 #include "Accelerator.hpp"
 #include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
+#include "hardware/device/directory/Directory.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/TrackingPoints.hpp"
@@ -28,14 +29,36 @@ void Accelerator::runTask(Task *task)
 	task->setMemoryPlace(_memoryPlace);
 
 	setActiveDevice();
-	generateDeviceEvironment(task);
-	preRunTask(task);
 
 	size_t tableSize = 0;
 	nanos6_address_translation_entry_t *translationTable =
 		SymbolTranslation::generateTranslationTable(
 			task, _computePlace, stackTranslationTable,
 			tableSize);
+
+	nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
+	assert(taskInfo != nullptr);
+	const int numSymbols = taskInfo->num_symbols;
+
+	DirectoryDevice *directoryDevice = getDirectoryDevice();
+	if (directoryDevice != nullptr) {
+		bool copiesReady = Directory::preTaskExecution(directoryDevice, task, translationTable, numSymbols);
+		if(!copiesReady) {
+			// Directory copies are not ready
+			// The copies are queued, but we cannot execute this task yet
+			// Free up all symbol translation
+			if (tableSize > 0) {
+				MemoryAllocator::free(translationTable, tableSize);
+			}
+
+			return;
+		}
+	}
+
+	SymbolTranslation::translateReductions(task, _computePlace, translationTable, numSymbols);
+
+	generateDeviceEvironment(task);
+	preRunTask(task);
 
 	callTaskBody(task, translationTable);
 

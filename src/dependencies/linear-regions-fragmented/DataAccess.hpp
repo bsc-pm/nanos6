@@ -9,6 +9,8 @@
 
 #define MAX_SYMBOLS 64 // TODO: Temporary solution to use a fixed bitset size
 
+#define REGIONS_DEPENDENCIES 1
+
 #include <atomic>
 #include <bitset>
 #include <cassert>
@@ -43,9 +45,9 @@ struct DataAccess : protected DataAccessBase {
 private:
 	enum status_bit_coding {
 		REGISTERED_BIT = 0,
-	
+
 		COMPLETE_BIT,
-	
+
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
@@ -54,12 +56,12 @@ private:
 		ALLOCATED_REDUCTION_INFO_BIT,
 		RECEIVED_SLOT_SET_BIT,
 		CLOSES_REDUCTION_BIT,
-	
+
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		COMMUTATIVE_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		REDUCTION_INFO_PROPAGATION_INHIBITED_BIT,
-	
+
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP_BIT,
 		TOPMOST_BIT,
@@ -90,7 +92,7 @@ private:
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
 
 	//! A bitmap of the "symbols" this access is related to
-	symbols_t _symbols; 
+	symbols_t _symbols;
 
 	//! An index that identifies the reduction within the task (if applicable)
 	reduction_index_t _reductionIndex;
@@ -137,7 +139,7 @@ public:
 		_outputLocation(outputLocation)
 	{
 		assert(originator != nullptr);
-	
+
 		if (_type == REDUCTION_ACCESS_TYPE) {
 			_reductionSlotSet.resize(ReductionInfo::getMaxSlots());
 		}
@@ -206,22 +208,22 @@ public:
 		if ((newWeak != _weak) || (newType != _type)) {
 			bool oldWeak = _weak;
 			DataAccessType oldType = _type;
-		
+
 			bool wasSatisfied = satisfied();
-		
+
 			_weak = newWeak;
 			_type = newType;
-		
+
 			Instrument::upgradedDataAccess(
 				_instrumentationId,
 				oldType, oldWeak,
 				newType, newWeak,
 				wasSatisfied && !satisfied()
 			);
-		
+
 			return true;
 		}
-	
+
 		return false;
 	}
 
@@ -666,7 +668,7 @@ public:
 		return _instrumentationId;
 	}
 
-	bool isInSymbol(int symbol) const 
+	bool isInSymbol(int symbol) const
 	{
 		return _symbols[symbol];
 	}

@@ -43,9 +43,20 @@ public:
 				MemoryAllocator::alloc(tableSize);
 		}
 
-		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
+		// Initialize translationTable
+		for (int i = 0; i < numSymbols; ++i)
+			table[i] = {0, 0};
 
 		return table;
+	}
+
+	static inline void translateReductions(
+		Task *task,
+		ComputePlace *computePlace,
+		nanos6_address_translation_entry_t *table,
+		int numSymbols
+	) {
+		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
 	}
 };
 

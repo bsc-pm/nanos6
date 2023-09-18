@@ -7,6 +7,7 @@
 #ifndef ACCELERATOR_HPP
 #define ACCELERATOR_HPP
 
+#include "hardware/device/directory/DirectoryDevice.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "tasks/Task.hpp"
@@ -119,6 +120,11 @@ public:
 
 	// Return the FIFO for re-use after task has finished.
 	virtual void releaseAsyncHandle(void *asyncHandle) = 0;
+
+	virtual DirectoryDevice *getDirectoryDevice() const
+	{
+		return nullptr;
+	}
 
 private:
 	static void serviceFunction(void *data);

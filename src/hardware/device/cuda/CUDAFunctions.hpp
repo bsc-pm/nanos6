@@ -187,6 +187,18 @@ public:
 		CUDAErrorHandler::handle(err, "Copying memory");
 	}
 
+	static void copyMemoryAsync(void *dst, const void *src, size_t count, cudaMemcpyKind kind, cudaStream_t stream)
+	{
+		cudaError_t err = cudaMemcpyAsync(dst, src, count, kind, stream);
+		CUDAErrorHandler::handle(err, "Copying memory");
+	}
+
+	static void copyMemoryP2PAsync(void *dstAddress, int dstDevice, const void *srcAddress, int srcDevice, size_t size, cudaStream_t stream)
+	{
+		cudaError_t err = cudaMemcpyPeerAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, stream);
+		CUDAErrorHandler::handle(err, "Copying memory P2P");
+	}
+
 	static void launchKernel(
 		const char *kernelName, void **kernelParams,
 		size_t gridDim1, size_t gridDim2, size_t gridDim3,

@@ -19,6 +19,7 @@
 
 class CUDADeviceInfo : public DeviceInfo {
 	std::vector<CUDAAccelerator *> _accelerators;
+	std::vector<CUDADirectoryDevice *> _directoryDevices;
 
 public:
 	CUDADeviceInfo()
@@ -36,6 +37,12 @@ public:
 				CUDAAccelerator *accelerator = new CUDAAccelerator(i);
 				assert(accelerator != nullptr);
 				_accelerators.push_back(accelerator);
+
+				CUDADirectoryDevice *directoryDevice = new CUDADirectoryDevice(accelerator);
+				Directory::registerDevice(static_cast<DirectoryDevice *>(directoryDevice));
+				_directoryDevices.push_back(directoryDevice);
+
+				accelerator->setDirectoryDevice(directoryDevice);
 			}
 
 			_deviceInitialized = true;
@@ -84,6 +91,11 @@ public:
 	inline MemoryPlace *getMemoryPlace(int handler) const override
 	{
 		return _accelerators[handler]->getMemoryPlace();
+	}
+
+	inline DirectoryDevice *getDirectoryDevice(int handler) const override
+	{
+		return (DirectoryDevice *) _directoryDevices[handler];
 	}
 };
 

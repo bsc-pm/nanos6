@@ -49,6 +49,11 @@ void CUDAAccelerator::acceleratorServiceLoop()
 				runTask(task);
 			}
 
+			// Process events from Directory
+			if (_directoryDevice != nullptr) {
+				_directoryDevice->processEvents();
+			}
+
 			// Only set the active device if there have been tasks launched
 			// Setting the device during e.g. bootstrap caused issues
 			if (!_activeEvents.empty()) {

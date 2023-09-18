@@ -3042,10 +3042,6 @@ namespace DataAccessRegistration {
 		assert(computePlace != nullptr);
 		assert(translationTable != nullptr);
 
-		// Initialize translationTable
-		for (int i = 0; i < totalSymbols; ++i)
-			translationTable[i] = {0, 0};
-
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 
 		assert(!accessStruct.hasBeenDeleted());

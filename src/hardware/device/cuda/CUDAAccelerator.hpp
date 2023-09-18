@@ -8,12 +8,15 @@
 #define CUDA_ACCELERATOR_HPP
 
 #include <list>
+#include <memory>
 
 #include <nanos6/cuda_device.h>
 
+#include "CUDADirectoryDevice.hpp"
 #include "CUDAFunctions.hpp"
 #include "CUDAStreamPool.hpp"
 #include "hardware/device/Accelerator.hpp"
+#include "hardware/device/directory/Directory.hpp"
 #include "support/config/ConfigVariable.hpp"
 #include "tasks/Task.hpp"
 
@@ -31,6 +34,7 @@ private:
 	std::list<CUDAEvent> _activeEvents, _preallocatedEvents;
 	cudaDeviceProp _deviceProperties;
 	CUDAStreamPool _streamPool;
+	CUDADirectoryDevice *_directoryDevice;
 
 	// Whether the device service should run while there are running tasks
 	static ConfigVariable<bool> _pinnedPolling;
@@ -67,13 +71,14 @@ private:
 
 	void postRunTask(Task *task) override;
 
-	void callTaskBody(Task *task, nanos6_address_translation_entry_t *translation);
+	void callTaskBody(Task *task, nanos6_address_translation_entry_t *translation) override;
 
 public:
 	CUDAAccelerator(int cudaDeviceIndex) :
 		Accelerator(cudaDeviceIndex, nanos6_cuda_device),
 		_streamPool(cudaDeviceIndex)
 	{
+		this->setActiveDevice();
 		CUDAFunctions::getDeviceProperties(_deviceProperties, _deviceHandler);
 	}
 
@@ -101,6 +106,16 @@ public:
 	static inline Task *getCurrentTask()
 	{
 		return _currentTask;
+	}
+
+	inline void setDirectoryDevice(CUDADirectoryDevice *device)
+	{
+		_directoryDevice = device;
+	}
+
+	virtual DirectoryDevice *getDirectoryDevice() const override
+	{
+		return _directoryDevice;
 	}
 };
 
