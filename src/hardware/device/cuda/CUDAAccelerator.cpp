@@ -97,6 +97,10 @@ void CUDAAccelerator::preRunTask(Task *task)
 	if (!_prefetchDataDependencies)
 		return;
 
+	// Disable prefetch when using memory directory
+	if (Directory::isEnabled())
+		return;
+
 	// Prefetch available memory locations to the GPU
 	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 

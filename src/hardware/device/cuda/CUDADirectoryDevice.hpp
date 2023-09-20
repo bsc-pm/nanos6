@@ -41,23 +41,29 @@ public:
 		_directoryStream = CUDAFunctions::createStream();
 	}
 
-    bool canCopyTo(DirectoryDevice *other) override
-    {
-        return other->getType() == oss_device_cuda || other->getType() == oss_device_host;
-    }
+	bool canCopyTo(DirectoryDevice *other) override
+	{
+		return other->getType() == oss_device_cuda || other->getType() == oss_device_host;
+	}
 
-    bool canCopyFrom(DirectoryDevice *other) override
-    {
-        return other->getType() == oss_device_host;
-    }
+	bool canCopyFrom(DirectoryDevice *other) override
+	{
+		return other->getType() == oss_device_host;
+	}
 
-    void memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress) override;
+	void memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress) override;
 
-    void memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress) override;
+	void memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress) override;
 
-    void *allocateMemory(size_t size) override {
-        return CUDAFunctions::malloc(size);
-    };
+	void *allocateMemory(size_t size) override
+	{
+		return CUDAFunctions::malloc(size);
+	}
+
+	void freeMemory(void *addr, size_t) override
+	{
+		CUDAFunctions::free(addr);
+	}
 
 	void processEvents();
 };

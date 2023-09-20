@@ -25,7 +25,6 @@ enum DirectoryPageState {
 class Task;
 
 struct DirectoryPage {
-	int _homeDevice;
 	Container::vector<DirectoryPageState> _states;
 	Container::vector<void *> _allocations;
 	Container::vector<Container::vector<Task *>> _pendingNotifications;

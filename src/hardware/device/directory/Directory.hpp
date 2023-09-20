@@ -7,6 +7,8 @@
 #ifndef DIRECTORY_HPP
 #define DIRECTORY_HPP
 
+#include <atomic>
+
 #include "DirectoryDevice.hpp"
 #include "DirectoryEntry.hpp"
 #include "HostDirectoryDevice.hpp"
@@ -21,15 +23,17 @@ private:
 	static Directory *_instance;
 	static DirectoryDevice *_hostDevice;
 	typedef uintptr_t addr_t;
+	static std::atomic<bool> _enabled;
 
-	Container::map<addr_t, DirectoryEntry> _directory;
+	typedef Container::map<addr_t, DirectoryEntry> directory_map_t;
+	directory_map_t _directory;
 	RWSpinLock _lock;
 	Container::vector<DirectoryDevice *> _devices;
 
 	inline DirectoryEntry *getEntry(addr_t addr)
 	{
 		_lock.readLock();
-		Container::map<addr_t, DirectoryEntry>::iterator entry = _directory.lower_bound(addr);
+		directory_map_t::iterator entry = _directory.lower_bound(addr);
 
 		DirectoryEntry *res = nullptr;
 
@@ -47,9 +51,15 @@ private:
 		return id;
 	}
 
+	void performFullFlush(Task *taskToUnlock);
+	void performPartialFlush(void *location, size_t length, Task *taskToUnlock);
+	void flushEntry(DirectoryEntry *entry, Task *taskToUnlock);
+	void partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, void *location, size_t length);
+
 	void readAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation);
 	void readWriteAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation);
-	void registerEntry(DirectoryDevice *device, void *buffer, size_t size, size_t pageSize);
+	void registerEntry(DirectoryDevice *device, void *buffer, void *virtualBuffer, size_t size, size_t pageSize);
+	void destroyEntry(void *buffer);
 	bool processTaskAccesses(DirectoryDevice *device, Task *task, nanos6_address_translation_entry_t *translationTable, int symbols);
 
 public:
@@ -90,7 +100,16 @@ public:
 		return _hostDevice;
 	}
 
+	static bool isEnabled()
+	{
+		return _enabled.load(std::memory_order_relaxed);
+	}
+
 	static void *deviceAlloc(oss_device_t device, int index, size_t size, size_t stride);
+	static void deviceFree(void *address);
+
+	static bool flush(Task *task);
+	static bool flushTaskDependencies(Task *task);
 };
 
 #endif // DIRECTORY_HPP

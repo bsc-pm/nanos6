@@ -38,7 +38,11 @@ public:
 
     void *allocateMemory(size_t size) override {
         return MemoryAllocator::alloc(size);
-    };
+    }
+
+    void freeMemory(void *addr, size_t size) override {
+        MemoryAllocator::free(addr, size);
+    }
 };
 
 #endif // HOST_DIRECTORY_DEVICE_HPP

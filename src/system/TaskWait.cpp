@@ -12,6 +12,7 @@
 #include "TaskBlocking.hpp"
 #include "TaskWait.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware/device/directory/Directory.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
@@ -39,7 +40,8 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 	TrackingPoints::enterTaskWait(currentTask, invocationSource, fromUserCode);
 
 	// Fast check
-	if (currentTask->doesNotNeedToBlockForChildren()) {
+	// Note that this must only be used with
+	if (currentTask->doesNotNeedToBlockForChildren() && !Directory::isEnabled()) {
 		// This in combination with a release from the children makes their changes visible to this thread
 		std::atomic_thread_fence(std::memory_order_acquire);
 
@@ -82,6 +84,22 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 
 	// This in combination with a release from the children makes their changes visible to this thread
 	std::atomic_thread_fence(std::memory_order_acquire);
+
+	// Now that everything is finished, we actually need to perform any needed directory flushes
+	// There are two possible cases: in the top-level main task, we will flush everything
+	// Otherwise, we will only flush the task's dependencies
+
+	bool copiesFinished = false;
+	if (currentTask->getParent() == nullptr) {
+		copiesFinished = Directory::flush(currentTask);
+	} else {
+		copiesFinished = Directory::flushTaskDependencies(currentTask);
+	}
+
+	// Block again until all directory copies are done
+	if (!copiesFinished) {
+
+	}
 
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();

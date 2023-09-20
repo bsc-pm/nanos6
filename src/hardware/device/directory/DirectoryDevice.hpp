@@ -43,6 +43,7 @@ public:
     virtual void memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress) = 0;
     virtual void memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress) = 0;
     virtual void *allocateMemory(size_t size) = 0;
+    virtual void freeMemory(void *addr, size_t size) = 0;
 
     virtual ~DirectoryDevice() {}
 };
