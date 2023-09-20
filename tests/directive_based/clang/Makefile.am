@@ -57,7 +57,9 @@ base_tests += \
 	cuda-kernargs.clang.test \
 	cuda-ndrange.clang.test \
 	cuda-saxpy.clang.test \
-	cuda-shmem.clang.test
+	cuda-shmem.clang.test \
+	cuda-ndrange-directory.clang.test \
+	cuda-saxpy-directory.clang.test
 endif
 
 # Ignore CPU Activation test if we have DLB
@@ -145,7 +147,9 @@ base_tests += \
 	cuda-kernargs.clang.debug.test \
 	cuda-ndrange.clang.debug.test \
 	cuda-saxpy.clang.debug.test \
-	cuda-shmem.clang.debug.test
+	cuda-shmem.clang.debug.test \
+	cuda-ndrange-directory.clang.debug.test \
+	cuda-saxpy-directory.clang.debug.test
 endif
 
 # Ignore CPU Activation test if we have DLB for now
@@ -282,6 +286,26 @@ cuda_shmem_clang_test_SOURCES = ../cuda/cuda-shmem.cpp ../cuda/cuda-shmem.hpp ..
 cuda_shmem_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
 cuda_shmem_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
 cuda_shmem_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_ndrange_directory_clang_debug_test_SOURCES = ../cuda/cuda-ndrange-directory.cpp ../cuda/cuda-ndrange.hpp ../cuda/cuda-ndrange-kernel.cu
+cuda_ndrange_directory_clang_debug_test_CPPFLAGS = $(CUDA_CFLAGS)
+cuda_ndrange_directory_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_ndrange_directory_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_ndrange_directory_clang_test_SOURCES = ../cuda/cuda-ndrange-directory.cpp ../cuda/cuda-ndrange.hpp ../cuda/cuda-ndrange-kernel.cu
+cuda_ndrange_directory_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
+cuda_ndrange_directory_clang_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_ndrange_directory_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_saxpy_directory_clang_debug_test_SOURCES = ../cuda/cuda-saxpy-directory.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_directory_clang_debug_test_CPPFLAGS = $(CUDA_CFLAGS)
+cuda_saxpy_directory_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_saxpy_directory_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_saxpy_directory_clang_test_SOURCES = ../cuda/cuda-saxpy-directory.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_directory_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
+cuda_saxpy_directory_clang_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_saxpy_directory_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
 
 blocking_clang_debug_test_SOURCES = ../blocking/blocking.cpp
 blocking_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
