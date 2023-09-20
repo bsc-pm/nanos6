@@ -59,9 +59,6 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 	const int directoryId = device->getId();
 	DirectoryEntry *locationEntry = getEntry((addr_t) location);
 	if (!locationEntry || !locationEntry->includes(location)) {
-		if (!device->isHost())
-			FatalErrorHandler::fail("Implicit host allocations are not supported");
-
 		// Non-tracked entry
 		return;
 	}
@@ -69,7 +66,7 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 	size_t pageSize = locationEntry->getPageSize();
 
 	if (length % pageSize != 0)
-		FatalErrorHandler::fail("Implicit host allocations are not supported");
+		FatalErrorHandler::fail("Length is not multiple of declared access stride");
 
 	int pageIndex = locationEntry->getPageIdx(location);
 
@@ -139,9 +136,6 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 	const int directoryId = device->getId();
 	DirectoryEntry *locationEntry = getEntry((addr_t) location);
 	if (!locationEntry || !locationEntry->includes(location)) {
-		if (!device->isHost())
-			FatalErrorHandler::fail("Implicit host allocations are not supported");
-
 		// Non-tracked entry
 		return;
 	}
@@ -149,7 +143,7 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 	size_t pageSize = locationEntry->getPageSize();
 
 	if (length % pageSize != 0)
-		FatalErrorHandler::fail("Implicit host allocations are not supported");
+		FatalErrorHandler::fail("Length is not multiple of declared access stride");
 
 	int pageIndex = locationEntry->getPageIdx(location);
 
