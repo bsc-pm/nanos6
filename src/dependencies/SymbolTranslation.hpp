@@ -56,7 +56,8 @@ public:
 		nanos6_address_translation_entry_t *table,
 		int numSymbols
 	) {
-		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
+		if (numSymbols != 0)
+			DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
 	}
 };
 
