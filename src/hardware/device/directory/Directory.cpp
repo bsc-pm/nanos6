@@ -335,6 +335,7 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 		} else if (state == StateInvalid) {
 			// We need to enqueue a copy then
 			taskToUnlock->increasePredecessors(1);
+			page->_states[homeDevice] = StateTransitionExclusive;
 			page->_pendingNotifications[homeDevice].push_back(taskToUnlock);
 
 			for (size_t i = 0; i < _devices.size(); ++i) {
@@ -355,6 +356,7 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 			if (i == (size_t) homeDevice)
 				continue;
 
+			assert(!isTransitioning(page->_states[i]));
 			page->_states[i] = StateInvalid;
 		}
 
@@ -396,7 +398,7 @@ bool Directory::processTaskAccesses(DirectoryDevice *, Task *, nanos6_address_tr
 	return true;
 }
 
-bool Directory::flushTaskDependencies(Task *task)
+bool Directory::flushTaskDependencies(Task *)
 {
 	return true;
 }

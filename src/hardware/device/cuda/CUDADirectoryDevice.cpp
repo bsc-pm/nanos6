@@ -22,7 +22,7 @@ void CUDADirectoryDevice::memcpy(DirectoryPage *page, DirectoryDevice *dst, size
 	copy.destinationDevice = dst->getId();
 
 	if (dst->getType() == oss_device_host) {
-		CUDAFunctions::copyMemoryAsync(srcAddress, dstAddress, size, cudaMemcpyHostToDevice, _directoryStream);
+		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyDeviceToHost, _directoryStream);
 	} else {
 		int srcDevice = _accelerator->getDeviceHandler();
 		int dstDevice = ((CUDADirectoryDevice *) dst)->_accelerator->getDeviceHandler();
@@ -47,7 +47,7 @@ void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, 
 	OngoingCopy copy;
 	copy.destinationDevice = this->getId();
 	CUDAFunctions::createEvent(copy.event);
-	CUDAFunctions::copyMemoryAsync(srcAddress, dstAddress, size, cudaMemcpyDeviceToHost, _directoryStream);
+	CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, _directoryStream);
 	CUDAFunctions::recordEvent(copy.event, _directoryStream);
 	copy.page = page;
 

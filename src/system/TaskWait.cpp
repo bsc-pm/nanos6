@@ -98,7 +98,17 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 
 	// Block again until all directory copies are done
 	if (!copiesFinished) {
+		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
 
+		TaskBlocking::taskBlocks(currentThread, currentTask);
+
+		// Update the CPU since the thread may have migrated
+		cpu = currentThread->getComputePlace();
+		assert(cpu != nullptr);
+
+		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
+
+		std::atomic_thread_fence(std::memory_order_acquire);
 	}
 
 	assert(currentTask->canBeWokenUp());

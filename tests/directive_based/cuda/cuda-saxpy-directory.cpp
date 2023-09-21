@@ -68,8 +68,8 @@ int main() {
 	double *x, *y;
 
 	// Allocate directory memory
-	x = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS);
-	y = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS);
+	x = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS * sizeof(double));
+	y = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS * sizeof(double));
 
 	initialize(N, BS, x, y);
 
