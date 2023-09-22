@@ -68,70 +68,66 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 
 	size_t pageSize = locationEntry->getPageSize();
 
-	if (length % pageSize != 0)
-		FatalErrorHandler::fail("Length is not multiple of declared access stride");
+	if (length > pageSize)
+		FatalErrorHandler::fail("Cannot use access length larger than directory page size. Use multideps instead");
 
 	int pageIndex = locationEntry->getPageIdx(location);
 
-	for (int currentPage = 0; currentPage < (int) (length / pageSize); currentPage++)
-	{
-		DirectoryPage *page = locationEntry->getPage(pageIndex + currentPage);
-		page->lock();
-		DirectoryPageState state = page->_states[directoryId];
+	DirectoryPage *page = locationEntry->getPage(pageIndex);
+	page->lock();
+	DirectoryPageState state = page->_states[directoryId];
 
-		if (!canWrite(state)) {
-			// Add the task to be notified later
-			task->increasePredecessors(1);
-			if (!isTransitioning(state)) {
-				// We have to do the following:
-				// - Search where the actual data is located
-				// - Enqueue the needed operations to make the transition
-				// - Add ourselves to the notifications
+	if (!canWrite(state)) {
+		// Add the task to be notified later
+		task->increasePredecessors(1);
+		if (!isTransitioning(state)) {
+			// We have to do the following:
+			// - Search where the actual data is located
+			// - Enqueue the needed operations to make the transition
+			// - Add ourselves to the notifications
 
-				bool found = false;
+			bool found = false;
 
-				if (canRead(state)) {
-					// We already have the page
-					page->_states[directoryId] = StateModified;
-					found = true;
-				} else {
-					page->_states[directoryId] = StateTransitionModified;
-				}
+			if (canRead(state)) {
+				// We already have the page
+				page->_states[directoryId] = StateModified;
+				found = true;
+			} else {
+				page->_states[directoryId] = StateTransitionModified;
+			}
 
-				for (size_t i = 0; i < _devices.size(); ++i) {
-					if (i == (size_t) directoryId)
-						continue;
+			for (size_t i = 0; i < _devices.size(); ++i) {
+				if (i == (size_t) directoryId)
+					continue;
 
-					DirectoryPageState remoteState = page->_states[i];
-					if (canRead(remoteState)) {
-						if (!found) {
-							found = true;
-							allocatePageIfNeeded(device, pageSize, page);
-							copyPage(_devices[i], device, pageSize, page);
-							page->_pendingNotifications[directoryId].push_back(task);
-						}
-
-						page->_states[i] = StateInvalid;
+				DirectoryPageState remoteState = page->_states[i];
+				if (canRead(remoteState)) {
+					if (!found) {
+						found = true;
+						allocatePageIfNeeded(device, pageSize, page);
+						copyPage(_devices[i], device, pageSize, page);
+						page->_pendingNotifications[directoryId].push_back(task);
 					}
 
-					assert(!isTransitioning(remoteState));
+					page->_states[i] = StateInvalid;
 				}
 
-				if (!found)
-					FatalErrorHandler::fail("Failure in D/C, not found source for read access");
-			} else {
-				assert(state != StateTransitionShared);
-				page->_pendingNotifications[directoryId].push_back(task);
+				assert(!isTransitioning(remoteState));
 			}
+
+			if (!found)
+				FatalErrorHandler::fail("Failure in D/C, not found source for read access");
+		} else {
+			assert(state != StateTransitionShared);
+			page->_pendingNotifications[directoryId].push_back(task);
 		}
-
-		// Set translation if on first page
-		// Technically we don't need the lock for this, but given that we already have it we'll just do it here
-		if (currentPage == 0)
-			translation = page->_allocations[directoryId];
-
-		page->unlock();
 	}
+
+	// Set translation
+	// Technically we don't need the lock for this, but given that we already have it we'll just do it here
+	translation = page->_allocations[directoryId];
+
+	page->unlock();
 }
 
 void Directory::readAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation)
@@ -145,62 +141,58 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 
 	size_t pageSize = locationEntry->getPageSize();
 
-	if (length % pageSize != 0)
-		FatalErrorHandler::fail("Length is not multiple of declared access stride");
+	if (length > pageSize)
+		FatalErrorHandler::fail("Cannot use access length larger than directory page size. Use multideps instead");
 
 	int pageIndex = locationEntry->getPageIdx(location);
 
-	for (int currentPage = 0; currentPage < (int) (length / pageSize); currentPage++)
-	{
-		DirectoryPage *page = locationEntry->getPage(pageIndex + currentPage);
-		page->lock();
-		DirectoryPageState state = page->_states[directoryId];
+	DirectoryPage *page = locationEntry->getPage(pageIndex);
+	page->lock();
+	DirectoryPageState state = page->_states[directoryId];
 
-		if (!canRead(state)) {
-			// Add the task to be notified later
-			task->increasePredecessors(1);
-			page->_pendingNotifications[directoryId].push_back(task);
+	if (!canRead(state)) {
+		// Add the task to be notified later
+		task->increasePredecessors(1);
+		page->_pendingNotifications[directoryId].push_back(task);
 
-			if (!isTransitioning(state)) {
-				// We have to do the following:
-				// - Search where the actual data is located
-				// - Enqueue the needed operations to make the transition
-				// - Add ourselves to the notifications
+		if (!isTransitioning(state)) {
+			// We have to do the following:
+			// - Search where the actual data is located
+			// - Enqueue the needed operations to make the transition
+			// - Add ourselves to the notifications
 
-				bool found = false;
-				page->_states[directoryId] = StateTransitionShared;
+			bool found = false;
+			page->_states[directoryId] = StateTransitionShared;
 
-				for (size_t i = 0; i < _devices.size(); ++i) {
-					if (i == (size_t) directoryId)
-						continue;
+			for (size_t i = 0; i < _devices.size(); ++i) {
+				if (i == (size_t) directoryId)
+					continue;
 
-					DirectoryPageState remoteState = page->_states[i];
-					if (canRead(remoteState)) {
-						found = true;
+				DirectoryPageState remoteState = page->_states[i];
+				if (canRead(remoteState)) {
+					found = true;
 
-						allocatePageIfNeeded(device, pageSize, page);
-						copyPage(_devices[i], device, pageSize, page);
+					allocatePageIfNeeded(device, pageSize, page);
+					copyPage(_devices[i], device, pageSize, page);
 
-						if (remoteState == StateExclusive || remoteState == StateModified) {
-							page->_states[i] = StateShared;
-						}
-
-						break;
+					if (remoteState == StateExclusive || remoteState == StateModified) {
+						page->_states[i] = StateShared;
 					}
+
+					break;
 				}
-
-				if (!found)
-					FatalErrorHandler::fail("Failure in D/C, not found source for read access");
 			}
+
+			if (!found)
+				FatalErrorHandler::fail("Failure in D/C, not found source for read access");
 		}
-
-		// Set translation if on first page
-		// Technically we don't need the lock for this, but given that we already have it we'll just do it here
-		if (currentPage == 0)
-			translation = page->_allocations[directoryId];
-
-		page->unlock();
 	}
+
+	// Set translation
+	// Technically we don't need the lock for this, but given that we already have it we'll just do it here
+	translation = page->_allocations[directoryId];
+
+	page->unlock();
 }
 
 void Directory::registerEntry(DirectoryDevice *device, void *buffer, void *virtualBuffer, size_t size, size_t pageSize)
