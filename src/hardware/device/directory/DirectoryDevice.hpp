@@ -10,6 +10,7 @@
 #include <nanos6/directory.h>
 
 struct DirectoryPage;
+class Task;
 
 class DirectoryDevice
 {
@@ -42,8 +43,31 @@ public:
     virtual bool canCopyFrom(DirectoryDevice *other) = 0;
     virtual void memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress) = 0;
     virtual void memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress) = 0;
+
+    virtual bool canSynchronizeImplicitely()
+    {
+        return false;
+    }
+
+    virtual void memcpyFromImplicit(DirectoryPage *, DirectoryDevice *, size_t, void *, void *, Task *)
+    {
+        return;
+    }
+
+    virtual void synchronizeOngoing(DirectoryPage *, Task *)
+    {
+        return;
+    }
+
     virtual void *allocateMemory(size_t size) = 0;
     virtual void freeMemory(void *addr, size_t size) = 0;
+
+    // Expresses if a Directory Device is capable to synchronize to a copy
+    // with itself as destination
+    virtual bool canSynchronizeOngoingCopies()
+    {
+        return false;
+    }
 
     virtual ~DirectoryDevice() {}
 };

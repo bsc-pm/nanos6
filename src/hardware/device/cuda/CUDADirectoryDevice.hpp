@@ -65,6 +65,20 @@ public:
 		CUDAFunctions::free(addr);
 	}
 
+	bool canSynchronizeImplicitely() override
+	{
+		return true;
+	}
+
+	void memcpyFromImplicit(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, Task *task) override;
+
+	void synchronizeOngoing(DirectoryPage *page, Task *task) override;
+
+	bool canSynchronizeOngoingCopies() override
+	{
+		return true;
+	}
+
 	void processEvents();
 };
 

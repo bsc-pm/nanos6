@@ -12,6 +12,66 @@
 
 #include <api/nanos6/events.h>
 
+void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress)
+{
+	assert(canCopyFrom(src));
+
+	_accelerator->setActiveDevice();
+
+	OngoingCopy copy;
+	copy.destinationDevice = this->getId();
+	CUDAFunctions::createEvent(copy.event);
+	if (src->getType() == oss_device_host) {
+		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, _directoryStream);
+	} else {
+		int srcDevice = ((CUDADirectoryDevice *) src)->_accelerator->getDeviceHandler();
+		int dstDevice = _accelerator->getDeviceHandler();
+		// P2P
+		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, _directoryStream);
+	}
+	CUDAFunctions::recordEvent(copy.event, _directoryStream);
+	page->_copyHandlers[this->getId()] = (void *) copy.event;
+	copy.page = page;
+
+	_lock.lock();
+	_pendingEvents.push_back(copy);
+	_lock.unlock();
+}
+
+//TODO merge both functions
+void CUDADirectoryDevice::memcpyFromImplicit(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, Task *task)
+{
+	assert(canCopyFrom(src));
+
+	cudaStream_t stream = task->getDeviceEnvironment().cuda.stream;
+	OngoingCopy copy;
+	copy.destinationDevice = this->getId();
+	CUDAFunctions::createEvent(copy.event);
+	if (src->getType() == oss_device_host) {
+		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, stream);
+	} else {
+		int srcDevice = ((CUDADirectoryDevice *) src)->_accelerator->getDeviceHandler();
+		int dstDevice = _accelerator->getDeviceHandler();
+		// P2P
+		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, stream);
+	}
+	CUDAFunctions::recordEvent(copy.event, stream);
+	copy.page = page;
+	page->_copyHandlers[this->getId()] = (void *) copy.event;
+
+	_lock.lock();
+	_pendingEvents.push_back(copy);
+	_lock.unlock();
+}
+
+void CUDADirectoryDevice::synchronizeOngoing(DirectoryPage *page, Task *task)
+{
+	cudaEvent_t event = (cudaEvent_t) page->_copyHandlers[this->getId()];
+	cudaStream_t stream = task->getDeviceEnvironment().cuda.stream;
+
+	CUDAFunctions::waitForEvent(event, stream);
+}
+
 void CUDADirectoryDevice::memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress)
 {
 	assert(canCopyTo(dst));
@@ -21,36 +81,12 @@ void CUDADirectoryDevice::memcpy(DirectoryPage *page, DirectoryDevice *dst, size
 	CUDAFunctions::createEvent(copy.event);
 	copy.destinationDevice = dst->getId();
 
-	if (dst->getType() == oss_device_host) {
-		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyDeviceToHost, _directoryStream);
-	} else {
-		int srcDevice = _accelerator->getDeviceHandler();
-		int dstDevice = ((CUDADirectoryDevice *) dst)->_accelerator->getDeviceHandler();
-		// P2P
-		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, _directoryStream);
-	}
-
+	assert(dst->getType() == oss_device_host);
+	CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyDeviceToHost, _directoryStream);
 	CUDAFunctions::recordEvent(copy.event, _directoryStream);
 	copy.page = page;
 
 	// TODO: This could be a lock-free MPSC queue.
-	_lock.lock();
-	_pendingEvents.push_back(copy);
-	_lock.unlock();
-}
-
-void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress)
-{
-	assert(canCopyFrom(src));
-
-	_accelerator->setActiveDevice();
-	OngoingCopy copy;
-	copy.destinationDevice = this->getId();
-	CUDAFunctions::createEvent(copy.event);
-	CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, _directoryStream);
-	CUDAFunctions::recordEvent(copy.event, _directoryStream);
-	copy.page = page;
-
 	_lock.lock();
 	_pendingEvents.push_back(copy);
 	_lock.unlock();

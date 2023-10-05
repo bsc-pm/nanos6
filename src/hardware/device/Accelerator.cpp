@@ -40,24 +40,20 @@ void Accelerator::runTask(Task *task)
 	assert(taskInfo != nullptr);
 	const int numSymbols = taskInfo->num_symbols;
 
+	generateDeviceEvironment(task);
+
 	DirectoryDevice *directoryDevice = getDirectoryDevice();
 	if (directoryDevice != nullptr) {
-		bool copiesReady = Directory::preTaskExecution(directoryDevice, task, translationTable, numSymbols);
-		if(!copiesReady) {
-			// Directory copies are not ready
-			// The copies are queued, but we cannot execute this task yet
-			// Free up all symbol translation
-			if (tableSize > 0) {
-				MemoryAllocator::free(translationTable, tableSize);
-			}
+		[[maybe_unused]] bool copiesReady =
+			Directory::preTaskExecution(directoryDevice, task, translationTable, numSymbols);
 
-			return;
-		}
+		// CUDA tasks should have ready copies since we do all of the synchronization through the
+		// assigned streams, even for ongoing copies
+		assert(copiesReady);
 	}
 
 	SymbolTranslation::translateReductions(task, _computePlace, translationTable, numSymbols);
 
-	generateDeviceEvironment(task);
 	preRunTask(task);
 
 	callTaskBody(task, translationTable);

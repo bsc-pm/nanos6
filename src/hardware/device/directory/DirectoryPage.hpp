@@ -27,6 +27,7 @@ class Task;
 struct DirectoryPage {
 	Container::vector<DirectoryPageState> _states;
 	Container::vector<void *> _allocations;
+	Container::vector<void *> _copyHandlers;
 	Container::vector<Container::vector<Task *>> _pendingNotifications;
 	pthread_spinlock_t _lock;
 	// SpinLock _lock;
@@ -44,6 +45,7 @@ struct DirectoryPage {
 	DirectoryPage(int maxDevices) :
 		_states(maxDevices),
 		_allocations(maxDevices),
+		_copyHandlers(maxDevices),
 		_pendingNotifications(maxDevices)
 	{
 		pthread_spin_init(&_lock, 0);

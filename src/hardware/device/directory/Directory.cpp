@@ -25,7 +25,10 @@ static inline bool canRead(DirectoryPageState state)
 
 static inline bool isTransitioning(DirectoryPageState state)
 {
-	return (state == StateTransitionExclusive || state == StateTransitionModified || state == StateTransitionShared);
+	return (
+		state == StateTransitionExclusive ||
+		state == StateTransitionModified ||
+		state == StateTransitionShared);
 }
 
 static inline bool canWrite(DirectoryPageState state)
@@ -33,18 +36,29 @@ static inline bool canWrite(DirectoryPageState state)
 	return (state == StateExclusive || state == StateModified);
 }
 
-bool Directory::preTaskExecution(DirectoryDevice *device, Task *task, nanos6_address_translation_entry_t *translationTable, int symbols)
+bool Directory::preTaskExecution(
+	DirectoryDevice *device,
+	Task *task,
+	nanos6_address_translation_entry_t *translationTable,
+	int symbols)
 {
 	return _instance->processTaskAccesses(device, task, translationTable, symbols);
 }
 
-static inline void copyPage(DirectoryDevice *src, DirectoryDevice *dst, size_t size, DirectoryPage *page)
+static inline bool copyPage(DirectoryDevice *src, DirectoryDevice *dst, size_t size, DirectoryPage *page, Task *task)
 {
-	if (src->canCopyTo(dst)) {
-		src->memcpy(page, dst, size, page->_allocations[src->getId()], page->_allocations[dst->getId()]);
+	if (dst->canCopyFrom(src)) {
+		if (task != nullptr && dst->canSynchronizeImplicitely()) {
+			dst->memcpyFromImplicit(page, src, size, page->_allocations[src->getId()], page->_allocations[dst->getId()], task);
+			return true;
+		} else {
+			dst->memcpyFrom(page, src, size, page->_allocations[src->getId()], page->_allocations[dst->getId()]);
+			return false;
+		}
 	} else {
-		assert(dst->canCopyFrom(src));
-		dst->memcpyFrom(page, src, size, page->_allocations[src->getId()], page->_allocations[dst->getId()]);
+		assert(src->canCopyTo(dst));
+		src->memcpy(page, dst, size, page->_allocations[src->getId()], page->_allocations[dst->getId()]);
+		return false;
 	}
 }
 
@@ -78,8 +92,6 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 	DirectoryPageState state = page->_states[directoryId];
 
 	if (!canWrite(state)) {
-		// Add the task to be notified later
-		task->increasePredecessors(1);
 		if (!isTransitioning(state)) {
 			// We have to do the following:
 			// - Search where the actual data is located
@@ -105,8 +117,10 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 					if (!found) {
 						found = true;
 						allocatePageIfNeeded(device, pageSize, page);
-						copyPage(_devices[i], device, pageSize, page);
-						page->_pendingNotifications[directoryId].push_back(task);
+						if (!copyPage(_devices[i], device, pageSize, page, task)) {
+							task->increasePredecessors(1);
+							page->_pendingNotifications[directoryId].push_back(task);
+						}
 					}
 
 					page->_states[i] = StateInvalid;
@@ -119,7 +133,12 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 				FatalErrorHandler::fail("Failure in D/C, not found source for read access");
 		} else {
 			assert(state != StateTransitionShared);
-			page->_pendingNotifications[directoryId].push_back(task);
+			if (device->canSynchronizeOngoingCopies()) {
+				device->synchronizeOngoing(page, task);
+			} else {
+				task->increasePredecessors(1);
+				page->_pendingNotifications[directoryId].push_back(task);
+			}
 		}
 	}
 
@@ -151,10 +170,6 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 	DirectoryPageState state = page->_states[directoryId];
 
 	if (!canRead(state)) {
-		// Add the task to be notified later
-		task->increasePredecessors(1);
-		page->_pendingNotifications[directoryId].push_back(task);
-
 		if (!isTransitioning(state)) {
 			// We have to do the following:
 			// - Search where the actual data is located
@@ -173,7 +188,10 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 					found = true;
 
 					allocatePageIfNeeded(device, pageSize, page);
-					copyPage(_devices[i], device, pageSize, page);
+					if(!copyPage(_devices[i], device, pageSize, page, task)) {
+						task->increasePredecessors(1);
+						page->_pendingNotifications[directoryId].push_back(task);
+					}
 
 					if (remoteState == StateExclusive || remoteState == StateModified) {
 						page->_states[i] = StateShared;
@@ -185,6 +203,13 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 
 			if (!found)
 				FatalErrorHandler::fail("Failure in D/C, not found source for read access");
+		} else {
+			if (device->canSynchronizeOngoingCopies()) {
+				device->synchronizeOngoing(page, task);
+			} else {
+				task->increasePredecessors(1);
+				page->_pendingNotifications[directoryId].push_back(task);
+			}
 		}
 	}
 
@@ -336,7 +361,7 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 
 				DirectoryPageState remoteState = page->_states[i];
 				if (canRead(remoteState)) {
-					copyPage(_devices[i], _devices[homeDevice], pageSize, page);
+					copyPage(_devices[i], _devices[homeDevice], pageSize, page, nullptr);
 					break;
 				}
 			}
@@ -427,7 +452,9 @@ bool Directory::processTaskAccesses(DirectoryDevice *device, Task *task, nanos6_
 
 	// Process task accesses, searching for accesses
 	TaskDataAccesses &accessStruct = task->getDataAccesses();
-	accessStruct.forAll([this, device, task, symbols, translationTable](void *address, DataAccess *access) -> bool {
+	accessStruct.forAll(
+		[this, device, task, symbols, translationTable]
+		(void *address,	DataAccess *access) -> bool {
 		void *translation = nullptr;
 
 		// Weak accesses don't really need to be translated

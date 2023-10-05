@@ -199,6 +199,12 @@ public:
 		CUDAErrorHandler::handle(err, "Copying memory P2P");
 	}
 
+	static void waitForEvent(cudaEvent_t event, cudaStream_t stream)
+	{
+		cudaError_t err = cudaStreamWaitEvent(stream, event, 0);
+		CUDAErrorHandler::handle(err, "Waiting for an event in a different stream");
+	}
+
 	static void launchKernel(
 		const char *kernelName, void **kernelParams,
 		size_t gridDim1, size_t gridDim2, size_t gridDim3,
