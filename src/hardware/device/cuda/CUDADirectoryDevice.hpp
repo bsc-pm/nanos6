@@ -35,7 +35,7 @@ private:
 
 public:
 	CUDADirectoryDevice(CUDAAccelerator *accelerator) :
-		DirectoryDevice(),
+		DirectoryDevice(oss_device_cuda),
 		_accelerator(accelerator)
 	{
 		_directoryStream = CUDAFunctions::createStream();
@@ -48,7 +48,7 @@ public:
 
 	bool canCopyFrom(DirectoryDevice *other) override
 	{
-		return other->getType() == oss_device_host;
+		return other->getType() == oss_device_cuda || other->getType() == oss_device_host;
 	}
 
 	void memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress) override;

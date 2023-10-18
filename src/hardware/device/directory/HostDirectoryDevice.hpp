@@ -18,6 +18,10 @@
 class HostDirectoryDevice : public DirectoryDevice
 {
 public:
+    HostDirectoryDevice() : DirectoryDevice(oss_device_host)
+    {
+    }
+
     bool canCopyTo(DirectoryDevice *) override
     {
         return false;

@@ -19,6 +19,11 @@ protected:
     oss_device_t _type;
 
 public:
+    DirectoryDevice(oss_device_t type) :
+        _type(type)
+    {
+    }
+
     inline int getId() const
     {
         return _id;
