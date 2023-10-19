@@ -72,7 +72,6 @@ nanos6include_HEADERS = \
 	api/nanos6/devices.h \
 	api/nanos6/events.h \
 	api/nanos6/final.h \
-	api/nanos6/instrument.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
@@ -204,7 +203,6 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
-	loader/symbol-resolver/instrument.c \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/numa.c \
@@ -243,7 +241,6 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
-	loader/indirect-symbols/instrument.c \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/numa.c \
@@ -443,7 +440,6 @@ common_sources = \
 	src/system/ClusterAPI.cpp \
 	src/system/ConfigAPI.cpp \
 	src/system/EventsAPI.cpp \
-	src/system/InstrumentAPI.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LintAPI.cpp \
 	src/system/Loop.cpp \
@@ -785,7 +781,6 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
 	src/instrument/api/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/api/InstrumentDistributedMemory.hpp \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
@@ -813,7 +808,6 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/ctf/InstrumentDependenciesByGroup.hpp \
 	src/instrument/ctf/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/ctf/InstrumentDistributedMemory.hpp \
 	src/instrument/ctf/InstrumentExternalThreadId.hpp \
 	src/instrument/ctf/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/ctf/InstrumentInitAndShutdown.hpp \
@@ -871,7 +865,6 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
 	src/instrument/extrae/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/extrae/InstrumentDistributedMemory.hpp \
 	src/instrument/extrae/InstrumentExternalThreadId.hpp \
 	src/instrument/extrae/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentExtrae.hpp \
@@ -912,7 +905,6 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/lint/InstrumentDependenciesByGroup.hpp \
 	src/instrument/lint/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/lint/InstrumentDistributedMemory.hpp \
 	src/instrument/lint/InstrumentExternalThreadId.hpp \
 	src/instrument/lint/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/lint/InstrumentInitAndShutdown.hpp \
@@ -948,7 +940,6 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
 	src/instrument/null/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/null/InstrumentDistributedMemory.hpp \
 	src/instrument/null/InstrumentExternalThreadId.hpp \
 	src/instrument/null/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
@@ -984,7 +975,6 @@ noinst_HEADERS = \
 	src/instrument/ovni/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/ovni/InstrumentDependenciesByGroup.hpp \
 	src/instrument/ovni/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/ovni/InstrumentDistributedMemory.hpp \
 	src/instrument/ovni/InstrumentExternalThreadId.hpp \
 	src/instrument/ovni/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/ovni/InstrumentInitAndShutdown.hpp \
@@ -1033,7 +1023,6 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
 	src/instrument/verbose/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/verbose/InstrumentDistributedMemory.hpp \
 	src/instrument/verbose/InstrumentExternalThreadId.hpp \
 	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \

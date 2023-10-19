@@ -21,7 +21,6 @@
 #include "nanos6/devices.h"
 #include "nanos6/events.h"
 #include "nanos6/final.h"
-#include "nanos6/instrument.h"
 #include "nanos6/lint.h"
 #include "nanos6/lint-multidimensional-accesses.h"
 #include "nanos6/loop.h"
