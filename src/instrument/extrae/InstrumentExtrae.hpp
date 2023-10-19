@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_HPP
@@ -13,10 +13,10 @@
 
 #include "InstrumentThreadId.hpp"
 #include "InstrumentTracingPointTypes.hpp"
-#include "support/config/ConfigVariable.hpp"
 #include "lowlevel/RWSpinLock.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "system/ompss/SpawnFunction.hpp"
+#include "support/config/ConfigVariable.hpp"
+#include "system/SpawnFunction.hpp"
 
 #include <atomic>
 #include <cstddef>

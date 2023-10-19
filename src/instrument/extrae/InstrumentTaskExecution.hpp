@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_TASK_EXECUTION_HPP
@@ -9,8 +9,8 @@
 
 
 #include "InstrumentExtrae.hpp"
-#include "system/ompss/SpawnFunction.hpp"
 #include "instrument/api/InstrumentTaskExecution.hpp"
+#include "system/SpawnFunction.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include <cassert>

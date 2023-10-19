@@ -435,6 +435,7 @@ common_sources = \
 	src/support/config/ConfigChecker.cpp \
 	src/support/config/ConfigParser.cpp \
 	src/support/config/ConfigVariable.cpp \
+	src/system/AddTask.cpp \
 	src/system/ALPI.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -445,20 +446,19 @@ common_sources = \
 	src/system/InstrumentAPI.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LintAPI.cpp \
+	src/system/Loop.cpp \
 	src/system/MonitoringAPI.cpp \
 	src/system/NumaAPI.cpp \
 	src/system/PollingAPI.cpp \
+	src/system/Query.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
+	src/system/SpawnFunction.cpp \
 	src/system/TaskInfoAPI.cpp \
+	src/system/TaskWait.cpp \
 	src/system/Throttle.cpp \
 	src/system/TrackingPoints.cpp \
+	src/system/UserMutex.cpp \
 	src/system/debug/DebugAPI.cpp \
-	src/system/ompss/AddTask.cpp \
-	src/system/ompss/Loop.cpp \
-	src/system/ompss/Query.cpp \
-	src/system/ompss/SpawnFunction.cpp \
-	src/system/ompss/TaskWait.cpp \
-	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Task.cpp \
 	src/tasks/TaskInfoManager.cpp \
@@ -1152,6 +1152,7 @@ noinst_HEADERS = \
 	src/support/config/toml/types.hpp \
 	src/support/config/toml/utility.hpp \
 	src/support/config/toml/value.hpp \
+	src/system/AddTask.hpp \
 	src/system/APICheck.hpp \
 	src/system/BlockingAPI.hpp \
 	src/system/EventsAPI.hpp \
@@ -1159,13 +1160,12 @@ noinst_HEADERS = \
 	src/system/LeaderThread.hpp \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoEssentials.hpp \
+	src/system/SpawnFunction.hpp \
+	src/system/TaskBlocking.hpp \
+	src/system/TaskWait.hpp \
 	src/system/Throttle.hpp \
 	src/system/TrackingPoints.hpp \
-	src/system/ompss/AddTask.hpp \
-	src/system/ompss/SpawnFunction.hpp \
-	src/system/ompss/TaskBlocking.hpp \
-	src/system/ompss/TaskWait.hpp \
-	src/system/ompss/UserMutex.hpp \
+	src/system/UserMutex.hpp \
 	src/tasks/LoopGenerator.hpp \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -20,7 +20,7 @@
 #include "instrument/generic_ids/GenericIds.hpp"
 #include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
 #include "system/RuntimeInfo.hpp"
-#include "system/ompss/SpawnFunction.hpp"
+#include "system/SpawnFunction.hpp"
 
 
 namespace Instrument {
