@@ -1575,7 +1575,7 @@ nodist_libnanos6_optimized_discrete_lint_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_verbose_la_SOURCES += loader/disabled_variant.c
 endif
 
-
+# Deprecated libraries, binaries and docfiles to manually uninstall
 deprecated_libs = \
 	libnanos6-optimized.la \
 	libnanos6-debug.la \
@@ -1617,13 +1617,14 @@ deprecated_libs = \
 	libnanos6-optimized-regions-graph.la \
 	libnanos6-debug-discrete-stats.la \
 	libnanos6-debug-regions-stats.la \
-	libnanos6-debug-regions-graph.la
+	libnanos6-debug-regions-graph.la \
+	libnanos6-main-wrapper.a \
+	nanos6/libprv.la
 
-# Extra libraries and binaries to uninstall manually
-uninstall_libs = nanos6/libprv.la
-uninstall_bins = nanos6-ctf2prv-fast nanos6-mergeprv
-uninstall_links = nanos6-ctf2prv
-uninstall_docfiles = scripts/nanos6_hwcounters.json scripts/nanos6.toml
+deprecated_headers = nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h
+deprecated_bins = nanos6-ctf2prv-fast nanos6-mergeprv
+deprecated_links = nanos6-ctf2prv
+deprecated_docfiles = scripts/nanos6_hwcounters.json scripts/nanos6.toml
 
 
 all-local: $(lib_OBJECTS)
@@ -1643,7 +1644,7 @@ install-exec-local: $(lib_OBJECTS)
 		$(INSTALL) $$list2 "$(DESTDIR)$(libdir)"; \
 	}
 	@echo Removing deprecated headers
-	for f in nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h ; do \
+	for f in $(deprecated_headers) ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
@@ -1654,32 +1655,20 @@ install-exec-local: $(lib_OBJECTS)
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
-	@echo Removing deprecated helper library
-	for l in libnanos6-main-wrapper.a ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing deprecated documentation files
-	for f in $(uninstall_docfiles) ; do \
+	for f in $(deprecated_docfiles) ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing other libraries
-	for l in $(uninstall_libs) ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing other binaries
-	for f in $(uninstall_bins) ; do \
+	for f in $(deprecated_bins) ; do \
 		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
 	@echo Removing other links
-	for f in $(uninstall_links) ; do \
+	for f in $(deprecated_links) ; do \
 		if test -L "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
@@ -1693,43 +1682,31 @@ uninstall-hook:
 		fi ; \
 	done
 	@echo Removing deprecated headers
-	for f in nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h ; do \
+	for f in $(deprecated_headers) ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing deprecated runtime implementations
+	@echo Removing deprecated libraries
 	for l in $(deprecated_libs) ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
-	@echo Removing deprecated helper library
-	for l in libnanos6-main-wrapper.a ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing deprecated documentation files
-	for f in $(uninstall_docfiles) ; do \
+	for f in $(deprecated_docfiles) ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing other libraries
-	for l in $(uninstall_libs) ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing other binaries
-	for f in $(uninstall_bins) ; do \
+	for f in $(deprecated_bins) ; do \
 		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
 	@echo Removing other links
-	for f in $(uninstall_links) ; do \
+	for f in $(deprecated_links) ; do \
 		if test -L "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
