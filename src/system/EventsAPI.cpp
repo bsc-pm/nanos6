@@ -1,14 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
 
 #include "CPUDependencyData.hpp"
 #include "DataAccessRegistration.hpp"
-#include "LeaderThread.hpp"
 #include "TrackingPoints.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
@@ -59,18 +58,11 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 		}
 
 		if (!task->isOnreadyCompleted()) {
-			// All onready events completed
+			// All onready events completed and the task is ready to execute
 			task->completeOnready();
 
-			// The task is ready to execute
 			Scheduler::addReadyTask(task, cpu, UNBLOCKED_TASK_HINT);
 		} else {
-			// Release dependencies if the event counter becomes zero
-			if (cpu == nullptr && LeaderThread::isLeaderThread()) {
-				cpu = LeaderThread::getComputePlace();
-				assert(cpu != nullptr);
-			}
-
 			// Release the data accesses of the task. Do not merge these
 			// two conditions; the creation of a local CPU dependency data
 			// structure may introduce unnecessary overhead
