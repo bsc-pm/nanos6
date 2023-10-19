@@ -1150,6 +1150,7 @@ noinst_HEADERS = \
 	src/support/config/toml/value.hpp \
 	src/system/APICheck.hpp \
 	src/system/BlockingAPI.hpp \
+	src/system/EventsAPI.hpp \
 	src/system/If0Task.hpp \
 	src/system/LeaderThread.hpp \
 	src/system/RuntimeInfo.hpp \
