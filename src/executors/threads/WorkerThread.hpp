@@ -99,8 +99,11 @@ public:
 	//! \brief code that the thread executes
 	virtual void body();
 
-	//! \brief returns the WorkerThread that runs the call
+	//! \brief Returns the WorkerThread that runs the call (if any)
 	static inline WorkerThread *getCurrentWorkerThread();
+
+	//! \brief Returns the task running in the current WorkerThread (if any)
+	static inline Task *getCurrentTask();
 
 	//! \brief Returns the thread's hardware counter structures
 	inline ThreadHardwareCounters &getHardwareCounters();

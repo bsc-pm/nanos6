@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef WORKER_THREAD_IMPLEMENTATION_HPP
@@ -95,6 +95,15 @@ inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 	} else {
 		return nullptr;
 	}
+}
+
+inline Task *WorkerThread::getCurrentTask()
+{
+	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
+	if (thread == nullptr)
+		return nullptr;
+
+	return thread->getTask();
 }
 
 inline ThreadHardwareCounters &WorkerThread::getHardwareCounters()
