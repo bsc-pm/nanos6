@@ -33,7 +33,8 @@ public:
 		_baseAddress(base),
 		_baseVirtualAddress(virtualBase),
 		_size(size),
-		_pageSize(pageSize)
+		_pageSize(pageSize),
+		_homeDevice(homeDeviceId)
 	{
 		assert(size % pageSize == 0);
 		char *basePtr = (char *)base;

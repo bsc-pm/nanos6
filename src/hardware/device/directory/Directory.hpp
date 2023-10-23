@@ -25,7 +25,9 @@ private:
 	typedef uintptr_t addr_t;
 	static std::atomic<bool> _enabled;
 
-	typedef Container::map<addr_t, DirectoryEntry> directory_map_t;
+	// WARNING! This container is reversed so we can use the lower_bound function
+	// Beware when iterating if expecting lower to higher
+	typedef Container::map<addr_t, DirectoryEntry, std::greater<addr_t>> directory_map_t;
 	directory_map_t _directory;
 	RWSpinLock _lock;
 	Container::vector<DirectoryDevice *> _devices;
