@@ -237,7 +237,7 @@ int main()
 		expected._taskARunsConcurrentlyToTaskB[0][2] = true;
 		expected._taskARunsConcurrentlyToTaskB[2][0] = true;
 
-		#pragma oss task shared(status, expected) label("T1: if 0 task")
+		#pragma oss task shared(status, expected) if(0) label("T1: if 0 task")
 		{
 			#pragma oss task shared(status, expected) label("T1.1: child of if 0 task")
 			{
