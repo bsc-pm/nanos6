@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2021-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2021-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef OVNI_TRACE_HPP
@@ -324,7 +324,7 @@ namespace Instrument {
 		static void threadInit()
 		{
 			ovni_thread_init(gettid());
-			ovni_thread_require("nanos6", "1.0.0");
+			ovni_thread_require("nanos6", "1.1.0");
 		}
 	};
 
