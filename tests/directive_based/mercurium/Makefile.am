@@ -49,6 +49,7 @@ base_tests += \
 	dep-wait.mercurium.test \
 	simple-commutative.mercurium.test \
 	commutative-stencil.mercurium.test \
+	alpi.mercurium.test \
 	taskloop-multiaxpy.mercurium.test \
 	taskloop-dep-multiaxpy.mercurium.test \
 	taskloop-nested-dep-multiaxpy.mercurium.test \
@@ -128,6 +129,7 @@ base_tests +=  \
 	dep-wait.mercurium.debug.test \
 	simple-commutative.mercurium.debug.test \
 	commutative-stencil.mercurium.debug.test \
+	alpi.mercurium.debug.test \
 	taskloop-multiaxpy.mercurium.debug.test \
 	taskloop-dep-multiaxpy.mercurium.debug.test \
 	taskloop-nested-dep-multiaxpy.mercurium.debug.test \
@@ -383,6 +385,15 @@ commutative_stencil_mercurium_test_SOURCES = ../commutative/commutative-stencil.
 commutative_stencil_mercurium_test_CPPFLAGS = -DNDEBUG
 commutative_stencil_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 commutative_stencil_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+alpi_mercurium_debug_test_SOURCES = ../alpi/alpi.cpp
+alpi_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
+alpi_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+alpi_mercurium_test_SOURCES = ../alpi/alpi.cpp
+alpi_mercurium_test_CPPFLAGS = -DNDEBUG
+alpi_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+alpi_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 taskloop_multiaxpy_mercurium_debug_test_SOURCES = ../taskloop/taskloop-multiaxpy.cpp
 taskloop_multiaxpy_mercurium_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
