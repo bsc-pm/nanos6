@@ -517,6 +517,11 @@ Although the throttle feature is disabled by default, it can be enabled and tunn
 * `throttle.pressure`: Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure. By default is 70.
 * `throttle.max_memory`: Maximum used memory or memory budget. Note that this variable can be set in terms of bytes or in memory units. For example: ``throttle.max_memory = "50GB"``. The default is the half of the available physical memory.
 
+## Task-Aware Libraries Support
+
+Nanos6 exposes and implements the ALPI tasking interface, which provides support for task-aware libraries, such as the [Task-Aware MPI](https://github.com/bsc-pm/tampi) library.
+The runtime system implements the ALPI interface version 1.0, which is exposed through the [alpi.h](./api/nanos6/alpi.h) API header.
+
 ## NUMA support
 
 Nanos6 includes NUMA support based on three main components: an allocation/deallocation API, a data tracking system and a locality-aware scheduler.
