@@ -6,9 +6,9 @@ AC_DEFUN([AC_CHECK_JEMALLOC],
 	[
 		AC_ARG_WITH(
 			[jemalloc],
-			[AS_HELP_STRING([--with-jemalloc=prefix], [specify the installation prefix of jemalloc or "embedded"])],
+			[AS_HELP_STRING([--with-jemalloc=prefix], [specify the installation prefix of jemalloc or "embedded" @<:@default=embedded@:>@])],
 			[ ac_use_jemalloc_prefix=$withval ],
-			[ ac_use_jemalloc_prefix="no" ]
+			[ ac_use_jemalloc_prefix="embedded" ]
 		)
 
 		jemalloc_LIBS=""

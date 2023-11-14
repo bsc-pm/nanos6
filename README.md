@@ -72,29 +72,30 @@ The configure script accepts the following options:
 1. `--with-babeltrace2=prefix` to specify the prefix of the Babeltrace2 installation and enable the fast CTF converter (`ctf2prv --fast`) and the multi-process trace merger (`nanos6-mergeprv`)
 1. `--with-ovni=prefix` to specify the prefix of the ovni installation and enable the ovni instrumentation
 
-The hwloc dependency can be specified using the `--with-hwloc` option.
-This option can take these values:
-* `pkgconfig`: The hwloc is an external installation and Nanos6 should discover it through the pkg-config tool.
-Make sure to set the `PKG_CONFIG_PATH` if the hwloc is not installed in non-standard directories.
-This is the **default** behavior if the option is not present or no value is provided
-* A prefix of an external hwloc installation
-* `embedded`: The hwloc is built and embedded into the Nanos6 library as an internal module.
+The hwloc dependency is mandatory, and, by default, an internal hwloc is embedded to the Nanos6 library.
+This behavior can be modified through the `--with-hwloc` option, which can take the following values:
+* `--with-hwloc=embedded`: The hwloc is built and embedded into the Nanos6 library as an internal module.
 This is useful when user programs may have third-party software (e.g., MPI libraries) that depend on a different hwloc version and may conflict with the one used by Nanos6.
-When embedded, the hwloc library is internal and is only used by Nanos6.
+In this way, the hwloc library is internal and is only used by Nanos6.
+This is the **default** behavior if the option is not present, or no value is provided.
 See [Embeddeding software dependencies](#embedding-software-dependencies) for more information
+* `--with-hwloc=pkgconfig`: The hwloc is an external installation and Nanos6 should discover it through the pkg-config tool.
+Make sure to set the `PKG_CONFIG_PATH` if the hwloc is not installed in non-standard directories
+* `--with-hwloc=<prefix>`: A prefix of an external hwloc installation
 
-Similarly, the jemalloc dependency can be specified using the `--with-jemalloc` option.
-The jemalloc allocator significantly improves the performance of our runtime by optimizing the memory allocations.
-Thus, it is highly **recommended** to enable the jemalloc allocator.
-The `--with-jemalloc` option can take two values:
-* A prefix of an external jemalloc installation configured with the `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` options
-* `embedded`: The jemalloc is built and embedded into Nanos6 as an internal library.
+The jemalloc dependency is optional but highly **recommended**.
+This allocator significantly improves the performance of the Nanos6 runtime by optimizing the memory allocations.
+By default, an internal jemalloc is embedded to the Nanos6 library.
+This behavior can be modified through the `--with-jemalloc` option, which can take the following values:
+* `--with-jemalloc=embedded`: The jemalloc is built and embedded into Nanos6 as an internal library.
 The building process installs the jemalloc headers and libraries in `$INSTALLATION_PREFIX/deps/nanos6/jemalloc` and dynamically links our runtime against the jemalloc library.
 This is the **default** behavior if the option is not provided.
 See [Embeddeding software dependencies](#embedding-software-dependencies)
+* `--with-jemalloc=<prefix>`: A prefix of an external jemalloc installation configured with the `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` options
+* `--with-jemalloc=no` or `--without-jemalloc`: Disable the jemalloc allocator (not recommended)
 
-The location of hwloc is retrieved through pkg-config by default, or when specifying `--with-hwloc=pkgconfig`.
-If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
+The location of an external hwloc can be retrieved through pkg-config when specifying `--with-hwloc=pkgconfig`.
+If it is installed in a non-standard location, pkg-config can be told where to find it through the `PKG_CONFIG_PATH` environment variable.
 For instance:
 
 ```sh
@@ -110,10 +111,10 @@ The location of PGI compilers can be retrieved from the `$PATH` variable, if it 
 
 ### Embedding software dependencies
 
-As mentioned above, there are some software dependencies that can be embedded into Nanos6.
-This is the case for hwloc and jemalloc, which you can embed into the Nanos6 installation by configuring with `--with-hwloc=embedded` and `--with-jemalloc=embedded`, respectively.
-The sources of these embedded dependencies are taken from the `deps` subdirectory in this repository.
-Inside the subdirectory, there is a default hwloc and jemalloc source tarballs.
+As mentioned above, there are some software dependencies that may be embedded into Nanos6.
+This is the case for hwloc and jemalloc, which will be embedded by default.
+The sources of these embedded dependencies are taken from the `deps` sub-directory in this repository.
+Inside the sub-directory, there is a default hwloc and jemalloc source tarballs.
 These tarballs are automatically extracted into `deps/hwloc` and `deps/jemalloc` by our `autogen.sh` script.
 
 These are the source packages that are then built when choosing `--with-hwloc=embedded` or `--with-jemalloc=embedded`.
@@ -253,15 +254,15 @@ The CTF instrumentation supports multiple processes running in parallel with MPI
 In order to coordinate the clock synchronization, it is required to run the
 application with [TAMPI](https://github.com/bsc-pm/tampi) (at least version 1.1).
 
-Every process will create the rank subdirectory inside the trace directory, with
+Every process will create the rank sub-directory inside the trace directory, with
 a name that corresponds to the rank number. In the absence of MPI, when there is
 only a single process, the folder will be named 0.
 
-Inside the rank directory, the CTF trace is stored in a subdirectory named
+Inside the rank directory, the CTF trace is stored in a sub-directory named
 "ctf". A post-processing step is required to reconstruct the timeline of events
 from the CTF trace. In order to visualize the events, the trace is converted to
 the Paraver PRV format. The resulting PRV trace is stored in the "prv"
-subdirectory.
+sub-directory.
 
 By default, Nanos6 will convert the trace automatically at the end of the
 execution unless the user explicitly sets the configuration variable
