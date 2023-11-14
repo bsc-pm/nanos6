@@ -39,7 +39,6 @@ static void initialize(long participant)
 
 
 static Atomic<int> concurrent_tasks;
-static void *critical_handle = 0;
 volatile long sum_result = 0;
 
 
