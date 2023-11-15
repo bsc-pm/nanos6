@@ -8,10 +8,10 @@ AC_DEFUN([AC_CHECK_HWLOC],
 			[hwloc],
 			[AS_HELP_STRING(
 				[--with-hwloc@<:@=DIR@:>@],
-				[specify the installation prefix of the hwloc library. Values may be the prefix, "embedded", or "pkgconfig" @<:@default=pkgconfig@:>@]
+				[specify the installation prefix of the hwloc library. Values may be the prefix, "embedded", or "pkgconfig" @<:@default=embedded@:>@]
 			)],
 			[ ac_use_hwloc_prefix="${withval}" ],
-			[ ac_use_hwloc_prefix="pkgconfig" ]
+			[ ac_use_hwloc_prefix="embedded" ]
 		)
 
 		hwloc_LIBS=""
