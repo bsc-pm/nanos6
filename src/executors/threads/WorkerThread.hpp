@@ -124,15 +124,6 @@ public:
 	}
 };
 
-
-#ifndef NDEBUG
-namespace ompss_debug {
-	__attribute__((weak)) WorkerThread *getCurrentWorkerThread();
-}
-#endif
-
-
 #include "WorkerThreadImplementation.hpp"
-
 
 #endif // WORKER_THREAD_HPP
