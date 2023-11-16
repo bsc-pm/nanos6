@@ -1,14 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef LOOP_GENERATOR_HPP
 #define LOOP_GENERATOR_HPP
 
 #include "Taskloop.hpp"
-#include "system/ompss/AddTask.hpp"
+#include "system/AddTask.hpp"
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskId.hpp>

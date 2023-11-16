@@ -72,7 +72,6 @@ nanos6include_HEADERS = \
 	api/nanos6/devices.h \
 	api/nanos6/events.h \
 	api/nanos6/final.h \
-	api/nanos6/instrument.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
@@ -204,7 +203,6 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
-	loader/symbol-resolver/instrument.c \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/numa.c \
@@ -243,7 +241,6 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
-	loader/indirect-symbols/instrument.c \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/numa.c \
@@ -435,6 +432,7 @@ common_sources = \
 	src/support/config/ConfigChecker.cpp \
 	src/support/config/ConfigParser.cpp \
 	src/support/config/ConfigVariable.cpp \
+	src/system/AddTask.cpp \
 	src/system/ALPI.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -442,23 +440,21 @@ common_sources = \
 	src/system/ClusterAPI.cpp \
 	src/system/ConfigAPI.cpp \
 	src/system/EventsAPI.cpp \
-	src/system/InstrumentAPI.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LintAPI.cpp \
+	src/system/Loop.cpp \
 	src/system/MonitoringAPI.cpp \
 	src/system/NumaAPI.cpp \
 	src/system/PollingAPI.cpp \
+	src/system/Query.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
+	src/system/SpawnFunction.cpp \
 	src/system/TaskInfoAPI.cpp \
+	src/system/TaskWait.cpp \
 	src/system/Throttle.cpp \
 	src/system/TrackingPoints.cpp \
+	src/system/UserMutex.cpp \
 	src/system/debug/DebugAPI.cpp \
-	src/system/ompss/AddTask.cpp \
-	src/system/ompss/Loop.cpp \
-	src/system/ompss/Query.cpp \
-	src/system/ompss/SpawnFunction.cpp \
-	src/system/ompss/TaskWait.cpp \
-	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Task.cpp \
 	src/tasks/TaskInfoManager.cpp \
@@ -785,7 +781,6 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
 	src/instrument/api/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/api/InstrumentDistributedMemory.hpp \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
@@ -813,7 +808,6 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/ctf/InstrumentDependenciesByGroup.hpp \
 	src/instrument/ctf/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/ctf/InstrumentDistributedMemory.hpp \
 	src/instrument/ctf/InstrumentExternalThreadId.hpp \
 	src/instrument/ctf/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/ctf/InstrumentInitAndShutdown.hpp \
@@ -871,7 +865,6 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
 	src/instrument/extrae/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/extrae/InstrumentDistributedMemory.hpp \
 	src/instrument/extrae/InstrumentExternalThreadId.hpp \
 	src/instrument/extrae/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentExtrae.hpp \
@@ -912,7 +905,6 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/lint/InstrumentDependenciesByGroup.hpp \
 	src/instrument/lint/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/lint/InstrumentDistributedMemory.hpp \
 	src/instrument/lint/InstrumentExternalThreadId.hpp \
 	src/instrument/lint/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/lint/InstrumentInitAndShutdown.hpp \
@@ -948,7 +940,6 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
 	src/instrument/null/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/null/InstrumentDistributedMemory.hpp \
 	src/instrument/null/InstrumentExternalThreadId.hpp \
 	src/instrument/null/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
@@ -984,7 +975,6 @@ noinst_HEADERS = \
 	src/instrument/ovni/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/ovni/InstrumentDependenciesByGroup.hpp \
 	src/instrument/ovni/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/ovni/InstrumentDistributedMemory.hpp \
 	src/instrument/ovni/InstrumentExternalThreadId.hpp \
 	src/instrument/ovni/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/ovni/InstrumentInitAndShutdown.hpp \
@@ -1033,7 +1023,6 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
 	src/instrument/verbose/InstrumentDependencySubsystemEntryPoints.hpp \
-	src/instrument/verbose/InstrumentDistributedMemory.hpp \
 	src/instrument/verbose/InstrumentExternalThreadId.hpp \
 	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
@@ -1152,6 +1141,7 @@ noinst_HEADERS = \
 	src/support/config/toml/types.hpp \
 	src/support/config/toml/utility.hpp \
 	src/support/config/toml/value.hpp \
+	src/system/AddTask.hpp \
 	src/system/APICheck.hpp \
 	src/system/BlockingAPI.hpp \
 	src/system/EventsAPI.hpp \
@@ -1159,13 +1149,12 @@ noinst_HEADERS = \
 	src/system/LeaderThread.hpp \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoEssentials.hpp \
+	src/system/SpawnFunction.hpp \
+	src/system/TaskBlocking.hpp \
+	src/system/TaskWait.hpp \
 	src/system/Throttle.hpp \
 	src/system/TrackingPoints.hpp \
-	src/system/ompss/AddTask.hpp \
-	src/system/ompss/SpawnFunction.hpp \
-	src/system/ompss/TaskBlocking.hpp \
-	src/system/ompss/TaskWait.hpp \
-	src/system/ompss/UserMutex.hpp \
+	src/system/UserMutex.hpp \
 	src/tasks/LoopGenerator.hpp \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \
@@ -1575,7 +1564,7 @@ nodist_libnanos6_optimized_discrete_lint_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_optimized_discrete_verbose_la_SOURCES += loader/disabled_variant.c
 endif
 
-
+# Deprecated libraries, binaries and docfiles to manually uninstall
 deprecated_libs = \
 	libnanos6-optimized.la \
 	libnanos6-debug.la \
@@ -1617,13 +1606,14 @@ deprecated_libs = \
 	libnanos6-optimized-regions-graph.la \
 	libnanos6-debug-discrete-stats.la \
 	libnanos6-debug-regions-stats.la \
-	libnanos6-debug-regions-graph.la
+	libnanos6-debug-regions-graph.la \
+	libnanos6-main-wrapper.a \
+	nanos6/libprv.la
 
-# Extra libraries and binaries to uninstall manually
-uninstall_libs = nanos6/libprv.la
-uninstall_bins = nanos6-ctf2prv-fast nanos6-mergeprv
-uninstall_links = nanos6-ctf2prv
-uninstall_docfiles = scripts/nanos6_hwcounters.json scripts/nanos6.toml
+deprecated_headers = nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h
+deprecated_bins = nanos6-ctf2prv-fast nanos6-mergeprv
+deprecated_links = nanos6-ctf2prv
+deprecated_docfiles = scripts/nanos6_hwcounters.json scripts/nanos6.toml
 
 
 all-local: $(lib_OBJECTS)
@@ -1643,7 +1633,7 @@ install-exec-local: $(lib_OBJECTS)
 		$(INSTALL) $$list2 "$(DESTDIR)$(libdir)"; \
 	}
 	@echo Removing deprecated headers
-	for f in nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h ; do \
+	for f in $(deprecated_headers) ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
@@ -1654,32 +1644,20 @@ install-exec-local: $(lib_OBJECTS)
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
-	@echo Removing deprecated helper library
-	for l in libnanos6-main-wrapper.a ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing deprecated documentation files
-	for f in $(uninstall_docfiles) ; do \
+	for f in $(deprecated_docfiles) ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing other libraries
-	for l in $(uninstall_libs) ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing other binaries
-	for f in $(uninstall_bins) ; do \
+	for f in $(deprecated_bins) ; do \
 		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
 	@echo Removing other links
-	for f in $(uninstall_links) ; do \
+	for f in $(deprecated_links) ; do \
 		if test -L "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
@@ -1693,43 +1671,31 @@ uninstall-hook:
 		fi ; \
 	done
 	@echo Removing deprecated headers
-	for f in nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h ; do \
+	for f in $(deprecated_headers) ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing deprecated runtime implementations
+	@echo Removing deprecated libraries
 	for l in $(deprecated_libs) ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
-	@echo Removing deprecated helper library
-	for l in libnanos6-main-wrapper.a ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing deprecated documentation files
-	for f in $(uninstall_docfiles) ; do \
+	for f in $(deprecated_docfiles) ; do \
 		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
-	@echo Removing other libraries
-	for l in $(uninstall_libs) ; do \
-		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
-			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
-		fi ; \
-	done
 	@echo Removing other binaries
-	for f in $(uninstall_bins) ; do \
+	for f in $(deprecated_bins) ; do \
 		if test -f "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \
 	done
 	@echo Removing other links
-	for f in $(uninstall_links) ; do \
+	for f in $(deprecated_links) ; do \
 		if test -L "$(DESTDIR)$(bindir)/$$f" ; then \
 			rm -f "$(DESTDIR)$(bindir)/$$f" ; \
 		fi ; \

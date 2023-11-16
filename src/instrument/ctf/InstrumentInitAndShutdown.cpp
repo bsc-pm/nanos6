@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -310,12 +310,6 @@ void Instrument::preinitFinished()
 				taskInfoData.getTaskDeclarationSource().c_str(), tasktypeId);
 		}
 	);
-}
-
-int64_t Instrument::getInstrumentStartTime()
-{
-	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
-	return trace.getAbsoluteStartTimestamp();
 }
 
 void Instrument::addCPUs()

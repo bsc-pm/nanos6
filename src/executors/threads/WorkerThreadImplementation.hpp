@@ -18,8 +18,8 @@
 #include <InstrumentThreadManagement.hpp>
 
 
-inline WorkerThread::WorkerThread(CPU *cpu)
-	: WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
+inline WorkerThread::WorkerThread(CPU *cpu) :
+	WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
 	_instrumentationData(), _hwCounters(), _replacementCount(0), _ISDistribution(0.0, 1.0)
 {
 	_originalNumaNode = cpu->getNumaNodeId();
@@ -110,22 +110,6 @@ inline ThreadHardwareCounters &WorkerThread::getHardwareCounters()
 {
 	return _hwCounters;
 }
-
-#ifndef NDEBUG
-namespace ompss_debug {
-	__attribute__((weak)) WorkerThread *getCurrentWorkerThread()
-	{
-		WorkerThread *current = WorkerThread::getCurrentWorkerThread();
-
-		if (current == nullptr) {
-			return (WorkerThread *) ~0UL;
-		} else {
-			return current;
-		}
-	}
-}
-#endif
-
 
 inline bool WorkerThread::isTaskReplaceable() const
 {

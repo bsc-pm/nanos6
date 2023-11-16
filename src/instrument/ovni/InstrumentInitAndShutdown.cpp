@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "InstrumentInitAndShutdown.hpp"
@@ -40,10 +40,4 @@ void Instrument::preinitFinished()
 			Ovni::typeCreate(tasktypeId, taskInfoData.getTaskTypeLabel().c_str());
 		}
 	);
-}
-
-int64_t Instrument::getInstrumentStartTime()
-{
-	// No need, the offset is computed by another ovni tool
-	return 0;
 }

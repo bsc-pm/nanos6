@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -32,8 +32,8 @@
 #include "support/config/ConfigChecker.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
+#include "system/SpawnFunction.hpp"
 #include "system/Throttle.hpp"
-#include "system/ompss/SpawnFunction.hpp"
 
 #include "tasks/StreamManager.hpp"
 

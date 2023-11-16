@@ -9,8 +9,8 @@
 #include "DataAccessRegistration.hpp"
 #include "Throttle.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/TaskBlocking.hpp"
-#include "system/ompss/TaskWait.hpp"
+#include "system/TaskBlocking.hpp"
+#include "system/TaskWait.hpp"
 #include "tasks/Task.hpp"
 
 #include <InstrumentWorkerThread.hpp>

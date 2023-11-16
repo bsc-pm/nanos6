@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef STREAM_EXECUTOR_HPP
@@ -14,8 +14,8 @@
 
 #include "lowlevel/ConditionVariable.hpp"
 #include "system/BlockingAPI.hpp"
-#include "system/ompss/SpawnFunction.hpp"
-#include "system/ompss/TaskWait.hpp"
+#include "system/SpawnFunction.hpp"
+#include "system/TaskWait.hpp"
 #include "tasks/Task.hpp"
 
 

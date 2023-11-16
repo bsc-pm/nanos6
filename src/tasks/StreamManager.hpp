@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef STREAM_MANAGER_HPP
@@ -12,8 +12,8 @@
 #include <nanos6.h>
 
 #include "StreamExecutor.hpp"
-#include "system/ompss/AddTask.hpp"
-#include "system/ompss/SpawnFunction.hpp"
+#include "system/AddTask.hpp"
+#include "system/SpawnFunction.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 

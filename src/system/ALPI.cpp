@@ -12,9 +12,9 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/WorkerThreadImplementation.hpp"
-#include "system/EventsAPI.hpp"
 #include "system/BlockingAPI.hpp"
-#include "system/ompss/SpawnFunction.hpp"
+#include "system/EventsAPI.hpp"
+#include "system/SpawnFunction.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
