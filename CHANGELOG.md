@@ -2,12 +2,30 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 4.0, Fri Nov 17, 2023
+The 4.0 version corresponds to the OmpSs-2 2023.11 release. It provides support for the [ALPI](https://gitlab.bsc.es/alpi/alpi) tasking interface, reduces the external software requirements, and removes obsolete features.
+
+### General
+- Implement the [ALPI](https://gitlab.bsc.es/alpi/alpi) tasking interface to support external task-aware libraries
+- Allow embedding jemalloc allocator
+- Embed hwloc and jemalloc by default
+- Add `devices.cuda.prefetch` option to control CUDA prefetching of data dependencies (enabled by default)
+- Install the nanos6.toml configuration file in `$prefix/share`
+- Remove obsolete `instrument.h` public interface
+- Remove obsolete `stats` and `graph` instrumentations
+- Remove software dependency with libunwind and elfutils
+- Improve ovni library discovery
+- Fix execution when enabling extrae instrumentation
+- Fix memory leaks
+- Fix several tests
+
+
 ## Version 3.0, Wed May 24, 2023
 The 3.0 release corresponds to the OmpSs-2 2023.05 release. It introduces several performance improvements, important bug fixes, and improved usability and programmability. It also improves the support for the ovni instrumentation.
 
 ### General
 - Leverage C++17 standard, which may require newer GCC (such as GCC 7 or later)
-- Fix visualization of task labels for programatically spawned tasks (e.g., polling tasks from task-aware libraries)
+- Fix visualization of task labels for programmatically spawned tasks (e.g., polling tasks from task-aware libraries)
 - Deprecate CTF instrumentation; use ovni instrumentation instead
 - Remove support for the `task for` clause
 

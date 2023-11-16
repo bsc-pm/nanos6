@@ -6,9 +6,9 @@
 #	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 
 # Nanos6 version and copyright
-m4_define([nanos6_version], [3.0])
+m4_define([nanos6_version], [4.0])
 m4_define([nanos6_license], ["GPL3"])
-m4_define([nanos6_copyright], ["2015-2021 Barcelona Supercomputing Center (BSC)"])
+m4_define([nanos6_copyright], ["2015-2023 Barcelona Supercomputing Center (BSC)"])
 
 # Location of external dependencies that can be embedded
 m4_define([hwloc_embedded_subdir], [deps/hwloc])
