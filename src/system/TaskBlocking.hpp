@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_BLOCKING_HPP
@@ -28,11 +28,11 @@ public:
 		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
 
-		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
-		assert(replacementThread != nullptr);
-
 		// Runtime Tracking Point - Thread is suspending
 		TrackingPoints::threadWillSuspend(currentThread, cpu);
+
+		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
+		assert(replacementThread != nullptr);
 
 		// When a task blocks, switch to another idle thread to avoid:
 		// 1) Getting the current thread stuck in the CPU while doing nothing
