@@ -323,6 +323,7 @@ namespace Instrument {
 		static void threadInit()
 		{
 			ovni_thread_init(gettid());
+			ovni_thread_require("nanos6", "1.0.0");
 		}
 
 		static void threadMaybeInit()
