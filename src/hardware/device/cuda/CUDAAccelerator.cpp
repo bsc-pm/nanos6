@@ -138,11 +138,6 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 	nanos6_task_info_t *taskInfo = task->getTaskInfo();
 	assert(taskInfo != nullptr);
 
-	// The device task may need the body to run on the host
-	const char *kernelName = taskInfo->implementations[0].device_function_name;
-	if (kernelName == nullptr)
-		return task->body(translationTable);
-
 	nanos6_cuda_device_environment_t &env = task->getDeviceEnvironment().cuda;
 
 	void *args = task->getArgsBlock();
@@ -162,6 +157,12 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 	// capabilities, we could perform some math to express the same working
 	// units in a supported way. Right now we expect the user to provide valid
 	// parameters
+
+	// The device task may need the body to run on the host
+	const char *kernelName = taskInfo->implementations[0].device_function_name;
+	if (deviceInfo.sizes[0] == -1 && deviceInfo.sizes[3] == -1) {
+		return task->body(translationTable);
+	}
 
 	// Retrieve the local sizes (CUDA block sizes)
 	size_t blockDim1 = std::max((int64_t) deviceInfo.sizes[3], (int64_t) 1);
