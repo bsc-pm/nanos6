@@ -222,7 +222,7 @@ void WorkerThread::executeTask(CPU *cpu)
 		size_t tableSize = 0;
 		nanos6_address_translation_entry_t *translationTable =
 			SymbolTranslation::generateTranslationTable(
-				_task, cpu, stackTranslationTable, tableSize
+				_task, stackTranslationTable, tableSize
 			);
 
 		nanos6_task_info_t const *const taskInfo = _task->getTaskInfo();

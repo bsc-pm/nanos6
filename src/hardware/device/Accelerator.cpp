@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Accelerator.hpp"
@@ -33,7 +33,7 @@ void Accelerator::runTask(Task *task)
 	size_t tableSize = 0;
 	nanos6_address_translation_entry_t *translationTable =
 		SymbolTranslation::generateTranslationTable(
-			task, _computePlace, stackTranslationTable,
+			task, stackTranslationTable,
 			tableSize);
 
 	nanos6_task_info_t const *const taskInfo = task->getTaskInfo();

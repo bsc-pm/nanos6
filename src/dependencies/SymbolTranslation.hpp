@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYMBOL_TRANSLATION_HPP
@@ -23,7 +23,6 @@ public:
 
 	static inline nanos6_address_translation_entry_t *generateTranslationTable(
 		Task *task,
-		ComputePlace *computePlace,
 		nanos6_address_translation_entry_t *stackTable,
 		/* output */ size_t &tableSize
 	) {
