@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_OVNI_ADD_TASK_HPP
@@ -96,14 +96,12 @@ namespace Instrument {
 
 	inline void enterSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)
 	{
-		Ovni::threadMaybeInit();
 		Ovni::spawnFunctionEnter();
 	}
 
 	inline void exitSpawnFunction(__attribute__((unused)) bool taskRuntimeTransition)
 	{
 		Ovni::spawnFunctionExit();
-		Ovni::flush();
 	}
 }
 

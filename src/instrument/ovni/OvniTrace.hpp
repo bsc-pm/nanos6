@@ -326,14 +326,6 @@ namespace Instrument {
 			ovni_thread_require("nanos6", "1.0.0");
 		}
 
-		static void threadMaybeInit()
-		{
-			if (!ovni_thread_isready()) {
-				threadInit();
-				threadExecute(-1, -1, -1);
-			}
-		}
-
 		static void flush()
 		{
 			ovni_flush();
