@@ -275,6 +275,7 @@ namespace Instrument {
 			emitGeneric(1, "OHe");
 			// Flush the events to disk before killing the thread
 			ovni_flush();
+			ovni_thread_free();
 		}
 
 		static void threadSignal(int32_t tid)
@@ -324,11 +325,6 @@ namespace Instrument {
 		{
 			ovni_thread_init(gettid());
 			ovni_thread_require("nanos6", "1.0.0");
-		}
-
-		static void flush()
-		{
-			ovni_flush();
 		}
 	};
 
