@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_OVNI_PTHREAD_HPP
@@ -24,9 +24,6 @@ namespace Instrument {
 	inline void pthreadEnd()
 	{
 		Ovni::threadEnd();
-
-		// Flush events at the end of the thread life
-		Ovni::flush();
 	}
 
 	inline void pthreadCreate(int cpu, void *arg)
