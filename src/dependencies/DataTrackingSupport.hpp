@@ -1,13 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_TRACKING_SUPPORT_HPP
 #define DATA_TRACKING_SUPPORT_HPP
 
 #include "support/config/ConfigVariable.hpp"
+#include <cstdint>
 
 class Task;
 
