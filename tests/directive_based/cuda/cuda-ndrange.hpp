@@ -12,7 +12,7 @@ extern "C"
 {
 #endif
 
-#pragma oss task device(cuda) ndrange(3, n1, n2, n3, t1, t2, t3)
+#pragma oss task device(cuda) ndrange(3, n1, n2, n3, t1, t2, t3) out([3]gridSizes) out([3]blockSizes)
 __global__ void ndrangeKernel(
 	int n1, int n2, int n3,
 	int t1, int t2, int t3,
