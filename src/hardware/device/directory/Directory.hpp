@@ -4,8 +4,8 @@
 	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef DIRECTORY_HPP
-#define DIRECTORY_HPP
+#ifndef DEVICE_DIRECTORY_HPP
+#define DEVICE_DIRECTORY_HPP
 
 #include <atomic>
 
@@ -114,4 +114,4 @@ public:
 	static bool flushTaskDependencies(Task *task);
 };
 
-#endif // DIRECTORY_HPP
+#endif // DEVICE_DIRECTORY_HPP

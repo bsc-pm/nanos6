@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DIRECTORY_PAGE_HPP
@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include "lowlevel/SpinLock.hpp"
+#include "scheduling/Scheduler.hpp"
 #include "support/Containers.hpp"
 
 enum DirectoryPageState {
@@ -25,6 +26,23 @@ enum DirectoryPageState {
 class Task;
 
 struct DirectoryPage {
+private:
+	static inline DirectoryPageState finishTransition(DirectoryPageState oldState)
+	{
+		switch (oldState) {
+			case StateTransitionShared:
+				return StateShared;
+			case StateTransitionModified:
+				return StateModified;
+			case StateTransitionExclusive:
+				return StateExclusive;
+			default:
+				FatalErrorHandler::fail("Invalid State Transition");
+				// Otherwise GCC complains
+				return StateExclusive;
+		}
+	}
+public:
 	Container::vector<DirectoryPageState> _states;
 	Container::vector<void *> _allocations;
 	Container::vector<void *> _copyHandlers;
@@ -49,6 +67,19 @@ struct DirectoryPage {
 		_pendingNotifications(maxDevices)
 	{
 		pthread_spin_init(&_lock, 0);
+	}
+
+	void notifyCopyFinalization(int deviceId)
+	{
+		_states[deviceId] = finishTransition(_states[deviceId]);
+		_copyHandlers[deviceId] = nullptr;
+
+		for (Task *t : _pendingNotifications[deviceId]) {
+			if (t->decreasePredecessors())
+				Scheduler::addReadyTask(t, nullptr, SIBLING_TASK_HINT);
+		}
+
+		_pendingNotifications[deviceId].clear();
 	}
 
 	~DirectoryPage() {

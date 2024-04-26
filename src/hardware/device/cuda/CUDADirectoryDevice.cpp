@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <iostream>
@@ -12,7 +12,13 @@
 
 #include <api/nanos6/events.h>
 
-void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress)
+void CUDADirectoryDevice::memcpyFromImpl(DirectoryPage *page,
+	DirectoryDevice *src,
+	size_t size,
+	void *srcAddress,
+	void *dstAddress,
+	cudaStream_t stream
+	)
 {
 	assert(canCopyFrom(src));
 
@@ -22,15 +28,15 @@ void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, 
 	copy.destinationDevice = this->getId();
 	CUDAFunctions::createEvent(copy.event);
 	if (src->getType() == oss_device_host) {
-		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, _directoryStream);
+		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, stream);
 	} else {
-		int srcDevice = ((CUDADirectoryDevice *) src)->_accelerator->getDeviceHandler();
+		int srcDevice = ((CUDADirectoryDevice *)src)->_accelerator->getDeviceHandler();
 		int dstDevice = _accelerator->getDeviceHandler();
 		// P2P
-		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, _directoryStream);
+		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, stream);
 	}
-	CUDAFunctions::recordEvent(copy.event, _directoryStream);
-	page->_copyHandlers[this->getId()] = (void *) copy.event;
+	CUDAFunctions::recordEvent(copy.event, stream);
+	page->_copyHandlers[copy.destinationDevice] = copy.event;
 	copy.page = page;
 
 	_lock.lock();
@@ -38,30 +44,17 @@ void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, 
 	_lock.unlock();
 }
 
-//TODO merge both functions
+
+void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress)
+{
+	cudaStream_t stream = _directoryStream;
+	memcpyFromImpl(page, src, size, srcAddress, dstAddress, stream);
+}
+
 void CUDADirectoryDevice::memcpyFromImplicit(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, Task *task)
 {
-	assert(canCopyFrom(src));
-
 	cudaStream_t stream = task->getDeviceEnvironment().cuda.stream;
-	OngoingCopy copy;
-	copy.destinationDevice = this->getId();
-	CUDAFunctions::createEvent(copy.event);
-	if (src->getType() == oss_device_host) {
-		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, stream);
-	} else {
-		int srcDevice = ((CUDADirectoryDevice *) src)->_accelerator->getDeviceHandler();
-		int dstDevice = _accelerator->getDeviceHandler();
-		// P2P
-		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, stream);
-	}
-	CUDAFunctions::recordEvent(copy.event, stream);
-	copy.page = page;
-	page->_copyHandlers[this->getId()] = (void *) copy.event;
-
-	_lock.lock();
-	_pendingEvents.push_back(copy);
-	_lock.unlock();
+	memcpyFromImpl(page, src, size, srcAddress, dstAddress, stream);
 }
 
 void CUDADirectoryDevice::synchronizeOngoing(DirectoryPage *page, Task *task)
@@ -84,28 +77,13 @@ void CUDADirectoryDevice::memcpy(DirectoryPage *page, DirectoryDevice *dst, size
 	assert(dst->getType() == oss_device_host);
 	CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyDeviceToHost, _directoryStream);
 	CUDAFunctions::recordEvent(copy.event, _directoryStream);
+	page->_copyHandlers[copy.destinationDevice] = copy.event;
 	copy.page = page;
 
 	// TODO: This could be a lock-free MPSC queue.
 	_lock.lock();
 	_pendingEvents.push_back(copy);
 	_lock.unlock();
-}
-
-static inline DirectoryPageState finishTransition(DirectoryPageState oldState)
-{
-	switch (oldState) {
-		case StateTransitionShared:
-			return StateShared;
-		case StateTransitionModified:
-			return StateModified;
-		case StateTransitionExclusive:
-			return StateExclusive;
-		default:
-			FatalErrorHandler::fail("Invalid State Transition");
-			// Otherwise GCC complains
-			return StateExclusive;
-	}
 }
 
 void CUDADirectoryDevice::processEvents()
@@ -127,20 +105,20 @@ void CUDADirectoryDevice::processEvents()
 		if (finished) {
 			// Notify page
 			DirectoryPage *page = copy.page;
-			CUDAFunctions::destroyEvent(copy.event);
 
 			page->lock();
 
-			page->_states[copy.destinationDevice] = finishTransition(page->_states[copy.destinationDevice]);
+			cudaEvent_t ongoingEvent = (cudaEvent_t) page->_copyHandlers[copy.destinationDevice];
+			// If the events on the copy do not match, it means that it has been finalized by another
+			// thread as part of an implicit synchronization. This can happen when a task finalization is processed
+			// before ready copies, and thus a descendant task finds the copy still transitioning. In that case,
+			// the descendant task will mark the copy as finalized.
+			if (ongoingEvent == copy.event)
+				page->notifyCopyFinalization(copy.destinationDevice);
 
-			for (Task *t : page->_pendingNotifications[copy.destinationDevice]) {
-				if (t->decreasePredecessors())
-					Scheduler::addReadyTask(t, nullptr, SIBLING_TASK_HINT);
-			}
-
-			page->_pendingNotifications[copy.destinationDevice].clear();
 			page->unlock();
 
+			CUDAFunctions::destroyEvent(copy.event);
 			_pendingEventsCopy.pop_front();
 		}
 	}

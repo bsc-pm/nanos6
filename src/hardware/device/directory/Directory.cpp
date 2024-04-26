@@ -113,7 +113,8 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 					continue;
 
 				DirectoryPageState remoteState = page->_states[i];
-				if (canRead(remoteState)) {
+				if (remoteState != StateInvalid) {
+					assert(remoteState != StateTransitionShared);
 					if (!found) {
 						found = true;
 						allocatePageIfNeeded(device, pageSize, page);
@@ -123,14 +124,14 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 						}
 					}
 
+					if (isTransitioning(remoteState))
+						page->notifyCopyFinalization(i);
+
 					page->_states[i] = StateInvalid;
 				}
 
 				assert(!isTransitioning(remoteState));
 			}
-
-			if (!found)
-				FatalErrorHandler::fail("Failure in D/C, not found source for read access");
 		} else {
 			assert(state != StateTransitionShared);
 			if (device->canSynchronizeOngoingCopies()) {
@@ -184,13 +185,17 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 					continue;
 
 				DirectoryPageState remoteState = page->_states[i];
-				if (canRead(remoteState)) {
+				if (canRead(remoteState) || (isTransitioning(remoteState) && remoteState != StateTransitionShared)) {
 					found = true;
 
 					allocatePageIfNeeded(device, pageSize, page);
 					if(!copyPage(_devices[i], device, pageSize, page, task)) {
 						task->increasePredecessors(1);
 						page->_pendingNotifications[directoryId].push_back(task);
+					}
+
+					if (isTransitioning(remoteState)) {
+						page->notifyCopyFinalization(i);
 					}
 
 					if (remoteState == StateExclusive || remoteState == StateModified) {
@@ -345,6 +350,14 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 		page->lock();
 		DirectoryPageState state = page->_states[homeDevice];
 
+		// We can assume at this point every access to this region has been closed, so any transitioning
+		// states that exist are because they haven't been processed by the relevant polling services yet.
+
+		if (isTransitioning(state)) {
+			page->notifyCopyFinalization(homeDevice);
+			state = page->_states[homeDevice];
+		}
+
 		assert(!isTransitioning(state));
 		if (state == StateModified || state == StateShared) {
 			// We already have a valid copy
@@ -360,7 +373,11 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 					continue;
 
 				DirectoryPageState remoteState = page->_states[i];
-				if (canRead(remoteState)) {
+				if (canRead(remoteState) || isTransitioning(remoteState)) {
+					if (isTransitioning(remoteState)) {
+						page->notifyCopyFinalization(i);
+						page->_states[i] = StateInvalid;
+					}
 					copyPage(_devices[i], _devices[homeDevice], pageSize, page, nullptr);
 					break;
 				}
@@ -373,7 +390,8 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 			if (i == (size_t) homeDevice)
 				continue;
 
-			assert(!isTransitioning(page->_states[i]));
+			if (isTransitioning(state))
+				page->notifyCopyFinalization(i);
 			page->_states[i] = StateInvalid;
 		}
 

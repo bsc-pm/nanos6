@@ -33,6 +33,8 @@ private:
 	typedef PaddedTicketSpinLock<int> spinlock_t;
 	spinlock_t _lock;
 
+	void memcpyFromImpl(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, cudaStream_t stream);
+
 public:
 	CUDADirectoryDevice(CUDAAccelerator *accelerator) :
 		DirectoryDevice(oss_device_cuda),
