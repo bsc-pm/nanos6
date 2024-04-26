@@ -11,7 +11,7 @@ shift
 export NANOS6_CONFIG="${DIR}/nanos6.toml"
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
-if [[ "${*}" == *"discrete"* ]] || [[ "${*}" == *"numa"* ]]; then
+if [[ "${*}" == *"discrete"* ]] || [[ "${*}" == *"numa"* ]] || [[ "${*}" == *"directory"* ]]; then
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.dependencies=discrete"
 else
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.dependencies=regions"
@@ -19,6 +19,10 @@ fi
 
 if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]]; then
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},scheduler.policy=lifo"
+fi
+
+if [[ "${*}" == *"directory"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},devices.cuda.prefetch=false"
 fi
 
 # Enable DLB for dlb-specific tests
