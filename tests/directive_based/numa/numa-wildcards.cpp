@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -39,8 +39,6 @@ int main()
 		num_any_active >= num_all_active,
 		"Check that NUMA_ANY_ACTIVE wildcard enables same or more bits than NUMA_ALL_ACTIVE"
 	);
-
-	tap.bailOutAndExitIfAnyFailed();
 
 	tap.end();
 
