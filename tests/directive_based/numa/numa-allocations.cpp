@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <unistd.h>
@@ -19,9 +19,8 @@ int main()
 
 	nanos6_bitmask_t bitmask;
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
-	size_t numaNodes = nanos6_count_setbits(&bitmask);
 
-	if (numaNodes == 1) {
+	if (nanos6_count_setbits(&bitmask) == 1) {
 		tap.registerNewTests(1);
 		tap.begin();
 		tap.skip("This test does not work with just 1 active NUMA node");
@@ -52,11 +51,9 @@ int main()
 	nanos6_numa_free(ptr_sentinel);
 
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ALL_ACTIVE);
-	// It may happen that we don't have any NUMA node with all the cores.
-	numaNodes = nanos6_count_setbits(&bitmask);
-	if (numaNodes < 1) {
-		tap.skip("This test requires all the cores of at least 1 NUMA node");
-	} else {
+
+	// We may not have access to any NUMA node with all cores
+	if (nanos6_count_setbits(&bitmask) > 0) {
 		void *ptr2 = nanos6_numa_alloc_block_interleave(pagesize*8, &bitmask, pagesize);
 		void *ptr2_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
 		nanos6_numa_free(ptr2);
@@ -68,8 +65,6 @@ int main()
 	void *ptr3_sentinel = nanos6_numa_alloc_sentinels(pagesize*8, &bitmask, pagesize);
 	nanos6_numa_free(ptr3);
 	nanos6_numa_free(ptr3_sentinel);
-
-	tap.bailOutAndExitIfAnyFailed();
 
 	tap.end();
 

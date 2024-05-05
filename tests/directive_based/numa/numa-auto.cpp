@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <unistd.h>
@@ -19,9 +19,8 @@ int main()
 
 	nanos6_bitmask_t bitmask;
 	nanos6_bitmask_set_wildcard(&bitmask, NUMA_ANY_ACTIVE);
-	size_t numaNodes = nanos6_count_setbits(&bitmask);
 
-	if (numaNodes == 1) {
+	if (nanos6_count_setbits(&bitmask) == 1) {
 		tap.registerNewTests(1);
 		tap.begin();
 		tap.skip("This test does not work with just 1 active NUMA node");
@@ -47,8 +46,6 @@ int main()
 		enabled,
 		"Check that NUMA tracking is enabled, because we already did an allocation"
 	);
-
-	tap.bailOutAndExitIfAnyFailed();
 
 	tap.end();
 
