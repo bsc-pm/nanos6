@@ -3,10 +3,10 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2024 Barcelona Supercomputing Center (BSC)
 
 # Nanos6 version and copyright
-m4_define([nanos6_version], [4.0])
+m4_define([nanos6_version], [4.1])
 m4_define([nanos6_license], ["GPL3"])
 m4_define([nanos6_copyright], ["2015-2023 Barcelona Supercomputing Center (BSC)"])
 
