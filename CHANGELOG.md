@@ -2,6 +2,22 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 4.1, Wed May 15, 2024
+The 4.1 version corresponds to the OmpSs-2 2024.05 release. It introduces the directory/cache (D/C) for Host and CUDA devices. It also adds several fixes for the instrumentation.
+
+### General
+- Add directory/cache (D/C) for Host and CUDA devices
+- Add device memory allocation API for D/C-managed memory
+- Require ovni 1.5.0 or greater
+- Fix NUMA tests to accept executions with no `NUMA_ALL_ACTIVE`
+
+### Instrumentation
+- Fix thread instrumentation order when blocking task
+- Call `ovni_thread_requires` for the Nanos6 model
+- Call `ovni_thread_free` when threads end
+- Always mark task as paused when entering taskwait in ovni
+
+
 ## Version 4.0, Fri Nov 17, 2023
 The 4.0 version corresponds to the OmpSs-2 2023.11 release. It provides support for the [ALPI](https://gitlab.bsc.es/alpi/alpi) tasking interface, reduces the external software requirements, and removes obsolete features.
 
