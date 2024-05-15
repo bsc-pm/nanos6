@@ -70,6 +70,7 @@ nanos6include_HEADERS = \
 	api/nanos6/cuda_device.h \
 	api/nanos6/debug.h \
 	api/nanos6/devices.h \
+	api/nanos6/directory.h \
 	api/nanos6/events.h \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
@@ -201,6 +202,7 @@ symbol_resolution += \
 	loader/symbol-resolver/cpu-control.c \
 	loader/symbol-resolver/debugging.c \
 	loader/symbol-resolver/dependencies.c \
+	loader/symbol-resolver/directory.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
 	loader/symbol-resolver/lint.c \
@@ -239,6 +241,7 @@ symbol_resolution += \
 	loader/indirect-symbols/cpu-control.c \
 	loader/indirect-symbols/debugging.c \
 	loader/indirect-symbols/dependencies.c \
+	loader/indirect-symbols/directory.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/lint.c \
@@ -403,6 +406,7 @@ common_sources = \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/device/Accelerator.cpp \
+	src/hardware/device/directory/Directory.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
 	src/hardware/places/ComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
@@ -469,6 +473,7 @@ cuda_sources =
 if USE_CUDA
 cuda_sources += \
 	src/hardware/device/cuda/CUDAAccelerator.cpp \
+	src/hardware/device/cuda/CUDADirectoryAgent.cpp \
 	src/hardware/device/cuda/CUDARuntimeLoader.cpp \
 	src/system/CUDADeviceAPI.cpp
 endif
@@ -738,9 +743,15 @@ noinst_HEADERS = \
 	src/hardware/device/DeviceEnvironment.hpp \
 	src/hardware/device/cuda/CUDAAccelerator.hpp \
 	src/hardware/device/cuda/CUDADeviceInfo.hpp \
+	src/hardware/device/cuda/CUDADirectoryAgent.hpp \
 	src/hardware/device/cuda/CUDAFunctions.hpp \
 	src/hardware/device/cuda/CUDAStreamPool.hpp \
 	src/hardware/device/cuda/CUDARuntimeLoader.hpp \
+	src/hardware/device/directory/Directory.hpp \
+	src/hardware/device/directory/DirectoryAgent.hpp \
+	src/hardware/device/directory/DirectoryEntry.hpp \
+	src/hardware/device/directory/DirectoryPage.hpp \
+	src/hardware/device/directory/HostDirectoryAgent.hpp \
 	src/hardware/device/openacc/OpenAccAccelerator.hpp \
 	src/hardware/device/openacc/OpenAccDeviceInfo.hpp \
 	src/hardware/device/openacc/OpenAccFunctions.hpp \

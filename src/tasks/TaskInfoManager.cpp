@@ -24,12 +24,5 @@ void TaskInfoManager::checkDeviceTaskInfo(__attribute__((unused)) const nanos6_t
 	// There are CUDA tasks, initialize the CUDA module
 	if (!CUDAFunctions::initialize())
 		return;
-
-	const char *kernelName = taskInfo->implementations[0].device_function_name;
-	if (kernelName != nullptr) {
-		for (size_t gpu = 0; gpu < CUDAFunctions::getDeviceCount(); ++gpu) {
-			CUDAFunctions::loadFunction(kernelName);
-		}
-	}
 #endif
 }

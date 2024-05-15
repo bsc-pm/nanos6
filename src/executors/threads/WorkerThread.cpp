@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -20,6 +20,7 @@
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "dependencies/SymbolTranslation.hpp"
+#include "hardware/device/directory/Directory.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/TurboSettings.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -212,9 +213,6 @@ void WorkerThread::executeTask(CPU *cpu)
 	MemoryPlace *memoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
 	assert(memoryPlace != nullptr);
 
-	_task->setThread(this);
-	_task->setMemoryPlace(memoryPlace);
-
 	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
 	Instrument::ThreadInstrumentationContext instrumentationContext(
 		taskId, cpu->getInstrumentationId(), _instrumentationId
@@ -224,8 +222,29 @@ void WorkerThread::executeTask(CPU *cpu)
 		size_t tableSize = 0;
 		nanos6_address_translation_entry_t *translationTable =
 			SymbolTranslation::generateTranslationTable(
-				_task, cpu, stackTranslationTable, tableSize
+				_task, stackTranslationTable, tableSize
 			);
+
+		nanos6_task_info_t const *const taskInfo = _task->getTaskInfo();
+		assert(taskInfo != nullptr);
+		const int numSymbols = taskInfo->num_symbols;
+
+		bool copiesReady = Directory::preTaskExecution(Directory::getHostAgent(), _task, translationTable, numSymbols);
+		if(!copiesReady) {
+			// Directory copies are not ready
+			// The copies are queued, but we cannot execute this task yet
+			// Free up all symbol translation
+			if (tableSize > 0) {
+				MemoryAllocator::free(translationTable, tableSize);
+			}
+
+			return;
+		}
+
+		SymbolTranslation::translateReductions(_task, cpu, translationTable, numSymbols);
+
+		_task->setThread(this);
+		_task->setMemoryPlace(memoryPlace);
 
 		// Runtime Tracking Point - A task starts its execution
 		TrackingPoints::taskIsExecuting(_task);

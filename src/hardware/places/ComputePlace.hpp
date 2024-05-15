@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef COMPUTE_PLACE_HPP
@@ -20,6 +20,7 @@
 
 class MemoryPlace;
 class Task;
+class DirectoryAgent;
 
 //! \brief A class that represents a place where code can be executed either directly, or in a sub-place within
 class ComputePlace {

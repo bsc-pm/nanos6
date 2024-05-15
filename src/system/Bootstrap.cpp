@@ -20,6 +20,7 @@
 #include "MemoryAllocator.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "hardware/device/directory/Directory.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/TurboSettings.hpp"
@@ -83,6 +84,7 @@ void nanos6_preinit(void)
 	// Pre-initialize Hardware Counters and Monitoring before hardware
 	HardwareCounters::preinitialize();
 	Monitoring::preinitialize();
+	Directory::initialize();
 	HardwareInfo::initialize();
 
 	CPUManager::preinitialize();

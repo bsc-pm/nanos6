@@ -1,12 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Accelerator.hpp"
 #include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
+#include "hardware/device/directory/Directory.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/TrackingPoints.hpp"
@@ -28,14 +29,32 @@ void Accelerator::runTask(Task *task)
 	task->setMemoryPlace(_memoryPlace);
 
 	setActiveDevice();
-	generateDeviceEvironment(task);
-	preRunTask(task);
 
 	size_t tableSize = 0;
 	nanos6_address_translation_entry_t *translationTable =
 		SymbolTranslation::generateTranslationTable(
-			task, _computePlace, stackTranslationTable,
+			task, stackTranslationTable,
 			tableSize);
+
+	nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
+	assert(taskInfo != nullptr);
+	const int numSymbols = taskInfo->num_symbols;
+
+	generateDeviceEvironment(task);
+
+	DirectoryAgent *DirectoryAgent = getDirectoryAgent();
+	if (DirectoryAgent != nullptr) {
+		[[maybe_unused]] bool copiesReady =
+			Directory::preTaskExecution(DirectoryAgent, task, translationTable, numSymbols);
+
+		// CUDA tasks should have ready copies since we do all of the synchronization through the
+		// assigned streams, even for ongoing copies
+		assert(copiesReady);
+	}
+
+	SymbolTranslation::translateReductions(task, _computePlace, translationTable, numSymbols);
+
+	preRunTask(task);
 
 	callTaskBody(task, translationTable);
 
