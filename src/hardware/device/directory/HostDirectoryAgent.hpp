@@ -1,13 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef HOST_DIRECTORY_DEVICE_HPP
-#define HOST_DIRECTORY_DEVICE_HPP
+#ifndef HOST_DIRECTORY_AGENT_HPP
+#define HOST_DIRECTORY_AGENT_HPP
 
-#include "DirectoryDevice.hpp"
+#include "DirectoryAgent.hpp"
 
 #include <MemoryAllocator.hpp>
 
@@ -15,28 +15,28 @@
 
 // This class is special since there is only one host
 // It cannot copy to/from anywhere
-class HostDirectoryDevice : public DirectoryDevice
+class HostDirectoryAgent : public DirectoryAgent
 {
 public:
-    HostDirectoryDevice() : DirectoryDevice(oss_device_host)
+    HostDirectoryAgent() : DirectoryAgent(oss_device_host, 0)
     {
     }
 
-    bool canCopyTo(DirectoryDevice *) override
-    {
-        return false;
-    }
-
-    bool canCopyFrom(DirectoryDevice *) override
+    bool canCopyTo(DirectoryAgent *) override
     {
         return false;
     }
 
-    void memcpy(DirectoryPage *, DirectoryDevice *, size_t, void *, void *) override
+    bool canCopyFrom(DirectoryAgent *) override
+    {
+        return false;
+    }
+
+    void memcpy(DirectoryPage *, DirectoryAgent *, size_t, void *, void *) override
     {
     }
 
-    void memcpyFrom(DirectoryPage *, DirectoryDevice *, size_t, void *, void *) override
+    void memcpyFrom(DirectoryPage *, DirectoryAgent *, size_t, void *, void *) override
     {
     }
 
@@ -49,4 +49,4 @@ public:
     }
 };
 
-#endif // HOST_DIRECTORY_DEVICE_HPP
+#endif // HOST_DIRECTORY_AGENT_HPP

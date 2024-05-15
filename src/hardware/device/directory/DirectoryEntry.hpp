@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DIRECTORY_ENTRY_HPP
@@ -13,13 +13,21 @@
 
 class DirectoryEntry
 {
+	// Base (real) address for the allocation. This refers to the allocation (which must be contiguous) in the home
+	// device, since it can be accessed without being inside a task
 	void *_baseAddress;
+	// Base (virtual) address. This is either the same as the base address when the host is the home device, or a
+	// shadow region mapped in the host for the purposes of computing task dependencies. We use mmap to allocate a
+	// virtual address range which is never touched, since we need some uniqueness in the addresses for dependencies
 	void *_baseVirtualAddress;
+	// Allocation size
 	size_t _size;
+	// Chunk size for each individual page
 	size_t _pageSize;
+	// Home device global id
 	int _homeDevice;
 
-	Container::vector<DirectoryPage> _pages;
+	DirectoryPage *_pages;
 
 public:
 	DirectoryEntry(
@@ -39,19 +47,31 @@ public:
 		assert(size % pageSize == 0);
 		char *basePtr = (char *)base;
 		char *virtualBasePtr = (char *)virtualBase;
+		_pages = (DirectoryPage *) MemoryAllocator::alloc(sizeof(DirectoryPage) * (size/pageSize));
 
 		for (size_t i = 0; i < size/pageSize; ++i) {
-			DirectoryPage &page = _pages.emplace_back(maxDevices);
-			page._allocations[homeDeviceId] = basePtr;
-			page._states[homeDeviceId] = StateExclusive;
+			new (&_pages[i]) DirectoryPage(maxDevices);
+			DirectoryPage &page = _pages[i];
+			DirectoryPageAgentInfo &homeAgentInfo = page._agentInfo[homeDeviceId];
+			homeAgentInfo._allocation = basePtr;
+			homeAgentInfo._state = StateExclusive;
 
 			// Add host region if needed
 			if (homeDeviceId != 0)
-				page._allocations[0] = virtualBasePtr;
+				page._agentInfo[0]._allocation = virtualBasePtr;
 
 			basePtr += pageSize;
 			virtualBasePtr += pageSize;
 		}
+	}
+
+	~DirectoryEntry()
+	{
+		for (size_t i = 0; i < getNumPages(); ++i) {
+			_pages[i].~DirectoryPage();
+		}
+
+		MemoryAllocator::free(_pages, sizeof(DirectoryPage) * getNumPages());
 	}
 
 	inline size_t getPageSize() const
@@ -72,7 +92,7 @@ public:
 
 	inline DirectoryPage *getPage(int idx)
 	{
-		return &_pages[idx];
+		return _pages + idx;
 	}
 
 	inline bool includes(void *location) const
@@ -100,7 +120,7 @@ public:
 
 	inline size_t getNumPages() const
 	{
-		return _pages.size();
+		return (_size / _pageSize);
 	}
 
 	inline int getHomeDevice() const

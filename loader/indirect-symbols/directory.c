@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <directory.h>
@@ -10,9 +10,9 @@
 
 #pragma GCC visibility push(default)
 
-void *oss_device_alloc(oss_device_t device, int index, size_t size, size_t access_stride)
+void *oss_device_alloc(oss_device_t device, int index, size_t size, size_t access_stride, size_t flags)
 {
-	typedef void *oss_device_alloc_t(oss_device_t, int, size_t, size_t);
+	typedef void *oss_device_alloc_t(oss_device_t, int, size_t, size_t, size_t);
 
 	static oss_device_alloc_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -20,7 +20,7 @@ void *oss_device_alloc(oss_device_t device, int index, size_t size, size_t acces
 			_nanos6_resolve_symbol("oss_device_alloc", "directory", NULL);
 	}
 
-	return (*symbol)(device, index, size, access_stride);
+	return (*symbol)(device, index, size, access_stride, flags);
 }
 
 void oss_device_free(void *ptr)

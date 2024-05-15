@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_ACCELERATOR_HPP
@@ -12,7 +12,7 @@
 
 #include <nanos6/cuda_device.h>
 
-#include "CUDADirectoryDevice.hpp"
+#include "CUDADirectoryAgent.hpp"
 #include "CUDAFunctions.hpp"
 #include "CUDAStreamPool.hpp"
 #include "hardware/device/Accelerator.hpp"
@@ -34,7 +34,7 @@ private:
 	std::list<CUDAEvent> _activeEvents, _preallocatedEvents;
 	cudaDeviceProp _deviceProperties;
 	CUDAStreamPool _streamPool;
-	CUDADirectoryDevice *_directoryDevice;
+	CUDADirectoryAgent *_directoryAgent;
 
 	// Whether the device service should run while there are running tasks
 	static ConfigVariable<bool> _pinnedPolling;
@@ -108,14 +108,14 @@ public:
 		return _currentTask;
 	}
 
-	inline void setDirectoryDevice(CUDADirectoryDevice *device)
+	inline void setDirectoryAgent(CUDADirectoryAgent *agent)
 	{
-		_directoryDevice = device;
+		_directoryAgent = agent;
 	}
 
-	virtual DirectoryDevice *getDirectoryDevice() const override
+	virtual DirectoryAgent *getDirectoryAgent() const override
 	{
-		return _directoryDevice;
+		return _directoryAgent;
 	}
 };
 

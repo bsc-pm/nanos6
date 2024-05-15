@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -68,8 +68,8 @@ int main() {
 	double *x, *y;
 
 	// Allocate directory memory
-	x = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS * sizeof(double));
-	y = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS * sizeof(double));
+	x = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS * sizeof(double), 0);
+	y = (double *) oss_device_alloc(oss_device_host, 0, N * sizeof(double), BS * sizeof(double), 0);
 
 	initialize(N, BS, x, y);
 

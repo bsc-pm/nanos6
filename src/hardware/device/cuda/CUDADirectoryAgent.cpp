@@ -7,13 +7,20 @@
 #include <iostream>
 
 #include "CUDAAccelerator.hpp"
-#include "CUDADirectoryDevice.hpp"
+#include "CUDADirectoryAgent.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <api/nanos6/events.h>
 
-void CUDADirectoryDevice::memcpyFromImpl(DirectoryPage *page,
-	DirectoryDevice *src,
+CUDADirectoryAgent::CUDADirectoryAgent(CUDAAccelerator *accelerator) :
+	DirectoryAgent(oss_device_cuda, accelerator->getDeviceHandler()),
+	_accelerator(accelerator)
+{
+	_directoryStream = CUDAFunctions::createStream();
+}
+
+void CUDADirectoryAgent::memcpyFromImpl(DirectoryPage *page,
+	DirectoryAgent *src,
 	size_t size,
 	void *srcAddress,
 	void *dstAddress,
@@ -25,18 +32,18 @@ void CUDADirectoryDevice::memcpyFromImpl(DirectoryPage *page,
 	_accelerator->setActiveDevice();
 
 	OngoingCopy copy;
-	copy.destinationDevice = this->getId();
+	copy.destinationDevice = this->getGlobalId();
 	CUDAFunctions::createEvent(copy.event);
 	if (src->getType() == oss_device_host) {
 		CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyHostToDevice, stream);
 	} else {
-		int srcDevice = ((CUDADirectoryDevice *)src)->_accelerator->getDeviceHandler();
+		int srcDevice = ((CUDADirectoryAgent *)src)->_accelerator->getDeviceHandler();
 		int dstDevice = _accelerator->getDeviceHandler();
 		// P2P
 		CUDAFunctions::copyMemoryP2PAsync(dstAddress, dstDevice, srcAddress, srcDevice, size, stream);
 	}
 	CUDAFunctions::recordEvent(copy.event, stream);
-	page->_copyHandlers[copy.destinationDevice] = copy.event;
+	page->_agentInfo[copy.destinationDevice]._copyHandler = copy.event;
 	copy.page = page;
 
 	_lock.lock();
@@ -45,39 +52,39 @@ void CUDADirectoryDevice::memcpyFromImpl(DirectoryPage *page,
 }
 
 
-void CUDADirectoryDevice::memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress)
+void CUDADirectoryAgent::memcpyFrom(DirectoryPage *page, DirectoryAgent *src, size_t size, void *srcAddress, void *dstAddress)
 {
 	cudaStream_t stream = _directoryStream;
 	memcpyFromImpl(page, src, size, srcAddress, dstAddress, stream);
 }
 
-void CUDADirectoryDevice::memcpyFromImplicit(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, Task *task)
+void CUDADirectoryAgent::memcpyFromImplicit(DirectoryPage *page, DirectoryAgent *src, size_t size, void *srcAddress, void *dstAddress, Task *task)
 {
 	cudaStream_t stream = task->getDeviceEnvironment().cuda.stream;
 	memcpyFromImpl(page, src, size, srcAddress, dstAddress, stream);
 }
 
-void CUDADirectoryDevice::synchronizeOngoing(DirectoryPage *page, Task *task)
+void CUDADirectoryAgent::synchronizeOngoing(DirectoryPage *page, Task *task)
 {
-	cudaEvent_t event = (cudaEvent_t) page->_copyHandlers[this->getId()];
+	cudaEvent_t event = (cudaEvent_t) page->_agentInfo[this->getGlobalId()]._copyHandler;
 	cudaStream_t stream = task->getDeviceEnvironment().cuda.stream;
 
 	CUDAFunctions::waitForEvent(event, stream);
 }
 
-void CUDADirectoryDevice::memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress)
+void CUDADirectoryAgent::memcpy(DirectoryPage *page, DirectoryAgent *dst, size_t size, void *srcAddress, void *dstAddress)
 {
 	assert(canCopyTo(dst));
 
 	_accelerator->setActiveDevice();
 	OngoingCopy copy;
 	CUDAFunctions::createEvent(copy.event);
-	copy.destinationDevice = dst->getId();
+	copy.destinationDevice = dst->getGlobalId();
 
 	assert(dst->getType() == oss_device_host);
 	CUDAFunctions::copyMemoryAsync(dstAddress, srcAddress, size, cudaMemcpyDeviceToHost, _directoryStream);
 	CUDAFunctions::recordEvent(copy.event, _directoryStream);
-	page->_copyHandlers[copy.destinationDevice] = copy.event;
+	page->_agentInfo[copy.destinationDevice]._copyHandler = copy.event;
 	copy.page = page;
 
 	// TODO: This could be a lock-free MPSC queue.
@@ -86,7 +93,7 @@ void CUDADirectoryDevice::memcpy(DirectoryPage *page, DirectoryDevice *dst, size
 	_lock.unlock();
 }
 
-void CUDADirectoryDevice::processEvents()
+void CUDADirectoryAgent::processEvents()
 {
 	bool finished = true;
 
@@ -108,7 +115,7 @@ void CUDADirectoryDevice::processEvents()
 
 			page->lock();
 
-			cudaEvent_t ongoingEvent = (cudaEvent_t) page->_copyHandlers[copy.destinationDevice];
+			cudaEvent_t ongoingEvent = (cudaEvent_t) page->_agentInfo[copy.destinationDevice]._copyHandler;
 			// If the events on the copy do not match, it means that it has been finalized by another
 			// thread as part of an implicit synchronization. This can happen when a task finalization is processed
 			// before ready copies, and thus a descendant task finds the copy still transitioning. In that case,

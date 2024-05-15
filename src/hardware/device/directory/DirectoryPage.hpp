@@ -25,6 +25,20 @@ enum DirectoryPageState {
 
 class Task;
 
+struct DirectoryPageAgentInfo {
+	DirectoryPageAgentInfo() :
+		_state(StateInvalid),
+		_allocation(nullptr),
+		_copyHandler(nullptr)
+	{
+	}
+
+	DirectoryPageState _state;
+	void *_allocation;
+	void *_copyHandler;
+	Container::vector<Task *> _pendingNotifications;
+};
+
 struct DirectoryPage {
 private:
 	static inline DirectoryPageState finishTransition(DirectoryPageState oldState)
@@ -43,47 +57,36 @@ private:
 		}
 	}
 public:
-	Container::vector<DirectoryPageState> _states;
-	Container::vector<void *> _allocations;
-	Container::vector<void *> _copyHandlers;
-	Container::vector<Container::vector<Task *>> _pendingNotifications;
-	pthread_spinlock_t _lock;
-	// SpinLock _lock;
+	Container::vector<DirectoryPageAgentInfo> _agentInfo;
+	SpinLock _lock;
 
 	inline void lock()
 	{
-		pthread_spin_lock(&_lock);
+		_lock.lock();
 	}
 
 	inline void unlock()
 	{
-		pthread_spin_unlock(&_lock);
+		_lock.unlock();
 	}
 
 	DirectoryPage(int maxDevices) :
-		_states(maxDevices),
-		_allocations(maxDevices),
-		_copyHandlers(maxDevices),
-		_pendingNotifications(maxDevices)
+		_agentInfo(maxDevices)
 	{
-		pthread_spin_init(&_lock, 0);
 	}
 
 	void notifyCopyFinalization(int deviceId)
 	{
-		_states[deviceId] = finishTransition(_states[deviceId]);
-		_copyHandlers[deviceId] = nullptr;
+		DirectoryPageAgentInfo &agentInfo = _agentInfo[deviceId];
+		agentInfo._state = finishTransition(agentInfo._state);
+		agentInfo._copyHandler = nullptr;
 
-		for (Task *t : _pendingNotifications[deviceId]) {
+		for (Task *t : agentInfo._pendingNotifications) {
 			if (t->decreasePredecessors())
 				Scheduler::addReadyTask(t, nullptr, SIBLING_TASK_HINT);
 		}
 
-		_pendingNotifications[deviceId].clear();
-	}
-
-	~DirectoryPage() {
-		pthread_spin_destroy(&_lock);
+		agentInfo._pendingNotifications.clear();
 	}
 };
 

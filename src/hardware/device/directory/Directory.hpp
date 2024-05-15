@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DEVICE_DIRECTORY_HPP
@@ -9,9 +9,9 @@
 
 #include <atomic>
 
-#include "DirectoryDevice.hpp"
+#include "DirectoryAgent.hpp"
 #include "DirectoryEntry.hpp"
-#include "HostDirectoryDevice.hpp"
+#include "HostDirectoryAgent.hpp"
 #include "lowlevel/RWSpinLock.hpp"
 #include "support/Containers.hpp"
 
@@ -21,7 +21,7 @@
 class Directory {
 private:
 	static Directory *_instance;
-	static DirectoryDevice *_hostDevice;
+	static DirectoryAgent *_hostAgent;
 	typedef uintptr_t addr_t;
 	static std::atomic<bool> _enabled;
 
@@ -30,7 +30,7 @@ private:
 	typedef Container::map<addr_t, DirectoryEntry, std::greater<addr_t>> directory_map_t;
 	directory_map_t _directory;
 	RWSpinLock _lock;
-	Container::vector<DirectoryDevice *> _devices;
+	Container::vector<DirectoryAgent *> _agents;
 
 	inline DirectoryEntry *getEntry(addr_t addr)
 	{
@@ -46,10 +46,10 @@ private:
 		return res;
 	}
 
-	inline int addDevice(DirectoryDevice *device)
+	inline int addAgent(DirectoryAgent *agent)
 	{
-		int id = _devices.size();
-		_devices.push_back(device);
+		int id = _agents.size();
+		_agents.push_back(agent);
 		return id;
 	}
 
@@ -58,27 +58,27 @@ private:
 	void flushEntry(DirectoryEntry *entry, Task *taskToUnlock);
 	void partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, void *location, size_t length);
 
-	void readAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation);
-	void readWriteAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation);
-	void registerEntry(DirectoryDevice *device, void *buffer, void *virtualBuffer, size_t size, size_t pageSize);
+	void readAccess(DirectoryAgent *agent, void *location, size_t length, Task *task, void *&translation);
+	void readWriteAccess(DirectoryAgent *agent, void *location, size_t length, Task *task, void *&translation);
+	void registerEntry(DirectoryAgent *agent, void *buffer, void *virtualBuffer, size_t size, size_t pageSize);
 	void destroyEntry(void *buffer);
-	bool processTaskAccesses(DirectoryDevice *device, Task *task, nanos6_address_translation_entry_t *translationTable, int symbols);
+	bool processTaskAccesses(DirectoryAgent *agent, Task *task, nanos6_address_translation_entry_t *translationTable, int symbols);
 
 public:
 	Directory() :
 		_directory(),
 		_lock(),
-		_devices()
+		_agents()
 	{
 	}
 
 	static void initialize()
 	{
 		_instance = MemoryAllocator::newObject<Directory>();
-		_hostDevice = MemoryAllocator::newObject<HostDirectoryDevice>();
+		_hostAgent = MemoryAllocator::newObject<HostDirectoryAgent>();
 
-		registerDevice(_hostDevice);
-		assert(_hostDevice->getId() == 0);
+		registerDevice(_hostAgent);
+		assert(_hostAgent->getGlobalId() == 0);
 	}
 
 	static void shutdown()
@@ -86,20 +86,20 @@ public:
 		delete _instance;
 	}
 
-	static void registerDevice(DirectoryDevice *device)
+	static void registerDevice(DirectoryAgent *agent)
 	{
-		device->setId(_instance->addDevice(device));
+		agent->setGlobalId(_instance->addAgent(agent));
 	}
 
 	static bool preTaskExecution(
-		DirectoryDevice *device,
+		DirectoryAgent *agent,
 		Task *task,
 		nanos6_address_translation_entry_t *translationTable,
 		int symbols);
 
-	static DirectoryDevice *getHostDevice()
+	static DirectoryAgent *getHostAgent()
 	{
-		return _hostDevice;
+		return _hostAgent;
 	}
 
 	static bool isEnabled()

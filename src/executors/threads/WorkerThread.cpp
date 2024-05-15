@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -229,7 +229,7 @@ void WorkerThread::executeTask(CPU *cpu)
 		assert(taskInfo != nullptr);
 		const int numSymbols = taskInfo->num_symbols;
 
-		bool copiesReady = Directory::preTaskExecution(Directory::getHostDevice(), _task, translationTable, numSymbols);
+		bool copiesReady = Directory::preTaskExecution(Directory::getHostAgent(), _task, translationTable, numSymbols);
 		if(!copiesReady) {
 			// Directory copies are not ready
 			// The copies are queued, but we cannot execute this task yet

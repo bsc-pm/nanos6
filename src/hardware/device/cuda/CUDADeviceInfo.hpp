@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2021 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CUDA_DEVICE_INFO_HPP
@@ -19,7 +19,7 @@
 
 class CUDADeviceInfo : public DeviceInfo {
 	std::vector<CUDAAccelerator *> _accelerators;
-	std::vector<CUDADirectoryDevice *> _directoryDevices;
+	std::vector<CUDADirectoryAgent *> _directoryAgents;
 
 public:
 	CUDADeviceInfo()
@@ -38,11 +38,11 @@ public:
 				assert(accelerator != nullptr);
 				_accelerators.push_back(accelerator);
 
-				CUDADirectoryDevice *directoryDevice = new CUDADirectoryDevice(accelerator);
-				Directory::registerDevice(static_cast<DirectoryDevice *>(directoryDevice));
-				_directoryDevices.push_back(directoryDevice);
+				CUDADirectoryAgent *DirectoryAgent = new CUDADirectoryAgent(accelerator);
+				Directory::registerDevice(DirectoryAgent);
+				_directoryAgents.push_back(DirectoryAgent);
 
-				accelerator->setDirectoryDevice(directoryDevice);
+				accelerator->setDirectoryAgent(DirectoryAgent);
 			}
 
 			_deviceInitialized = true;
@@ -93,9 +93,9 @@ public:
 		return _accelerators[handler]->getMemoryPlace();
 	}
 
-	inline DirectoryDevice *getDirectoryDevice(int handler) const override
+	inline DirectoryAgent *getDirectoryAgent(int handler) const override
 	{
-		return (DirectoryDevice *) _directoryDevices[handler];
+		return _directoryAgents[handler];
 	}
 };
 

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DEVICE_INFO_HPP
@@ -56,7 +56,7 @@ public:
 		return 0;
 	}
 
-	virtual DirectoryDevice *getDirectoryDevice(int) const
+	virtual DirectoryAgent *getDirectoryAgent(int) const
 	{
 		return nullptr;
 	}

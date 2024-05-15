@@ -473,7 +473,7 @@ cuda_sources =
 if USE_CUDA
 cuda_sources += \
 	src/hardware/device/cuda/CUDAAccelerator.cpp \
-	src/hardware/device/cuda/CUDADirectoryDevice.cpp \
+	src/hardware/device/cuda/CUDADirectoryAgent.cpp \
 	src/hardware/device/cuda/CUDARuntimeLoader.cpp \
 	src/system/CUDADeviceAPI.cpp
 endif
@@ -743,15 +743,15 @@ noinst_HEADERS = \
 	src/hardware/device/DeviceEnvironment.hpp \
 	src/hardware/device/cuda/CUDAAccelerator.hpp \
 	src/hardware/device/cuda/CUDADeviceInfo.hpp \
-	src/hardware/device/cuda/CUDADirectoryDevice.hpp \
+	src/hardware/device/cuda/CUDADirectoryAgent.hpp \
 	src/hardware/device/cuda/CUDAFunctions.hpp \
 	src/hardware/device/cuda/CUDAStreamPool.hpp \
 	src/hardware/device/cuda/CUDARuntimeLoader.hpp \
 	src/hardware/device/directory/Directory.hpp \
-	src/hardware/device/directory/DirectoryDevice.hpp \
+	src/hardware/device/directory/DirectoryAgent.hpp \
 	src/hardware/device/directory/DirectoryEntry.hpp \
 	src/hardware/device/directory/DirectoryPage.hpp \
-	src/hardware/device/directory/HostDirectoryDevice.hpp \
+	src/hardware/device/directory/HostDirectoryAgent.hpp \
 	src/hardware/device/openacc/OpenAccAccelerator.hpp \
 	src/hardware/device/openacc/OpenAccDeviceInfo.hpp \
 	src/hardware/device/openacc/OpenAccFunctions.hpp \

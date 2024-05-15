@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -50,8 +50,8 @@ void CUDAAccelerator::acceleratorServiceLoop()
 			}
 
 			// Process events from Directory
-			if (_directoryDevice != nullptr) {
-				_directoryDevice->processEvents();
+			if (_directoryAgent != nullptr) {
+				_directoryAgent->processEvents();
 			}
 
 			// Only set the active device if there have been tasks launched

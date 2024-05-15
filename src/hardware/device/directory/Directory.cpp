@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <sys/mman.h>
@@ -15,7 +15,7 @@
 #include <TaskDataAccesses.hpp>
 
 Directory *Directory::_instance;
-DirectoryDevice *Directory::_hostDevice;
+DirectoryAgent *Directory::_hostAgent;
 std::atomic<bool> Directory::_enabled;
 
 static inline bool canRead(DirectoryPageState state)
@@ -37,43 +37,51 @@ static inline bool canWrite(DirectoryPageState state)
 }
 
 bool Directory::preTaskExecution(
-	DirectoryDevice *device,
+	DirectoryAgent *agent,
 	Task *task,
 	nanos6_address_translation_entry_t *translationTable,
 	int symbols)
 {
-	return _instance->processTaskAccesses(device, task, translationTable, symbols);
+	return _instance->processTaskAccesses(agent, task, translationTable, symbols);
 }
 
-static inline bool copyPage(DirectoryDevice *src, DirectoryDevice *dst, size_t size, DirectoryPage *page, Task *task)
+static inline bool copyPage(DirectoryAgent *src, DirectoryAgent *dst, size_t size, DirectoryPage *page, Task *task)
 {
 	if (dst->canCopyFrom(src)) {
-		if (task != nullptr && dst->canSynchronizeImplicitely()) {
-			dst->memcpyFromImplicit(page, src, size, page->_allocations[src->getId()], page->_allocations[dst->getId()], task);
+		if (task != nullptr && dst->canSynchronizeImplicitly()) {
+			dst->memcpyFromImplicit(page, src, size,
+				page->_agentInfo[src->getGlobalId()]._allocation,
+				page->_agentInfo[dst->getGlobalId()]._allocation,
+				task);
 			return true;
 		} else {
-			dst->memcpyFrom(page, src, size, page->_allocations[src->getId()], page->_allocations[dst->getId()]);
+			dst->memcpyFrom(page, src, size,
+				page->_agentInfo[src->getGlobalId()]._allocation,
+				page->_agentInfo[dst->getGlobalId()]._allocation);
 			return false;
 		}
 	} else {
 		assert(src->canCopyTo(dst));
-		src->memcpy(page, dst, size, page->_allocations[src->getId()], page->_allocations[dst->getId()]);
+		src->memcpy(page, dst, size,
+			page->_agentInfo[src->getGlobalId()]._allocation,
+			page->_agentInfo[dst->getGlobalId()]._allocation);
 		return false;
 	}
 }
 
-static inline void allocatePageIfNeeded(DirectoryDevice *device, size_t size, DirectoryPage *page)
+static inline void allocatePageIfNeeded(DirectoryAgent *agent, size_t size, DirectoryPage *page)
 {
-	const int directoryId = device->getId();
-	if (page->_allocations[directoryId] == nullptr) {
-		page->_allocations[directoryId] = device->allocateMemory(size);
-		assert(page->_allocations[directoryId]);
+	const int directoryId = agent->getGlobalId();
+	DirectoryPageAgentInfo &agentInfo = page->_agentInfo[directoryId];
+	if (agentInfo._allocation == nullptr) {
+		agentInfo._allocation = agent->allocateMemory(size);
+		assert(agentInfo._allocation);
 	}
 }
 
-void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation)
+void Directory::readWriteAccess(DirectoryAgent *agent, void *location, size_t length, Task *task, void *&translation)
 {
-	const int directoryId = device->getId();
+	const int localId = agent->getGlobalId();
 	DirectoryEntry *locationEntry = getEntry((addr_t) location);
 	if (!locationEntry || !locationEntry->includes(location)) {
 		// Non-tracked entry
@@ -89,7 +97,9 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 
 	DirectoryPage *page = locationEntry->getPage(pageIndex);
 	page->lock();
-	DirectoryPageState state = page->_states[directoryId];
+
+	DirectoryPageAgentInfo &localAgentInfo = page->_agentInfo[localId];
+	DirectoryPageState state = localAgentInfo._state;
 
 	if (!canWrite(state)) {
 		if (!isTransitioning(state)) {
@@ -102,57 +112,57 @@ void Directory::readWriteAccess(DirectoryDevice *device, void *location, size_t 
 
 			if (canRead(state)) {
 				// We already have the page
-				page->_states[directoryId] = StateModified;
+				localAgentInfo._state = StateModified;
 				found = true;
 			} else {
-				page->_states[directoryId] = StateTransitionModified;
+				localAgentInfo._state = StateTransitionModified;
 			}
 
-			for (size_t i = 0; i < _devices.size(); ++i) {
-				if (i == (size_t) directoryId)
+			for (size_t remoteId = 0; remoteId < _agents.size(); ++remoteId) {
+				if (remoteId == (size_t) localId)
 					continue;
 
-				DirectoryPageState remoteState = page->_states[i];
+				DirectoryPageState remoteState = page->_agentInfo[remoteId]._state;
 				if (remoteState != StateInvalid) {
 					assert(remoteState != StateTransitionShared);
 					if (!found) {
 						found = true;
-						allocatePageIfNeeded(device, pageSize, page);
-						if (!copyPage(_devices[i], device, pageSize, page, task)) {
+						allocatePageIfNeeded(agent, pageSize, page);
+						if (!copyPage(_agents[remoteId], agent, pageSize, page, task)) {
 							task->increasePredecessors(1);
-							page->_pendingNotifications[directoryId].push_back(task);
+							localAgentInfo._pendingNotifications.push_back(task);
 						}
 					}
 
 					if (isTransitioning(remoteState))
-						page->notifyCopyFinalization(i);
+						page->notifyCopyFinalization(remoteId);
 
-					page->_states[i] = StateInvalid;
+					page->_agentInfo[remoteId]._state = StateInvalid;
 				}
 
 				assert(!isTransitioning(remoteState));
 			}
 		} else {
 			assert(state != StateTransitionShared);
-			if (device->canSynchronizeOngoingCopies()) {
-				device->synchronizeOngoing(page, task);
+			if (agent->canSynchronizeOngoingCopies()) {
+				agent->synchronizeOngoing(page, task);
 			} else {
 				task->increasePredecessors(1);
-				page->_pendingNotifications[directoryId].push_back(task);
+				localAgentInfo._pendingNotifications.push_back(task);
 			}
 		}
 	}
 
 	// Set translation
 	// Technically we don't need the lock for this, but given that we already have it we'll just do it here
-	translation = page->_allocations[directoryId];
+	translation = localAgentInfo._allocation;
 
 	page->unlock();
 }
 
-void Directory::readAccess(DirectoryDevice *device, void *location, size_t length, Task *task, void *&translation)
+void Directory::readAccess(DirectoryAgent *agent, void *location, size_t length, Task *task, void *&translation)
 {
-	const int directoryId = device->getId();
+	const int localId = agent->getGlobalId();
 	DirectoryEntry *locationEntry = getEntry((addr_t) location);
 	if (!locationEntry || !locationEntry->includes(location)) {
 		// Non-tracked entry
@@ -168,7 +178,9 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 
 	DirectoryPage *page = locationEntry->getPage(pageIndex);
 	page->lock();
-	DirectoryPageState state = page->_states[directoryId];
+
+	DirectoryPageAgentInfo &localAgentInfo = page->_agentInfo[localId];
+	DirectoryPageState state = localAgentInfo._state;
 
 	if (!canRead(state)) {
 		if (!isTransitioning(state)) {
@@ -178,28 +190,28 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 			// - Add ourselves to the notifications
 
 			bool found = false;
-			page->_states[directoryId] = StateTransitionShared;
+			localAgentInfo._state = StateTransitionShared;
 
-			for (size_t i = 0; i < _devices.size(); ++i) {
-				if (i == (size_t) directoryId)
+			for (size_t remoteId = 0; remoteId < _agents.size(); ++remoteId) {
+				if (remoteId == (size_t) localId)
 					continue;
 
-				DirectoryPageState remoteState = page->_states[i];
+				DirectoryPageState remoteState = page->_agentInfo[remoteId]._state;
 				if (canRead(remoteState) || (isTransitioning(remoteState) && remoteState != StateTransitionShared)) {
 					found = true;
 
-					allocatePageIfNeeded(device, pageSize, page);
-					if(!copyPage(_devices[i], device, pageSize, page, task)) {
+					allocatePageIfNeeded(agent, pageSize, page);
+					if(!copyPage(_agents[remoteId], agent, pageSize, page, task)) {
 						task->increasePredecessors(1);
-						page->_pendingNotifications[directoryId].push_back(task);
+						localAgentInfo._pendingNotifications.push_back(task);
 					}
 
 					if (isTransitioning(remoteState)) {
-						page->notifyCopyFinalization(i);
+						page->notifyCopyFinalization(remoteId);
 					}
 
 					if (remoteState == StateExclusive || remoteState == StateModified) {
-						page->_states[i] = StateShared;
+						page->_agentInfo[remoteId]._state = StateShared;
 					}
 
 					break;
@@ -209,25 +221,25 @@ void Directory::readAccess(DirectoryDevice *device, void *location, size_t lengt
 			if (!found)
 				FatalErrorHandler::fail("Failure in D/C, not found source for read access");
 		} else {
-			if (device->canSynchronizeOngoingCopies()) {
-				device->synchronizeOngoing(page, task);
+			if (agent->canSynchronizeOngoingCopies()) {
+				agent->synchronizeOngoing(page, task);
 			} else {
 				task->increasePredecessors(1);
-				page->_pendingNotifications[directoryId].push_back(task);
+				localAgentInfo._pendingNotifications.push_back(task);
 			}
 		}
 	}
 
 	// Set translation
 	// Technically we don't need the lock for this, but given that we already have it we'll just do it here
-	translation = page->_allocations[directoryId];
+	translation = localAgentInfo._allocation;
 
 	page->unlock();
 }
 
-void Directory::registerEntry(DirectoryDevice *device, void *buffer, void *virtualBuffer, size_t size, size_t pageSize)
+void Directory::registerEntry(DirectoryAgent *agent, void *buffer, void *virtualBuffer, size_t size, size_t pageSize)
 {
-	const int directoryId = device->getId();
+	const int directoryId = agent->getGlobalId();
 
 	if (!isEnabled())
 		_enabled.store(true, std::memory_order_release);
@@ -235,7 +247,7 @@ void Directory::registerEntry(DirectoryDevice *device, void *buffer, void *virtu
 	_lock.writeLock();
 	_directory.emplace(std::piecewise_construct,
 		std::forward_as_tuple((addr_t) virtualBuffer),
-		std::forward_as_tuple(buffer, virtualBuffer, size, pageSize, directoryId, _devices.size()));
+		std::forward_as_tuple(buffer, virtualBuffer, size, pageSize, directoryId, _agents.size()));
 	_lock.writeUnlock();
 }
 
@@ -250,7 +262,7 @@ void Directory::destroyEntry(void *buffer)
 	}
 
 	const int homeDevice = entry->getHomeDevice();
-	const int numDevices = _devices.size();
+	const int numDevices = _agents.size();
 	const size_t numPages = entry->getNumPages();
 	// Free every buffer except the one in the host and the home device, since those are allocated consecutively
 	for (size_t i = 0; i < numPages; ++i) {
@@ -260,13 +272,13 @@ void Directory::destroyEntry(void *buffer)
 			if (dev == homeDevice || dev == 0)
 				continue;
 
-			if (page->_allocations[dev] != nullptr) {
-				_devices[dev]->freeMemory(page->_allocations[dev], entry->getPageSize());
+			if (page->_agentInfo[dev]._allocation != nullptr) {
+				_agents[dev]->freeMemory(page->_agentInfo[dev]._allocation, entry->getPageSize());
 			}
 		}
 	}
 
-	_devices[homeDevice]->freeMemory(entry->getBaseAddress(), entry->getSize());
+	_agents[homeDevice]->freeMemory(entry->getBaseAddress(), entry->getSize());
 
 	if (homeDevice != 0) {
 		// Free host shadow region
@@ -281,20 +293,24 @@ void Directory::destroyEntry(void *buffer)
 
 void *Directory::deviceAlloc(oss_device_t device, int index, size_t size, size_t stride)
 {
-	DirectoryDevice *deviceHandle = nullptr;
+	DirectoryAgent *agent = nullptr;
 
 	if (device == oss_device_host) {
-		deviceHandle = _hostDevice;
+		agent = _hostAgent;
 	} else if (device == oss_device_cuda) {
 		DeviceInfo *cudaDeviceInfo = HardwareInfo::getDeviceInfo(nanos6_cuda_device);
 		assert(cudaDeviceInfo);
-		deviceHandle = cudaDeviceInfo->getDirectoryDevice(index);
-		assert(deviceHandle);
+		agent = cudaDeviceInfo->getDirectoryAgent(index);
+		assert(agent);
 	} else {
 		FatalErrorHandler::fail("Unsupported device");
 	}
 
-	void *buffer = deviceHandle->allocateMemory(size);
+	if (size % stride != 0) {
+		FatalErrorHandler::fail("Directory allocation size must be multiple of access stride");
+	}
+
+	void *buffer = agent->allocateMemory(size);
 	void *virtualBuffer = buffer;
 	if (device != oss_device_host) {
 		// Allocate virtual memory in the host to act as a shadow region
@@ -303,7 +319,7 @@ void *Directory::deviceAlloc(oss_device_t device, int index, size_t size, size_t
 		assert(virtualBuffer != MAP_FAILED);
 	}
 
-	_instance->registerEntry(deviceHandle, buffer, virtualBuffer, size, stride);
+	_instance->registerEntry(agent, buffer, virtualBuffer, size, stride);
 
 	return buffer;
 }
@@ -313,25 +329,10 @@ void Directory::deviceFree(void *address)
 	_instance->destroyEntry(address);
 }
 
-extern "C" void *oss_device_alloc(oss_device_t device, int index, size_t size, size_t access_stride)
-{
-	return Directory::deviceAlloc(device, index, size, access_stride);
-}
-
-extern "C"  void oss_device_free(void *address)
-{
-	Directory::deviceFree(address);
-}
-
 void Directory::flushEntry(DirectoryEntry *entry, Task *taskToUnlock)
 {
 	partiallyFlushEntry(entry, taskToUnlock, entry->getBaseVirtualAddress(), entry->getSize());
 }
-
-// MMap adreces virtuals sempre host
-// Sempre es tradueixen devices! (Bueno, es pot traduïr tot sempre no passa res)
-// Flags a la allocation per dir si ha d ser memòria consecutiva
-// Tractar sempre x pàgines, no admetre deps de + 1 pàgina
 
 void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, void *location, size_t length)
 {
@@ -348,14 +349,15 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 	{
 		DirectoryPage *page = entry->getPage(pageIndex + currentPage);
 		page->lock();
-		DirectoryPageState state = page->_states[homeDevice];
+		DirectoryPageAgentInfo &homeAgentInfo = page->_agentInfo[homeDevice];
+		DirectoryPageState state = homeAgentInfo._state;
 
 		// We can assume at this point every access to this region has been closed, so any transitioning
 		// states that exist are because they haven't been processed by the relevant polling services yet.
 
 		if (isTransitioning(state)) {
 			page->notifyCopyFinalization(homeDevice);
-			state = page->_states[homeDevice];
+			state = homeAgentInfo._state;
 		}
 
 		assert(!isTransitioning(state));
@@ -365,20 +367,20 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 		} else if (state == StateInvalid) {
 			// We need to enqueue a copy then
 			taskToUnlock->increasePredecessors(1);
-			page->_states[homeDevice] = StateTransitionExclusive;
-			page->_pendingNotifications[homeDevice].push_back(taskToUnlock);
+			homeAgentInfo._state = StateTransitionExclusive;
+			homeAgentInfo._pendingNotifications.push_back(taskToUnlock);
 
-			for (size_t i = 0; i < _devices.size(); ++i) {
+			for (size_t i = 0; i < _agents.size(); ++i) {
 				if (i == (size_t) homeDevice)
 					continue;
 
-				DirectoryPageState remoteState = page->_states[i];
+				DirectoryPageState remoteState = page->_agentInfo[i]._state;
 				if (canRead(remoteState) || isTransitioning(remoteState)) {
 					if (isTransitioning(remoteState)) {
 						page->notifyCopyFinalization(i);
-						page->_states[i] = StateInvalid;
+						page->_agentInfo[i]._state = StateInvalid;
 					}
-					copyPage(_devices[i], _devices[homeDevice], pageSize, page, nullptr);
+					copyPage(_agents[i], _agents[homeDevice], pageSize, page, nullptr);
 					break;
 				}
 			}
@@ -386,13 +388,13 @@ void Directory::partiallyFlushEntry(DirectoryEntry *entry, Task *taskToUnlock, v
 			assert(state == StateExclusive);
 		}
 
-		for (size_t i = 0; i < _devices.size(); ++i) {
+		for (size_t i = 0; i < _agents.size(); ++i) {
 			if (i == (size_t) homeDevice)
 				continue;
 
 			if (isTransitioning(state))
 				page->notifyCopyFinalization(i);
-			page->_states[i] = StateInvalid;
+			page->_agentInfo[i]._state = StateInvalid;
 		}
 
 		page->unlock();
@@ -403,8 +405,8 @@ void Directory::performFullFlush(Task *taskToUnlock)
 {
 	_lock.readLock();
 
-	for (directory_map_t::iterator it = _directory.begin(); it != _directory.end(); ++it)
-		flushEntry(&(it->second), taskToUnlock);
+	for (auto & [_, val] : _directory)
+		flushEntry(&val, taskToUnlock);
 
 	_lock.readUnlock();
 }
@@ -428,7 +430,7 @@ bool Directory::flush(Task *task)
 }
 
 #ifdef REGIONS_DEPENDENCIES
-bool Directory::processTaskAccesses(DirectoryDevice *, Task *, nanos6_address_translation_entry_t *, int)
+bool Directory::processTaskAccesses(DirectoryAgent *, Task *, nanos6_address_translation_entry_t *, int)
 {
 	return true;
 }
@@ -461,7 +463,7 @@ bool Directory::flushTaskDependencies(Task *task)
 	return task->decreasePredecessors();
 }
 
-bool Directory::processTaskAccesses(DirectoryDevice *device, Task *task, nanos6_address_translation_entry_t *translationTable, int symbols)
+bool Directory::processTaskAccesses(DirectoryAgent *agent, Task *task, nanos6_address_translation_entry_t *translationTable, int symbols)
 {
 	if (!isEnabled())
 		return true;
@@ -471,31 +473,42 @@ bool Directory::processTaskAccesses(DirectoryDevice *device, Task *task, nanos6_
 	// Process task accesses, searching for accesses
 	TaskDataAccesses &accessStruct = task->getDataAccesses();
 	accessStruct.forAll(
-		[this, device, task, symbols, translationTable]
+		[this, agent, task, symbols, translationTable]
 		(void *address,	DataAccess *access) -> bool {
-		void *translation = nullptr;
+			void *translation = nullptr;
 
-		// Weak accesses don't really need to be translated
-		if (access->isWeak())
-			return true;
+			// Weak accesses don't really need to be translated
+			if (access->isWeak())
+				return true;
 
-		// TODO other types
-		if (access->getType() == READ_ACCESS_TYPE)
-			this->readAccess(device, address, access->getLength(), task, translation);
-		else
-			this->readWriteAccess(device, address, access->getLength(), task, translation);
+			if (access->getType() == READ_ACCESS_TYPE)
+				this->readAccess(agent, address, access->getLength(), task, translation);
+			else
+				this->readWriteAccess(agent, address, access->getLength(), task, translation);
 
-		if (translation != nullptr) {
-			for (int j = 0; j < symbols; ++j) {
-				if (access->isInSymbol(j)) {
-					translationTable[j] = {(size_t)address, (size_t)translation};
+			if (translation != nullptr) {
+				for (int j = 0; j < symbols; ++j) {
+					if (access->isInSymbol(j)) {
+						translationTable[j] = {(size_t)address, (size_t)translation};
+					}
 				}
 			}
-		}
 
-		return true;
-	});
+			return true;
+		}
+	);
 
 	return task->decreasePredecessors();
 }
+
 #endif // REGIONS_DEPENDENCIES
+
+extern "C" void *oss_device_alloc(oss_device_t device, int index, size_t size, size_t access_stride, __attribute__((unused)) size_t flags)
+{
+	return Directory::deviceAlloc(device, index, size, access_stride);
+}
+
+extern "C"  void oss_device_free(void *address)
+{
+	Directory::deviceFree(address);
+}

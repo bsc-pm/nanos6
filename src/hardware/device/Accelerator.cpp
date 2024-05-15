@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Accelerator.hpp"
@@ -42,10 +42,10 @@ void Accelerator::runTask(Task *task)
 
 	generateDeviceEvironment(task);
 
-	DirectoryDevice *directoryDevice = getDirectoryDevice();
-	if (directoryDevice != nullptr) {
+	DirectoryAgent *DirectoryAgent = getDirectoryAgent();
+	if (DirectoryAgent != nullptr) {
 		[[maybe_unused]] bool copiesReady =
-			Directory::preTaskExecution(directoryDevice, task, translationTable, numSymbols);
+			Directory::preTaskExecution(DirectoryAgent, task, translationTable, numSymbols);
 
 		// CUDA tasks should have ready copies since we do all of the synchronization through the
 		// assigned streams, even for ongoing copies

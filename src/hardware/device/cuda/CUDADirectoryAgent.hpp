@@ -1,14 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CUDA_DIRECTORY_DEVICE_HPP
-#define CUDA_DIRECTORY_DEVICE_HPP
+#ifndef CUDA_DIRECTORY_AGENT_HPP
+#define CUDA_DIRECTORY_AGENT_HPP
 
 #include "CUDAFunctions.hpp"
-#include "hardware/device/directory/DirectoryDevice.hpp"
+#include "hardware/device/directory/DirectoryAgent.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
 #include "support/Containers.hpp"
 
@@ -17,7 +17,7 @@
 class CUDAAccelerator;
 class Task;
 
-class CUDADirectoryDevice : public DirectoryDevice {
+class CUDADirectoryAgent : public DirectoryAgent {
 private:
 	CUDAAccelerator *_accelerator;
 	cudaStream_t _directoryStream;
@@ -33,29 +33,24 @@ private:
 	typedef PaddedTicketSpinLock<int> spinlock_t;
 	spinlock_t _lock;
 
-	void memcpyFromImpl(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, cudaStream_t stream);
+	void memcpyFromImpl(DirectoryPage *page, DirectoryAgent *src, size_t size, void *srcAddress, void *dstAddress, cudaStream_t stream);
 
 public:
-	CUDADirectoryDevice(CUDAAccelerator *accelerator) :
-		DirectoryDevice(oss_device_cuda),
-		_accelerator(accelerator)
-	{
-		_directoryStream = CUDAFunctions::createStream();
-	}
+	CUDADirectoryAgent(CUDAAccelerator *accelerator);
 
-	bool canCopyTo(DirectoryDevice *other) override
+	bool canCopyTo(DirectoryAgent *other) override
 	{
 		return other->getType() == oss_device_cuda || other->getType() == oss_device_host;
 	}
 
-	bool canCopyFrom(DirectoryDevice *other) override
+	bool canCopyFrom(DirectoryAgent *other) override
 	{
 		return other->getType() == oss_device_cuda || other->getType() == oss_device_host;
 	}
 
-	void memcpy(DirectoryPage *page, DirectoryDevice *dst, size_t size, void *srcAddress, void *dstAddress) override;
+	void memcpy(DirectoryPage *page, DirectoryAgent *dst, size_t size, void *srcAddress, void *dstAddress) override;
 
-	void memcpyFrom(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress) override;
+	void memcpyFrom(DirectoryPage *page, DirectoryAgent *src, size_t size, void *srcAddress, void *dstAddress) override;
 
 	void *allocateMemory(size_t size) override
 	{
@@ -67,12 +62,12 @@ public:
 		CUDAFunctions::free(addr);
 	}
 
-	bool canSynchronizeImplicitely() override
+	bool canSynchronizeImplicitly() override
 	{
 		return true;
 	}
 
-	void memcpyFromImplicit(DirectoryPage *page, DirectoryDevice *src, size_t size, void *srcAddress, void *dstAddress, Task *task) override;
+	void memcpyFromImplicit(DirectoryPage *page, DirectoryAgent *src, size_t size, void *srcAddress, void *dstAddress, Task *task) override;
 
 	void synchronizeOngoing(DirectoryPage *page, Task *task) override;
 
@@ -84,4 +79,4 @@ public:
 	void processEvents();
 };
 
-#endif // CUDA_DIRECTORY_DEVICE_HPP
+#endif // CUDA_DIRECTORY_AGENT_HPP

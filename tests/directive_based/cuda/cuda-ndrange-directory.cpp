@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -35,10 +35,10 @@ int main() {
 	cudaError_t err;
 	int *outGridSizes, *outBlockSizes;
 
-	// Allocate CUDA unified memory
+	// Allocate directory memory
 
-	outGridSizes = (int *) oss_device_alloc(oss_device_host, 0, 3 * sizeof(int), 3 * sizeof(int));
-	outBlockSizes = (int *) oss_device_alloc(oss_device_host, 0, 3 * sizeof(int), 3 * sizeof(int));
+	outGridSizes = (int *) oss_device_alloc(oss_device_host, 0, 3 * sizeof(int), 3 * sizeof(int), 0);
+	outBlockSizes = (int *) oss_device_alloc(oss_device_host, 0, 3 * sizeof(int), 3 * sizeof(int), 0);
 
 	std::memset(outGridSizes, 0, 3 * sizeof(int));
 	std::memset(outBlockSizes, 0, 3 * sizeof(int));

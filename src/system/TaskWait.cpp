@@ -40,7 +40,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 	TrackingPoints::enterTaskWait(currentTask, invocationSource, fromUserCode);
 
 	// Fast check
-	// Note that this must only be used with
+	// Using the directory disables this fast path because we need to flush home node accesses
 	if (currentTask->doesNotNeedToBlockForChildren() && !Directory::isEnabled()) {
 		// This in combination with a release from the children makes their changes visible to this thread
 		std::atomic_thread_fence(std::memory_order_acquire);
