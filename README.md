@@ -31,7 +31,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. Jemalloc must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime
 1. [PAPI](http://icl.utk.edu/papi/software/) >= 5.6.0
 1. [Babeltrace2](https://babeltrace.org/) to enable the fast CTF converter (`ctf2prv --fast`) and the multi-process trace merger (`nanos6-mergeprv`)
-1. [ovni](https://ovni.readthedocs.io/) to generate execution traces for performance analysis with [Paraver](https://tools.bsc.es/paraver)
+1. [ovni](https://ovni.readthedocs.io/) >= 1.5.0 to generate execution traces for performance analysis with [Paraver](https://tools.bsc.es/paraver)
 
 
 ## Build procedure
