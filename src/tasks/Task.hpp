@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_HPP
@@ -702,6 +702,18 @@ public:
 		int count = (_countdownToRelease -= amount);
 		assert(count >= 0);
 		return (count == 0);
+	}
+
+	//! \brief Get the number of events
+	//!
+	//! This function returns the number of events of this task. The number
+	//! of external events may change at any point if any is decreased from
+	//! another thread
+	//!
+	//! \returns the number of external events
+	inline int getReleaseCount()
+	{
+		return _countdownToRelease.load(std::memory_order_relaxed);
 	}
 
 	//! \brief Return the number of symbols on the task

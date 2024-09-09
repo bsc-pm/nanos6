@@ -1,7 +1,7 @@
 /*
 	This file is part of ALPI and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef ALPI_INTERFACE_H
@@ -44,7 +44,7 @@ struct alpi_attr;
 /**
  * Constant defining the minor version of the current interface
  */
-#define ALPI_VERSION_MINOR 0
+#define ALPI_VERSION_MINOR 1
 
 /**
  * The list of all errors that can be returned by any interface's function
@@ -158,7 +158,7 @@ int alpi_task_unblock(struct alpi_task *task);
  * Block the calling task for an approximate amount of nanoseconds
  *
  * This function blocks the calling task during an approximate amount of
- * nanoseconds. The task will be automatically resumed by the tasking runtime 
+ * nanoseconds. The task will be automatically resumed by the tasking runtime
  * system after that time. The task cannot be unblocked explicitly
  *
  * The tasking runtime system should reuse the execution resources used by this
@@ -195,6 +195,24 @@ int alpi_task_waitfor_ns(uint64_t target_ns, uint64_t *actual_ns);
  *         ALPI_ERR_OUTSIDE_TASK if running outside a task
  */
 int alpi_task_events_increase(struct alpi_task *task, uint64_t increment);
+
+/**
+ * Returns if the calling task has some event
+ *
+ * This function sets the value pointed by the has_events parameter
+ * to 1 if the calling task has events, or 0 if not
+ *
+ * This function is intended as a hint. Another thread can decrease the events
+ * at any time. The result is guaranteed to be correct when it returns that has
+ * no events
+ *
+ * @param task The handle of the calling task
+ * @param has_events Pointer to the result of the operation
+ *
+ * @return 0 on success; or ALPI_ERR_PARAMETER if the task handle is invalid; or
+ *		ALPI_ERR_OUTSIDE_TASK if running outside a task
+ */
+int alpi_task_events_test(struct alpi_task *task, uint64_t *has_events);
 
 /**
  * Decrease the external events of a task and complete it if required
@@ -348,6 +366,49 @@ int alpi_cpu_logical_id(uint64_t *logical_id);
  *         invalid; or ALPI_ERR_OUTSIDE_TASK if running outside a task
  */
 int alpi_cpu_system_id(uint64_t *system_id);
+
+/**
+ * List of all suspend modes
+ * Suspend modes are executed after suspending.
+ */
+typedef enum {
+	ALPI_SUSPEND_NONE = 0,       /**< Do nothing, args will be ignored */
+	ALPI_SUSPEND_SUBMIT,         /**< Submit itself, if args is 0 will do a normal submit, if args is 1 the task will yield */
+	ALPI_SUSPEND_TIMEOUT_SUBMIT, /**< Submit itself with a timeout, args is the timeout in ns */
+	ALPI_SUSPEND_EVENT_SUBMIT,   /**< Wait for events (events == 0) and re-submit, args will be ignored */
+} alpi_suspend_mode_t;
+
+/**
+ * Set the suspend mode of the calling task
+ *
+ * This function sets the suspend mode and the arguments of the current task,
+ * to be executed if the current task suspends
+ *
+ * This function can only be called within a running task
+ *
+ * @param task The handle of the calling task
+ * @param suspend_mode Suspend mode to be executed in the next suspend
+ * @param args Extra parameter that some suspend modes use
+ *
+ * @return 0 on success; or ALPI_ERR_PARAMETER if the task handle is invalid; or
+ *         ALPI_ERR_OUTSIDE_TASK if running outside a task
+ */
+int alpi_task_suspend_mode_set(struct alpi_task *task, alpi_suspend_mode_t suspend_mode, uint64_t args);
+
+/**
+ * Mark the calling task as suspended
+ *
+ * This function marks the current task as suspended, after the task body is executed,
+ * it will execute the suspend mode instead of finishing the task
+ *
+ * This function can only be called within a running task
+ *
+ * @param task The handle of the calling task
+ *
+ * @return 0 on success; or ALPI_ERR_PARAMETER if the task handle is invalid; or
+ *         ALPI_ERR_OUTSIDE_TASK if running outside a task
+ */
+int alpi_task_suspend(struct alpi_task *task);
 
 #ifdef __cplusplus
 }

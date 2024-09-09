@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -12,6 +12,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/WorkerThreadImplementation.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "system/BlockingAPI.hpp"
 #include "system/EventsAPI.hpp"
 #include "system/SpawnFunction.hpp"
@@ -105,6 +106,23 @@ int alpi_task_events_decrease(struct alpi_task *handle, uint64_t decrement)
 	return 0;
 }
 
+int alpi_task_events_test(struct alpi_task *, uint64_t *has_events)
+{
+	if (has_events == nullptr)
+		return ALPI_ERR_PARAMETER;
+
+	Task *task = WorkerThread::getCurrentTask();
+	if (task == nullptr)
+		return ALPI_ERR_OUTSIDE_TASK;
+
+	int count = task->getReleaseCount();
+	assert(count > 0);
+
+	*has_events = count - 1;
+
+	return 0;
+}
+
 int alpi_task_waitfor_ns(uint64_t target_ns, uint64_t *actual_ns)
 {
 	if (WorkerThread::getCurrentTask() == nullptr)
@@ -159,6 +177,18 @@ int alpi_task_spawn(
 		completion_callback, completion_args,
 		label, true);
 	return 0;
+}
+
+int alpi_task_suspend_mode_set(struct alpi_task *, alpi_suspend_mode_t, uint64_t)
+{
+	FatalErrorHandler::fail("Function ", __func__, " not implemented");
+	return ALPI_ERR_UNKNOWN;
+}
+
+int alpi_task_suspend(struct alpi_task *)
+{
+	FatalErrorHandler::fail("Function ", __func__, " not implemented");
+	return ALPI_ERR_UNKNOWN;
 }
 
 int alpi_cpu_count(uint64_t *count)
