@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 4.2, Fri Nov 15, 2024
+The 4.2 version corresponds to the OmpSs-2 2024.11 release. It adds compatibility with ALPI version 1.1.
+
+### General
+- Add compatibility with [ALPI](https://gitlab.bsc.es/alpi/alpi) version 1.1 by implementing various functions from the tasking interface
+
+
 ## Version 4.1, Wed May 15, 2024
 The 4.1 version corresponds to the OmpSs-2 2024.05 release. It introduces the directory/cache (D/C) for Host and CUDA devices. It also adds several fixes for the instrumentation.
 
