@@ -1,10 +1,11 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
+#include <cstdio>
 
 #include "nanos6/alpi.h"
 
@@ -22,21 +23,64 @@
 extern "C" {
 
 static constexpr const char *Errors[ALPI_ERR_MAX] = {
-	[ALPI_SUCCESS] =             "Operation succeeded",
-	[ALPI_ERR_VERSION] =         "Incompatible version",
+	[ALPI_SUCCESS]             = "Operation succeeded",
+	[ALPI_ERR_VERSION]         = "Incompatible version",
 	[ALPI_ERR_NOT_INITIALIZED] = "Runtime system not initialized",
-	[ALPI_ERR_PARAMETER] =       "Invalid parameter",
-	[ALPI_ERR_OUT_OF_MEMORY] =   "Failed to allocate memory",
-	[ALPI_ERR_OUTSIDE_TASK] =    "Must run within a task",
-	[ALPI_ERR_UNKNOWN] =         "Unknown error",
+	[ALPI_ERR_PARAMETER]       = "Invalid parameter",
+	[ALPI_ERR_OUT_OF_MEMORY]   = "Failed to allocate memory",
+	[ALPI_ERR_OUTSIDE_TASK]    = "Must run within a task",
+	[ALPI_ERR_UNKNOWN]         = "Unknown error",
+	[ALPI_ERR_FEATURE_UNKNOWN] = "API feature unavailable or unknown",
 };
 
-const char *alpi_error_string(int err)
+const char *alpi_error_string(alpi_error_t err)
 {
 	if (err < 0 || err >= ALPI_ERR_MAX)
 		return "Error code not recognized";
 
 	return Errors[err];
+}
+
+int alpi_info_get(alpi_info_t query, char *buffer, size_t max_length, int *length)
+{
+	if (buffer == nullptr || max_length <= 0)
+		return ALPI_ERR_PARAMETER;
+
+	int len = 0;
+	switch (query) {
+		case ALPI_INFO_RUNTIME_NAME:
+			len = snprintf(buffer, max_length, "%s", "Nanos6");
+			break;
+
+		case ALPI_INFO_RUNTIME_VENDOR:
+			len = snprintf(buffer, max_length, "%s", "STAR Team (BSC)");
+			break;
+
+		case ALPI_INFO_VERSION:
+			len = snprintf(buffer, max_length, "ALPI %d.%d (Nanos6)",
+				ALPI_VERSION_MAJOR, ALPI_VERSION_MINOR);
+			break;
+
+		default:
+			return ALPI_ERR_PARAMETER;
+	}
+
+	if (len < 0)
+		return ALPI_ERR_UNKNOWN;
+
+	if (length != nullptr)
+		*length = len;
+
+	return ALPI_SUCCESS;
+}
+
+int alpi_feature_check(int feature_bitmask)
+{
+	if ((feature_bitmask & ALPI_SUPPORTED_FEATURES) == feature_bitmask) {
+		return ALPI_SUCCESS;
+	} else {
+		return ALPI_ERR_FEATURE_UNKNOWN;
+	}
 }
 
 int alpi_version_check(int major, int minor)
@@ -181,14 +225,14 @@ int alpi_task_spawn(
 
 int alpi_task_suspend_mode_set(struct alpi_task *, alpi_suspend_mode_t, uint64_t)
 {
-	FatalErrorHandler::fail("Function ", __func__, " not implemented");
-	return ALPI_ERR_UNKNOWN;
+	FatalErrorHandler::warn("Function ", __func__, " not implemented");
+	return ALPI_ERR_FEATURE_UNKNOWN;
 }
 
 int alpi_task_suspend(struct alpi_task *)
 {
-	FatalErrorHandler::fail("Function ", __func__, " not implemented");
-	return ALPI_ERR_UNKNOWN;
+	FatalErrorHandler::warn("Function ", __func__, " not implemented");
+	return ALPI_ERR_FEATURE_UNKNOWN;
 }
 
 int alpi_cpu_count(uint64_t *count)

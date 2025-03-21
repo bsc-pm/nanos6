@@ -521,7 +521,7 @@ Although the throttle feature is disabled by default, it can be enabled and tunn
 ## Task-Aware Libraries Support
 
 Nanos6 exposes and implements the ALPI tasking interface, which provides support for task-aware libraries, such as the [Task-Aware MPI](https://github.com/bsc-pm/tampi) library.
-The runtime system implements the ALPI interface version 1.0, which is exposed through the [alpi.h](./api/nanos6/alpi.h) API header.
+The runtime system implements most of the ALPI interface version 1.2, which is exposed through the [alpi.h](./api/nanos6/alpi.h) API header. ALPI's `suspend` feature remains unimplemented in Nanos6.
 
 ## NUMA support
 

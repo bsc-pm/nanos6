@@ -1,11 +1,13 @@
 /*
 	This file is part of ALPI and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023-2024 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef ALPI_INTERFACE_H
 #define ALPI_INTERFACE_H
+
+#include "alpi-defs.h"
 
 #include <stdint.h>
 
@@ -44,7 +46,7 @@ struct alpi_attr;
 /**
  * Constant defining the minor version of the current interface
  */
-#define ALPI_VERSION_MINOR 1
+#define ALPI_VERSION_MINOR 2
 
 /**
  * The list of all errors that can be returned by any interface's function
@@ -57,8 +59,18 @@ typedef enum {
 	ALPI_ERR_OUT_OF_MEMORY,   /**< Not enough memory to perform operation */
 	ALPI_ERR_OUTSIDE_TASK,    /**< Must be executed within a running task */
 	ALPI_ERR_UNKNOWN,         /**< Unknown or internal error */
+	ALPI_ERR_FEATURE_UNKNOWN, /**< The optional ALPI feature is unsupported or unknown */
 	ALPI_ERR_MAX,             /**< Value only used by the implementation */
 } alpi_error_t;
+
+/**
+ * The list of all the information fields reported by the underlying runtime
+ */
+typedef enum {
+	ALPI_INFO_RUNTIME_NAME,   /**< Name of the underlying runtime */
+	ALPI_INFO_RUNTIME_VENDOR, /**< Name of the vendor of the underlying runtime */
+	ALPI_INFO_VERSION,        /**< Full version string of the underlying runtime */
+} alpi_info_t;
 
 /**
  * Get a string error from an error code
@@ -71,7 +83,46 @@ typedef enum {
  *
  * @return A string explaining the error code
  */
-const char *alpi_error_string(int error);
+const char *alpi_error_string(alpi_error_t error);
+
+/**
+ * Get information of the underlying tasking runtime
+ *
+ * This function enables obtaining information regarding the **underlying runtime**. Solely
+ * intended for debugging and reporting. To numerically obtain the version of ALPI
+ * implemented by the runtime, use `alpi_version_{get,check}` instead.
+ *
+ * @note If the written information would surpass the maximum length of the buffer
+ *      (`max_length`), the information is truncated to fit into `buffer`
+ *
+ * @param query The type of information to obtain
+ * @param buffer A pointer to a buffer of at least `max_len` bytes where the
+ *        requested information will be stored
+ * @param max_length Maximum buffer length
+ * @param length Optional (can be NULL). Pointer to an integer in which the length of the
+ *        saved information will be reported
+ *
+ * @return 0 on success; ALPI_ERR_PARAMETER if the query is not valid or there were one or
+ *         more invalid parameters
+ */
+int alpi_info_get(alpi_info_t query, char *buffer, size_t max_length, int *length);
+
+/**
+ * Check the availability of one or more optional ALPI features
+ *
+ * Given a bitmask of flags representing ALPI features, this function determines whether
+ * the flagged features are supported. Its return value should **not** be interpreted as
+ * a boolean. Instead:
+ * - If all flagged features are supported, it returns `ALPI_SUCCESS` (0)
+ * - If at least one of the features is unsupported or unknown, it returns
+ *   `ALPI_ERR_FEATURE_UNKNOWN`
+ *
+ * @param feature_bitmask Bitmask for the ALPI features to check
+ *
+ * @return `ALPI_SUCCESS` (0) if all flagged features **are** supported;
+ * `ALPI_ERR_FEATURE_UNKNOWN` if at least one of the features is unsupported or unknown
+ */
+int alpi_feature_check(int feature_bitmask);
 
 /**
  * Check the compatibility with respect to an expected version
