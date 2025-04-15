@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
@@ -9,9 +9,9 @@
 
 #pragma GCC visibility push(default)
 
-const char *alpi_error_string(int error)
+const char *alpi_error_string(alpi_error_t error)
 {
-	typedef const char *alpi_error_string_t(int);
+	typedef const char *alpi_error_string_t(alpi_error_t);
 
 	static alpi_error_string_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -19,6 +19,30 @@ const char *alpi_error_string(int error)
 	}
 
 	return (*symbol)(error);
+}
+
+int alpi_info_get(alpi_info_t query, char *buffer, size_t max_length, int *length)
+{
+	typedef int alpi_info_get_t(alpi_info_t, char *, size_t, int *);
+
+	static alpi_info_get_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (alpi_info_get_t *) _nanos6_resolve_symbol("alpi_info_get", "alpi", NULL);
+	}
+
+	return (*symbol)(query, buffer, max_length, length);
+}
+
+int alpi_feature_check(int feature_bitmask)
+{
+	typedef int alpi_feature_check_t(int);
+
+	static alpi_feature_check_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (alpi_feature_check_t *) _nanos6_resolve_symbol("alpi_feature_check", "alpi", NULL);
+	}
+
+	return (*symbol)(feature_bitmask);
 }
 
 int alpi_version_check(int major, int minor)

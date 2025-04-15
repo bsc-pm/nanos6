@@ -1,13 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
 
 #include <nanos6/alpi.h>
+#include <nanos6/alpi-defs.h>
 
 #include <cassert>
 #include <cstdio>
@@ -39,11 +40,12 @@ struct alpi_task *getCurrentTask()
 	return task;
 }
 
-// Perform several checks regarding the versions
+// Perform several checks regarding the versions and API features
 void performVersionChecks()
 {
 	int required[2], provided[2], err;
 
+	// Version checks
 	CHECK(alpi_version_get(&provided[0], &provided[1]));
 	tap.evaluate(provided[0] == ALPI_VERSION_MAJOR, "Same provided and requested major versions");
 	tap.evaluate(provided[1] == ALPI_VERSION_MINOR, "Same provided and requested minor versions");
@@ -67,6 +69,66 @@ void performVersionChecks()
 	required[1] = 0;
 	err = alpi_version_check(required[0], required[1]);
 	tap.evaluate(err == ALPI_ERR_VERSION, "Requesting higher major version is invalid");
+
+
+	// Runtime info checks
+	int length, test_pass;
+	char buffer[64];
+	err = alpi_info_get(ALPI_INFO_RUNTIME_NAME, buffer, sizeof(buffer), &(length));
+	test_pass = (err == ALPI_SUCCESS) && (strcmp(buffer, "Nanos6") == 0) && (length > 0);
+	tap.evaluate(test_pass, "Requesting the runtime name provides valid information");
+
+	err = alpi_info_get(ALPI_INFO_RUNTIME_VENDOR, buffer, sizeof(buffer), &(length));
+	test_pass = (err == ALPI_SUCCESS) && (strcmp(buffer, "STAR Team (BSC)") == 0) && (length > 0);
+	tap.evaluate(test_pass, "Requesting the runtime vendor provides valid information");
+
+	char tmp_buffer[64];
+	snprintf(tmp_buffer, sizeof(tmp_buffer), "ALPI %d.%d (Nanos6)",  ALPI_VERSION_MAJOR, ALPI_VERSION_MINOR);
+	err = alpi_info_get(ALPI_INFO_VERSION, buffer, sizeof(buffer), &(length));
+	test_pass = (err == ALPI_SUCCESS) && (strcmp(buffer, tmp_buffer) == 0);
+	tap.evaluate(test_pass, "Requesting the full version of ALPI and the underlying runtime provides valid information");
+
+	err = alpi_info_get(ALPI_INFO_VERSION, buffer, sizeof(buffer), NULL);
+	tap.evaluate(err == ALPI_SUCCESS, "Passing a null pointer as the length parameter is valid");
+
+	err = alpi_info_get((alpi_info_t) -1, buffer, sizeof(buffer), &(length));
+	tap.evaluate(err == ALPI_ERR_PARAMETER, "Passing an unknown query identifier is invalid");
+
+	err = alpi_info_get(ALPI_INFO_RUNTIME_NAME, NULL, sizeof(buffer), &(length));
+	tap.evaluate(err == ALPI_ERR_PARAMETER, "Passing a null pointer as the buffer is invalid");
+
+	err = alpi_info_get(ALPI_INFO_RUNTIME_NAME, buffer, 0, &(length));
+	tap.evaluate(err == ALPI_ERR_PARAMETER, "Passing a non-positive size for the buffer is invalid");
+
+
+	// Feature checks
+	err = alpi_feature_check((1 << 0) /* ALPI_FEATURE_BLOCKING */);
+	tap.evaluate(err == ALPI_SUCCESS, "ALPI feature 'Blocking' is supported");
+
+	err = alpi_feature_check((1 << 1) /* ALPI_FEATURE_EVENTS */);
+	tap.evaluate(err == ALPI_SUCCESS, "ALPI feature 'Events' is supported");
+
+	err = alpi_feature_check((1 << 2) /* ALPI_FEATURE_RESOURCES */);
+	tap.evaluate(err == ALPI_SUCCESS, "ALPI feature 'Resources' is supported");
+
+	err = alpi_feature_check((1 << 3) /* ALPI_FEATURE_SUSPEND */);
+	tap.evaluate(err == ALPI_ERR_FEATURE_UNKNOWN, "ALPI feature 'Suspend' is unsupported");
+
+	err = alpi_feature_check((1 << 0) | (1 << 2));
+	tap.evaluate(err == ALPI_SUCCESS, "ALPI features 'Blocking' and 'Resources' are supported");
+
+	err = alpi_feature_check((1 << 0) | (1 << 3));
+	tap.evaluate(err == ALPI_ERR_FEATURE_UNKNOWN, "ALPI feature 'Blocking' is supported but 'Suspend' is not");
+
+	int unknown_feature = (1 << 15);
+	err = alpi_feature_check(unknown_feature);
+	tap.evaluate(err == ALPI_ERR_FEATURE_UNKNOWN, "ALPI Feature with unknown identifier is not supported");
+
+	err = alpi_feature_check((1 << 0) | (1 << 1) | (1 << 2));
+	tap.evaluate(err == ALPI_SUCCESS, "ALPI features 'Blocking', 'Events' and 'Resources' are supported");
+
+	err = alpi_feature_check((1 << 0) | (1 << 1) | unknown_feature);
+	tap.evaluate(err == ALPI_ERR_FEATURE_UNKNOWN, "ALPI features 'Blocking' and 'Events' are supported but unknown identifier is not");
 }
 
 // Perform several checks regarding the error handling
@@ -79,7 +141,7 @@ void performErrorChecks()
 	string = alpi_error_string(ALPI_ERR_PARAMETER);
 	tap.evaluate(string && std::strlen(string) > 0, "String of ALPI_ERR_PARAMETER is valid");
 
-	string = alpi_error_string(-1);
+	string = alpi_error_string((alpi_error_t) -1);
 	tap.evaluate(string && std::strlen(string) > 0, "String of an unknown error is valid");
 
 	string = alpi_error_string(ALPI_ERR_MAX);
@@ -167,13 +229,13 @@ void taskEventsBody()
 
 int main()
 {
-	tap.registerNewTests(30);
+	tap.registerNewTests(46);
 	tap.begin();
 
 	// Check that the main function is executed by a task
 	getCurrentTask();
 
-	// Perform checks about versions, error handling and the available CPUs
+	// Perform checks about versions, API features error handling and the available CPUs
 	performVersionChecks();
 	performErrorChecks();
 	performCPUChecks();

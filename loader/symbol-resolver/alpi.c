@@ -1,12 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2023 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2023-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
 
 RESOLVE_API_FUNCTION(alpi_error_string, "alpi", NULL);
+RESOLVE_API_FUNCTION(alpi_info_get, "alpi", NULL);
+RESOLVE_API_FUNCTION(alpi_feature_check, "alpi", NULL);
 RESOLVE_API_FUNCTION(alpi_version_check, "alpi", NULL);
 RESOLVE_API_FUNCTION(alpi_version_get, "alpi", NULL);
 RESOLVE_API_FUNCTION(alpi_task_self, "alpi", NULL);

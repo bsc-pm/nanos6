@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2023 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2025 Barcelona Supercomputing Center (BSC)
 
 # A workaround for http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18744
 am__is_gnu_make = { \
@@ -61,6 +61,7 @@ nanos6includedir = $(includedir)/nanos6
 
 nanos6include_HEADERS = \
 	api/nanos6/alpi.h \
+	api/nanos6/alpi-defs.h \
 	api/nanos6/api-check.h \
 	api/nanos6/blocking.h \
 	api/nanos6/bootstrap.h \
