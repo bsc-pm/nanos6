@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_TASK_INSTANTIATION_H
@@ -54,6 +54,7 @@ typedef enum {
 typedef struct {
 	size_t sizes[6];
 	size_t shm_size;
+	int is_grid;
 } nanos6_device_info_t;
 
 

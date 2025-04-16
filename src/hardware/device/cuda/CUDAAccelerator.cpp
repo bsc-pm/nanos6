@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2020-2024 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020-2025 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -143,15 +143,18 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 	void *args = task->getArgsBlock();
 	nanos6_device_info_t &deviceInfo = *((nanos6_device_info_t *)args);
 
-	// The ndrange clause in device tasks is used to define the work hierarchy
-	// used to execute the kernel in the device. The work hierarchy can be 1D,
-	// 2D, or 3D. The first parameter of the clause is the number of dimensions,
-	// the next are the global sizes of elements in each dimension, and then,
-	// the last are the local sizes of elements in each dimenion. The global
-	// sizes indicate how many threads will be spawn in total. The local sizes
-	// indicate the number of threads per CUDA block
+	// The ndrange or grid clause in device tasks is used to define the work
+	// hierarchy used to execute the kernel in the device. The work hierarchy can
+	// be 1D, 2D, or 3D. With ndrange, the first parameter of the clause is the
+	// number of dimensions, the next are the global sizes of elements in each
+	// dimension, and then, the last are the local sizes of elements in each
+	// dimenion. The global sizes indicate how many threads will be spawn in
+	// total. The local sizes indicate the number of threads per CUDA block. If
+	// the grid clause is used, the CUDA grid sizes are defined directly replacing
+	// the global sizes.
 	//
-	// NOTE: The global sizes do not correspond to the CUDA grid sizes
+	// NOTE: The global sizes do not correspond to the CUDA grid sizes when using
+	// ndrange. Only with the grid clause.
 	//
 	// TODO: If the parameters provided by the user are invalid for our CUDA
 	// capabilities, we could perform some math to express the same working
@@ -174,10 +177,18 @@ void CUDAAccelerator::callTaskBody(Task *task, nanos6_address_translation_entry_
 	size_t globalDim2 = std::max((int64_t) deviceInfo.sizes[1], (int64_t) 1);
 	size_t globalDim3 = std::max((int64_t) deviceInfo.sizes[2], (int64_t) 1);
 
-	// Compute the CUDA grid sizes using the global and local dimensions
-	size_t gridDim1 = MathSupport::ceil(globalDim1, blockDim1);
-	size_t gridDim2 = MathSupport::ceil(globalDim2, blockDim2);
-	size_t gridDim3 = MathSupport::ceil(globalDim3, blockDim3);
+	size_t gridDim1, gridDim2, gridDim3;
+	if (deviceInfo.is_grid) { // grid clause
+		// The CUDA grid size is specified directly
+		gridDim1 = globalDim1;
+		gridDim2 = globalDim2;
+		gridDim3 = globalDim3;
+	} else { // ndrange clause
+		// Compute the CUDA grid sizes using the global and local dimensions
+		gridDim1 = MathSupport::ceil(globalDim1, blockDim1);
+		gridDim2 = MathSupport::ceil(globalDim2, blockDim2);
+		gridDim3 = MathSupport::ceil(globalDim3, blockDim3);
+	}
 
 	std::array<void *, MAX_STACK_ARGS> stackParams;
 	void **params = &stackParams[0];
