@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2020-2023 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2020-2025 Barcelona Supercomputing Center (BSC)
 
 CXX = $(NANOS6_CLANGXX)
 
@@ -59,7 +59,8 @@ base_tests += \
 	cuda-saxpy.clang.test \
 	cuda-shmem.clang.test \
 	cuda-ndrange-directory.clang.test \
-	cuda-saxpy-directory.clang.test
+	cuda-saxpy-directory.clang.test \
+	cuda-grid.clang.test
 endif
 
 # Ignore CPU Activation test if we have DLB
@@ -149,7 +150,8 @@ base_tests += \
 	cuda-saxpy.clang.debug.test \
 	cuda-shmem.clang.debug.test \
 	cuda-ndrange-directory.clang.debug.test \
-	cuda-saxpy-directory.clang.debug.test
+	cuda-saxpy-directory.clang.debug.test \
+	cuda-grid.clang.debug.test
 endif
 
 # Ignore CPU Activation test if we have DLB for now
@@ -306,6 +308,16 @@ cuda_saxpy_directory_clang_test_SOURCES = ../cuda/cuda-saxpy-directory.cpp ../cu
 cuda_saxpy_directory_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
 cuda_saxpy_directory_clang_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
 cuda_saxpy_directory_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_grid_clang_debug_test_SOURCES = ../cuda/cuda-grid.cpp ../cuda/cuda-grid.hpp ../cuda/cuda-grid-kernel.cu
+cuda_grid_clang_debug_test_CPPFLAGS = $(CUDA_CFLAGS)
+cuda_grid_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_grid_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags) -fno-lto $(CUDA_LIBS)
+
+cuda_grid_clang_test_SOURCES = ../cuda/cuda-grid.cpp ../cuda/cuda-grid.hpp ../cuda/cuda-grid-kernel.cu
+cuda_grid_clang_test_CPPFLAGS = -DNDEBUG $(CUDA_CFLAGS)
+cuda_grid_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS) -fno-lto
+cuda_grid_clang_test_LDFLAGS = $(test_common_ldflags) -fno-lto $(CUDA_LIBS)
 
 blocking_clang_debug_test_SOURCES = ../blocking/blocking.cpp
 blocking_clang_debug_test_CXXFLAGS = $(DBG_CXXFLAGS) $(AM_CXXFLAGS)
