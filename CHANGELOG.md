@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 4.3, Fri Jun 6, 2025
+The 4.3 version corresponds to the OmpSs-2 2025.06 release. It adds compatibility with ALPI version 1.2 and support for the `grid` clause on CUDA tasks.
+
+### General
+- Add compatibility with [ALPI](https://gitlab.bsc.es/alpi/alpi) version 1.2.
+- Add support for the `grid` clause on CUDA tasks.
+- Weaken DLB test requirements (partial drop of tests).
+
+
 ## Version 4.2, Fri Nov 15, 2024
 The 4.2 version corresponds to the OmpSs-2 2024.11 release. It adds compatibility with ALPI version 1.1.
 
