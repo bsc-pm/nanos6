@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 4.3.1, Fri Jun 16, 2026
+The 4.3.1 version corresponds to the OmpSs-2 2026.06 release. It is a patch that improves the PAPI m4 module.
+
+### General
+- Add some fixes to improve the PAPI m4 module.
+
+
 ## Version 4.3, Fri Jun 6, 2025
 The 4.3 version corresponds to the OmpSs-2 2025.06 release. It adds compatibility with ALPI version 1.2 and support for the `grid` clause on CUDA tasks.
 
